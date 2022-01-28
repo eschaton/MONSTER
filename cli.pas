@@ -28,12 +28,6 @@ function cli$get_value (%descr entity_desc: string;
 function cli$present (%descr entity_desc: string): cond_value;
 	external;
 
-procedure rebuild_system;
-	external;
-
-function fix_system (batch: string := ''): boolean;
-	external;
-
 function lowcase (s: string): string;
 	external;
 
@@ -43,8 +37,8 @@ begin
 	writeln('Monster, a multiplayer adventure game where the players create the world');
 	writeln('and make the rules.');
 	writeln;
-	writeln('VERSION:     Monster Helsinki 1.04');
-	writeln('DISTRIBUTED: 13.6.1992');
+	writeln('VERSION:     ',VERSION);
+	writeln('DISTRIBUTED: ',DISTRIBUTED);
 	writeln;
 	writeln('Originally written by Rich Skrenta at Northwestern University, 1988.');
         writeln;
@@ -56,39 +50,7 @@ begin
 end;
 
 
-function batch_system (file_name: string): boolean;
-var line: string;
-    pos,errorcode: integer;
-    batch: text;
-    quit: boolean;
-begin
-    batch_system := true;
-    open(batch,file_name,history := readonly, error := continue);
-    quit := false;
-    errorcode := status(batch);
-    if errorcode <> 0 then begin
-	case errorcode of
-	    -1: { PAS$K_EOF } writeln('Batch file is empty.');
-	    3:  { PAS$K_FILNOTFOU } writeln('Batch file not foud.');
-	    4:  { PAS$K_INVFILSYN } writeln('Illegal name of batch file.');
-	    otherwise writeln('Can''t open batch file, error code (status): ',
-		errorcode:1);
-	end; { case }
-	quit := true;
-    end else begin
-	reset(batch);
-	while not quit and not eof(batch) do begin
-	    readln(batch,line);
-	    writeln(line);
-	    if line > '' then begin
-		pos := index(line,'!');
-		if pos > 0 then line := substr(line,1,pos-1);
-	    end;
-	    if line > '' then quit := not fix_system(line);
-	end;
-    end;
-    batch_system := not quit;
-end; { batch system }
+
 
 [global] procedure very_prestart; { before procedure init }
 var
@@ -99,12 +61,8 @@ var
 	status1,
 	status2		: cond_value;
 
-	do_rebuild, do_fix, do_batch : boolean;
+	do_fix, do_batch : boolean;
 begin
-    do_rebuild := false;
-    do_fix := false;
-    do_batch := false;
-    file_name := '';
 
 	qualifier := 'OUTPUT';
 	status1 := cli$present (qualifier);
@@ -124,53 +82,6 @@ begin
 	    rewrite(output);
 	end; 
 
-	qualifier := 'REBUILD';
-	status1 := cli$present (qualifier);
-	if status1 = cli$_present then begin
-		if wizard then begin
-			{ Must use 'wizard' here, because at this spot
-			  the priv'd users always have privd:=false, but
-			  wizard:=true					 }
-			{ Nowadays even that is incorrect. 'Wizard'
-			  denotes rebuilding rights. 	leino@finuha	}
-			if REBUILD_OK then begin
-				writeln('Do you really want to destroy the entire universe?');
-				readln(s);
-				if length(s) > 0 then
-					if substr(lowcase(s),1,1) = 'y' then
-						do_rebuild := true;
-			end else
-				writeln('REBUILD is disabled.');
-				done := true;
-		end else
-			writeln ('Only the Monster Manager may REBUILD.');
-	end;
-
-	qualifier := 'FIX';
-	status1 := cli$present (qualifier);
-	if status1 = cli$_present then begin
-		if wizard then do_fix := true	{ hurtta@finuh }
-		else writeln ('Only the Monster Manager may fix database.');
-	end;
-
-	qualifier := 'BATCH';
-	status1 := cli$present (qualifier);
-	if status1 = cli$_present then begin
-	    if userid = MM_userid then begin
-		status2 := cli$get_value (qualifier, value, value_length);
-		if status2 = ss$_normal then begin
-		    file_name := value;
-		    do_batch := true { hurtta@finuh }
-		end else begin
-		    writeln ('Something is wrong with BATCH.');
-		    done := true;
-		end;
-	    end else begin
-		writeln ('You may not batch database.');
-		done := true;
-	    end;
-	end;
-
 	qualifier := 'DEBUG';
 	status1 := cli$present (qualifier);
 	if status1 = cli$_present then begin
@@ -182,20 +93,6 @@ begin
 	    end
 	end else debug := false;
     
-    if do_rebuild or do_fix or do_batch then begin    
-	if open_database(playing := false) then begin
-	    writeln('Database locked (file level lock).');
-	    if do_rebuild then rebuild_system;
-	    if do_fix then done := not fix_system;
-	    if do_batch then done := not batch_system(file_name);
-	    close_database;
-	    writeln('Database freed (file level lock).');
-	end else begin
-	    writeln('Can''t lock database. Someone is playing Monster.');
-	    done := true;
-	end;
-    end;
-
 end;
 
    

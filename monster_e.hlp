@@ -278,8 +278,8 @@ min_accept:    5
 3 Directories
   Make four directories:
     Directory for sources, lets CALL it SOURCES directory.
-    Directory for MONSTER.EXE and MONSTER_WHO.EXE, lets call it  IMAGE 
-      directory.
+    Directory for MONSTER.EXE, MONSTER_DUMP.EXE, MONSTER_REBUILD.EXE and 
+      MONSTER_WHO.EXE, lets call it  IMAGE directory.
     Directory for *.MON files, lets call it DATABASE_MON directory.
     Directory for CODE*.MON files, lets call it DATABASE_CODE directory.
 
@@ -287,13 +287,13 @@ min_accept:    5
   Files: CLI.PAS, CONVERT.BATCH, CUSTOM.PAS, DATABASE.PAS,  FIX.BATCH, 
   GLOBAL.PAS, GUTS.PAS, INTERPRETER.PAS, KEYS.PAS, MAKEFILE.  MON.PAS,
   MONSTER_WHO.PAS, PARSER.PAS, PRIVUSERS.PAS, QUEUE.PAS, MONSTER_E.HLP,
-  MONSTER_DUMP.PAS.
+  MONSTER_DUMP.PAS, MONSTER_REBUILD.PAS, ALLOC.PAS and VERSION.PAS.
 
 4 IMAGE
   Files: MONSTER.CLD, MONSTER.INIT.
 
   Compiled Files: MON.EXE, MONSTER_WHO.EXE, MONSTER_E.HLB, 
-  MONSTER_DUMP.EXE.
+  MONSTER_DUMP.EXE and MONSTER_REBUILD.EXE.
 
 4 DATABASE_MON
   Files: COMMANDS.PAPER, ILMOITUS.TXT, MONSTER.HELP.
@@ -313,24 +313,35 @@ min_accept:    5
 
   Commands for compilation:
 $ LIBRARIAN/CREATE/HELP MONSTER_E MONSTER_E
-$ PASCAL /CHECK=ALL GLOBAL		
-$ PASCAL GUTS/CHECK=ALL
-$ PASCAL /CHECK=ALL DATABASE		
-$ PASCAL  CLI
-$ PASCAL  PRIVUSERS / CHECK = ALL
-$ PASCAL /CHECK=ALL PARSER 		
-$ PASCAL /CHECK=ALL QUEUE 		
-$ PASCAL /CHECK=ALL INTERPRETER 		
-$ PASCAL  KEYS /CHECK = ALL	
-$ PASCAL /CHECK=ALL MON			
-$ LINK MON,GUTS,INTERPRETER,KEYS,PRIVUSERS,QUEUE,PARSER,CLI,GLOBAL,DATABASE,CUSTOM	! Linkkaus
+$ PASCAL /CHECK=ALL GLOBAL                
+$ PASCAL /CHECK=ALL GUTS                 
+$ PASCAL /CHECK=ALL DATABASE              
+$ PASCAL /CHECK=ALL CLI
+$ PASCAL /CHECK=ALL  PRIVUSERS
+$ PASCAL /CHECK=ALL PARSER                
+$ PASCAL /CHECK=ALL INTERPRETER          
+$ PASCAL /CHECK=ALL QUEUE                 
+$ PASCAL /CHECK=ALL ALLOC        
+$ PASCAL /CHECK=ALL CUSTOM               
+$ PASCAL /CHECK=ALL MON                   
+$ PASCAL /CHECK=ALL  KEYS         
+$ PASCAL /CHECK=ALL VERSION              
+$ LINK MON,GUTS,INTERPRETER,KEYS,PRIVUSERS,QUEUE,PARSER,CLI,GLOBAL, -
+DATABASE,CUSTOM,ALLOC,VERSION  
+$ PASCAL /CHECK=ALL MONSTER_DUMP
+$ LINK MONSTER_DUMP, DATABASE, GUTS, GLOBAL, PRIVUSERS, PARSER,   VERSION
+$ PASCAL /CHECK=ALL MONSTER_REBUILD
+$ LINK MONSTER_REBUILD, DATABASE, GUTS, GLOBAL, PRIVUSERS, PARSER, -
+ALLOC, KEYS, VERSION
 $ PASCAL /CHECK=ALL MONSTER_WHO
 $ LINK MONSTER_WHO, DATABASE, GUTS, GLOBAL, PRIVUSERS, PARSER
-$ PASCAL /CHECK=ALL MONSTER_DUMP
-$ LINK MONSTER_DUMP, DATABASE, GUTS, GLOBAL, PRIVUSERS, PARSER
 
-  Put MON.EXE, MONSTER_WHO.EXE, MONSTER_DUMP.EXE and MONSTER_E.HLB 
-  to IMAGE directory.
+  You can also produce these files with command
+$ MMS ALL
+  if you have MMS (and MAKEFILE in that directory)
+
+  Put MON.EXE, MONSTER_WHO.EXE, MONSTER_DUMP.EXE, MONSTER_REBUILD.EXE 
+  and MONSTER_E.HLB to IMAGE directory.
 
 3 Editing
 
@@ -349,6 +360,14 @@ $ LINK MONSTER_DUMP, DATABASE, GUTS, GLOBAL, PRIVUSERS, PARSER
 define syntax MONSTER_WHO
    image <IMAGE -directory>monster_who
    noqualifiers
+define syntax MONSTER_DUMP
+   image <IMAGE -directory>monster_dump
+   parameter P1
+        label = DUMP_FILE
+        prompt = "Dump file"
+        value(type=$file,required)
+define syntax MONSTER_REBUILD
+  image <IMAGE -directory>>monster_rebuild
 define verb MONSTER
    image <IMAGE -directory>mon
    qualifier WHO
@@ -409,7 +428,8 @@ min_accept:    5
   Put protection (world:execute) to 
         MON.EXE and MONSTER_WHO.EXE files 
 
-  MONSTER_DUMP.EXE don't need to be executable by world.
+  MONSTER_DUMP.EXE and MONSTER_REBUILD.EXE don't need to be executable 
+  by world.
 
   After building database put protection (world:read+write) to
         *.MON files
@@ -2431,19 +2451,19 @@ Requirements: You have the Manager -privilege
   === 		(<line 1>,<line 2>) 
   inv		() 
   pinv		() 
-  players		() 
-  objects		() 
+  players	() 
+  objects	() 
   get		(<object list>) 
   pget		(<object list>) 
   drop		(<object list>) 
   pdrop		(<object list>) 
-  and		(<item list>,<item list>) 
-  or		(<item list>,<item list>) 
+  and		(<item list 1>,<item list 2>,...,<item list n>) 
+  or		(<item list 1>,...,<item list n>) 
   move		(<room's name>) 
   pmove		(<room's name>) 
-  pprint		(<message part 1>,...,<message part n>) 
+  pprint	(<message part 1>,...,<message part n>) 
   print		(<message part 1>,...,<message part n>) 
-  oprint		(<message part 1>,...,<message part n>) 
+  oprint	(<message part 1>,...,<message part n>) 
   pprint raw	(<message part 1>,...,<message part n>) 
   print raw	(<message part 1>,...,<message part n>) 
   oprint raw	(<message part 1>,...,<message part n>) 
@@ -2451,12 +2471,12 @@ Requirements: You have the Manager -privilege
   if 		(<p1>,<action 1>,<action 2>) 
   where		(<monster's or player's name>) 
   null		(<action 1>,<action 2>,<action 3>,...,<action n>) 
-  attack		(<attack force: nr>) 
+  attack	(<attack force: nr>) 
   not		(<p1>)
-  random		(<item list>) 
+  random	(<item list>) 
   strip		(<string>) 
   experience	(<player's name>) 
-  set experience	(<player's new experience>) 
+  set experience (<player's new experience>) 
   plus		(<p1: nr>,<p2: nr>)           
   difference	(<p1: nr>,<p2: nr>)
   times		(<p1: nr>,<p2: nr>)
@@ -2492,19 +2512,19 @@ Requirements: You have the Manager -privilege
   parse player	(<parameter>)
   parse room	(<parameter>)
   experience	(<player name>,<privilege list>)
-  userid		(<player list>)
+  userid	(<player list>)
   mheal		(<monster name>,<heal amount: nr>)
-  mattack		(<monster name>,<attck amont>: nr>)
+  mattack	(<monster name>,<attck amont>: nr>)
   list		(<item list 1>,...,<item list n>)
-  spell level     ()
-  set spell level (level number)
+  spell level	()
+  set spell level	(level number)
   
   LABEL <label>		(<action 1>,...,<action n>)
   GOSUB <label>		(<param 1>,...,<param n>)
   DEFINE <variable>	(<action>)
-  SET <variable>		(<value>)
-  SUBMIT <label>		(<delta time>,<player's name>)
-  FOR <variable>		(<list>,<action>)
+  SET <variable>	(<value>)
+  SUBMIT <label>	(<delta time>,<player's name>)
+  FOR <variable>	(<list>,<action>)
 3 Labels
   When player do somtehing, correspond labels of monsters and hooks
   are executed.
@@ -2704,9 +2724,9 @@ Requirements: You have the Manager -privilege
      p1    - lista
      tulos - lista
 4 and
-  Funktio: and (p1,p2)
+  Funktio: and (p1,p2,...)
 
-  Laskee parametrien p1 ja p2 arvon.
+  Laskee parametrien p1,p2 jne. arvon.
 
   Palauttaa listan, jossa on ne alkiot, jotka ovat sekä p1:ssä 
   että p2:ssa. Jokainen alkio esiintyy tuloksessa vain kerran.
@@ -2714,7 +2734,11 @@ Requirements: You have the Manager -privilege
   Tulkinta:
      p1    - lista
      p2    - lista
+     ...
+     pn    - lista
      tulos - lista
+  Huomautus:
+     Parameterja pitää vähintään olla kaksi.
 4 move
   Funktio: move (p1)
 
@@ -3555,12 +3579,12 @@ Requirements: You have the Manager -privilege
      p1    - lista
      tulos - lista
 4 or
-  Funktio: or (p1,p2,p3)
+  Funktio: or (p1,p2,p3,...)
 
-  Laskee parametrien p1, p2 ja p3 arvon.
+  Laskee parametrien p1,p2,p3,... arvon.
 
   Palauttaa listan, jossa on ne alkiot, jotka ovat p1:ssä, 
-  p2:ssa tai p3:ssa. Jokainen alkio esiintyy tuloksessa 
+  p2:ssa tai p3:ssa (jne). Jokainen alkio esiintyy tuloksessa 
   vain kerran.
 
   Virhetilanteet:
@@ -3570,8 +3594,8 @@ Requirements: You have the Manager -privilege
 
   Tulkinta:
      p1    - lista
-     p2    - lista
-     p3    - lista
+     ...
+     p<n>   - lista
  ÿ    tulos - lista
 4 string_head
   Funktio: string head (p1)

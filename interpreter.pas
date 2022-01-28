@@ -28,6 +28,9 @@ MODIFICATION HISTORY:
 --------------+---------+-------------------------------------------------------
    11.2.1991  |         | This comment header created
    26.5.1992  | Hurtta  | Now parser print error line also (LINE_* in parse)
+   26.6.1992  |         | monster_owner, set_owner, delete_program moved to DATABASE.PAS
+   29.6.1992  |         | MDL-funktio or sallii nyt enemmin kuin 3 parametria
+              |         | MDL-funktio and parametrien m‰‰r‰ voi nyt vaihdella
 --------------+---------+-------------------------------------------------------
 
 -}
@@ -206,8 +209,8 @@ Value ftable := (
 	('pget',	1,  1),		    { 8 }
 	('drop',	1,  1),		    { 9 }
 	('pdrop',	1,  1),		    { 10 }
-	('and',		2,  2),		    { 11 }
-	('or',		1,  3),		    { 12 }
+	('and',		2,  max_param),	    { 11 }
+	('or',		1,  max_param),	    { 12 }
 	('move',	1,  1),		    { 13 }
 	('pmove',	1,  1),		    { 14 }
 	('pprint',	0,  max_param),	    { 15 }
@@ -1899,8 +1902,8 @@ function exec_program (label_name: atom_t; monster: atom_t;
          result := '';
          a1 := eval_atom(p1);
          a2 := eval_atom(p2);
-         write_debug('%e_and - p1: ',a1);
-         write_debug('%      - p2: ',a2);
+         write_debug('%e_exclude - p1: ',a1);
+         write_debug('%          - p2: ',a2);
          i := 1;
          while i <= length(a1) do begin
             atom := clean_spaces(cut_atom(a1,i,','));
@@ -1910,30 +1913,42 @@ function exec_program (label_name: atom_t; monster: atom_t;
          e_exclude := result;
       end; { e_exclude }
 
-      function e_and (p1,p2: integer): string_t;
-      var result,first,second: string_t;
-          i: integer;
-          atom: atom_t;
+      function e_and (params: paramtable): string_t;
+      var result: string_t;
+	  filter: string_t;
+
+	function action_first(atom: atom_t): atom_t;
+	begin
+	    if not list_include(result,atom) then add_atom(result,atom);
+	    action_first := ''
+	end;
+
+	function action_next(atom: atom_t): atom_t;
+	begin
+	    action_next := atom;
+	    if not list_include(result,atom) or
+	       list_include (filter,atom) then action_next := ''
+	    else add_atom(filter,atom);
+	end;
+
+      var i,n: integer;
       begin
          write_debug('%e_and');
          result := '';
-         first := eval_atom (p1);
-         second := eval_atom (p2);
-         write_debug('%e_and - p1: ',first);
-         write_debug('%        p2: ',second);
-         i := 1;
-         while i <= length(first) do
-            begin
-               atom := clean_spaces(cut_atom(first,i,','));
-               if list_include(second,atom) and not list_include(result,atom) then
-                 add_atom(result,atom)
-            end;
+	 n := count_params(params);
+	 meta_do(params[1],action_first);
+	 write_debug('%e_and >> ',result);
+         for i := 2 to n do begin
+	    filter := '';
+	    result := meta_do(params[i],action_next);
+	    write_debug('%e_and >> ',result);
+         end;
         write_debug('%e_and result: ',result);
         e_and := result
       end; { e_and }
 
-      function e_or (p1,p2,p3: integer): string_t;
-      var result: string_t;
+      function e_or (params: paramtable): string_t;
+      var result: string_t;               
 
 	function action (atom: atom_t): atom_t;
 	begin
@@ -1941,15 +1956,15 @@ function exec_program (label_name: atom_t; monster: atom_t;
 	    action := ''
 	end;
 
+      var i,n: integer;
       begin
 	write_debug('%e_or');
 	result := '';
-	meta_do(p1,action);
-	meta_do(p2,action);
-	meta_do(p3,action);
+	n := count_params(params);
+	for i := 1 to n do meta_do(params[i],action); 
         write_debug('%e_or result: ',result);
         e_or := result
-      end; { e_and }
+      end; { e_or }
       
       function e_drop (p1: integer): string_t;
       var result: string_t;
@@ -3141,8 +3156,8 @@ function exec_program (label_name: atom_t; monster: atom_t;
 	    8: { pget } result	:= e_pget (p1);
 	    9: { drop } result	:= e_drop (p1);
 	    10: { pdrop }   result := e_pdrop (p1);
-	    11: { and } result	:= e_and (p1,p2);
-	    12: { or }	result := e_or (p1,p2,p3);
+	    11: { and } result	:= e_and (params);
+	    12: { or }	result := e_or (params);
 	    13: { move }    result := e_move (p1);
 	    14: { pmove }   result := e_pmove (p1);
 	    15: { pprint }  result := e_pprint (params,false);
@@ -3401,36 +3416,15 @@ begin
    monster_runnable := header.runnable;
 end;
 
+{ monster_owner moved TO DATABASE.PAS }
 
-[global] 
-function monster_owner  (code: integer; class : integer := 0): atom_t;
-begin  
-  write_debug ('%monster_owner');
-  getheader(code);
-  freeheader;
-  case class of
-    0: monster_owner := header.owner;
-    1: monster_owner := header.author;
-  end; { case }
-end; { monster_owner }
 
 function x_monster_owner { (code: integer; class : integer := 0): atom_t };
 begin
   x_monster_owner := monster_owner(code,class);
 end; { x_monster_owner }
 
-
-[global] 
-procedure set_owner (code: integer; class : integer := 0; owner: atom_t);
-begin  
-  write_debug ('%set_owner');
-  getheader(code);
-  case class of
-    0: header.owner := owner;
-    1: header.author := owner;
-  end; { case }
-  putheader
-end; { set_owner }
+{ set_owner moved to DATABASE.PAS }
 
 [global]
 procedure set_runnable(code: integer; value: boolean);
@@ -3884,37 +3878,7 @@ begin
 	end; { case }
 end; { load }
 
-[global]                                 
-procedure delete_program (code: integer);
-label 1;  
-var fl: text;
-    count,apu,errorcode: integer;
-begin
-  write_debug ('%delete_program');
-  apu := code;
-  count := 0;
-  repeat
-    open (fl,file_name(code),old,sharing:=NONE,error := continue,
-          record_length := string_length +20);
-    errorcode := status(fl);
-    if errorcode > 0 then begin
-       count := count +1;
-       write_debug ('%collision in delete_program');
-       if count > 10 then  begin
-          if debug then begin
-	     writeln ('%Deadlock in delete_program.');
-	     writeln ('% Error code (status): ',errorcode:1);
-	  end;
-          goto 1
-       end;
-       wait (0.2);      { collision is very rare in here }
-    end
-  until errorcode <= 0;
-  reset (fl);
-  truncate(fl);
-  close(fl);
-1:
-end; { delete_program }
+{ delete_program moved to DATABASE.PAS }
 
 [global]     
 procedure init_interpreter;
@@ -3965,5 +3929,4 @@ end; { create_program }
             
 { addheaders moved to module DATABASE }
 
-end. { end of module interpreter }
-                                      
+end. { end of module interpreter }                                      

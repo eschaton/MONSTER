@@ -742,4 +742,8 @@ var
 
 	debug: [global] boolean;        { minor change by hurtta@finuh }
 
+        VERSION : [external] string;  { defined in VERSION.PAS }
+	DISTRIBUTED : [external] string;
+					    { defined in VERSION.PAS }
+
 End.	{ end of module }

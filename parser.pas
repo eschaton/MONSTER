@@ -265,17 +265,7 @@ begin
     clean_spaces := bf
 end; { clean spaces }
 
-[global]
-procedure write_debug(a: string; b: mega_string := '');
-begin
-   if debug then begin
-      write(a,'   ');
-      if length(b) > 200 then	{ system limit printable string }
-                                { about 200 characters          }
-         writeln('(PARAMETER TOO LONG FOR PRINTING)')
-      else writeln(b);
-   end;
-end;
+{ write_debug moved to DATABASE.PAS }
 
 [global]
 function cut_atom (var main: mega_string; var x: integer;

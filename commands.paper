@@ -36,7 +36,7 @@ SYNTAX:	function	->	name (p) / name (p,p) / name (p,p,p) /
 				privilege / userid / pprint raw / print raw /
 				oprint raw / print null / mheal / mattack /
 				list / lookup direction / get global flag /
-                                spell level / set spell level
+                                spell level / set spell level / prog
 
 	program		->	sentence +
 
@@ -77,6 +77,7 @@ Summary:	+	concatenate all parameters
 				first parameter
 		where	room of any player or monster
 		null	eval all parameters, but do not return anything
+		prog	eval all paramaters, return value of last paramater
 		attack	decrease player's force
 		heal	increase player's force
 		mattack	decrease monster's force
@@ -442,8 +443,8 @@ get		(<object list>)
 pget		(<object list>) 
 drop		(<object list>) 
 pdrop		(<object list>) 
-and		(<item list>,<item list>) 
-or		(<item list>,<item list>) 
+and		(<item list 1>,<item list 2>,...,<item list n>) 
+or		(<item list 1>,...,<item list n>) 
 move		(<room's name>) 
 pmove		(<room's name>) 
 pprint		(<message part 1>,...,<message part n>) 
@@ -456,6 +457,7 @@ print null	(<message part 1>,...,<message part n>)
 if 		(<p1>,<action 1>,<action 2>) 
 where		(<monster's or player's name>) 
 null		(<action 1>,<action 2>,<action 3>,...,<action n>) 
+prog		(<action 1>,<action 2>,<action 3>,...,<action n>) 
 attack		(<attack force: nr>) 
 not		(<p1>)
 random		(<item list>) 
@@ -492,7 +494,7 @@ tail		(<item list>)
 lookup object	(<object list>)
 lookup player	(<player list>)
 lookup room	(<room list>)
-lookup direction	(<direction list>)
+lookup direction(<direction list>)
 parse object	(<parameter>)
 parse player	(<parameter>)
 parse room	(<parameter>)

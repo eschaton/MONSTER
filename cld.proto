@@ -8,13 +8,19 @@ define syntax MONSTER_DUMP
 	label = DUMP_FILE
 	prompt = "Dump file"
 	value(type=$file,required)
+define syntax MONSTER_REBUILD
+   image %image_dir%monster_rebuild
 define verb MONSTER
    image %image_dir%mon
    qualifier WHO
       nonnegatable
       syntax = MONSTER_WHO
    qualifier REBUILD
+      nonnegatable
+      syntax = MONSTER_REBUILD
    qualifier FIX
+      nonnegatable
+      syntax = MONSTER_REBUILD
    qualifier VERSION
    qualifier DEBUG
    qualifier REAL_USERID
@@ -23,6 +29,8 @@ define verb MONSTER
       value(required)
    qualifier BATCH
       value(required,type=$infile)
+      nonnegatable
+      syntax = MONSTER_REBUILD
    qualifier START
    qualifier OUTPUT
       value(default="SYS$OUTPUT",type=$outfile)

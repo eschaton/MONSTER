@@ -1,21 +1,30 @@
 $! Install Monster 
 $ SET NOON
 $ SET ON
-$ ON WARNING THEN $ STOP
+$ ON WARNING THEN CALL FATAL "ERROR !!"
+$ df = F$ENVIRONMENT("DEFAULT")
 $
 $! Questions
 $ CALL PATHNAME bn 'F$ENVIRONMENT("PROCEDURE")
 $ source_directory == ""
 $ CALL QUERY_DIR source_directory "Give source (distribution) directory" 'bn
-$ df = F$ENVIRONMENT("DEFAULT")
 $ work_directory == ""
 $ CALL ASK_DIR work_directory "Give work directory for compilation" 'df
-$ image_directory == ""
-$ CALL ASK_DIR image_directory "Give directory for installed MON.EXE"
-$ database_directory == ""
-$ CALL ASK_DIR database_directory "Give directory for Monster database"
-$ option == ""
+$ option == 0
 $ CALL ASK_OPTION
+$ database_directory == ""
+$ image_directory == ""
+$ IF option .eq. 4 
+$    THEN
+$    CALL QUERY_DIR image_directory "Give directory for (current) installed MON.EXE"
+$    CALL CHECK_FILE 'image_directory'MONSTER.INIT
+$    CALL QUERY_DIR database_directory "Give existed database directory" ""
+$    CALL CHECK_FILE 'database_directory'DB.DIR
+$    CALL CHECK_FILE 'database_directory'C.DIR
+$    ELSE
+$    CALL ASK_DIR image_directory "Give directory for installed MON.EXE"
+$    CALL ASK_DIR database_directory "Give directory for Monster database"
+$ ENDIF
 $ old_database == ""
 $ IF option .eq. 2 
 $    THEN
@@ -36,24 +45,26 @@ $! Actions
 $ SET DEFAULT 'work_directory'
 $ CALL CHECK_FILE 'source_directory'MONSTER.HELP
 $ CALL CHECK_FILE 'source_directory'COMMANDS.PAPER
-$ CALL CHECK_FILE 'source_directory'ILMOITUS.TXT
+$ IF option .ne. 4 THEN CALL CHECK_FILE 'source_directory'ILMOITUS.TXT
 $ CALL CHECK_FILE 'source_directory'CLD.PROTO
-$ CALL CHECK_FILE 'source_directory'INIT.PROTO
+$ IF option .ne. 4 THEN CALL CHECK_FILE 'source_directory'INIT.PROTO
 $ CALL CHECK_FILE 'source_directory'CONVERT.BATCH
 $ CALL CHECK_FILE 'source_directory'FIX.BATCH
 $
 $ CALL MAKE_HELP | Produce MONSTER_E.HLB
 $ CALL MAKE_DUMP ! Produce MONSTER_DUMP.EXE
+$ CALL MAKE_REBUILD ! Produce MONSTER_REBUILD.EXE
 $ CALL MAKE_WHO  ! Produce MONSTER_WHO.EXE
 $ CALL MAKE_MON  ! Produce MON.EXE
 $
 $ CALL CHECK_FILE MON.EXE
 $ CALL CHECK_FILE MONSTER_DUMP.EXE
+$ CALL CHECK_FILE MONSTER_REBUILD.EXE
 $ CALL CHECK_FILE MONSTER_WHO.EXE
 $
 $ CALL CREATE_SUBDIR 'database_directory' DB DBDIR
 $ CALL CREATE_SUBDIR 'database_directory' C  CODEDIR
-$ COPY/LOG MON.EXE,MONSTER_DUMP.EXE,MONSTER_WHO.EXE,MONSTER_E.HLB 'image_directory
+$ COPY/LOG MON.EXE,MONSTER_DUMP.EXE,MONSTER_WHO.EXE,MONSTER_E.HLB,MONSTER_REBUILD.EXE 'image_directory
 $ IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
 $ COPY/LOG 'source_directory'CONVERT.BATCH,FIX.BATCH 'image_directory
 $ IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
@@ -61,9 +72,14 @@ $ SET FILE/PROTECTION=(W:E)/LOG 'image_directory'MON.EXE,MONSTER_DUMP.EXE,MONSTE
 $ IF .not. $SEVERITY THEN CALL FATAL "Set file/protection failed"
 $ COPY/LOG 'source_directory'CONVERT.BATCH,FIX.BATCH 'image_directory
 $ IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
-$ COPY/LOG 'source_directory'ILMOITUS.TXT,MONSTER.HELP 'DBDIR'
+$ COPY/LOG 'source_directory'MONSTER.HELP 'DBDIR'
 $ IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
-$ SET FILE/PROTECTION=(W:R)/LOG 'DBDIR'MONSTER.HELP
+$ IF option .ne. 4 
+$   THEN
+$   COPY/LOG 'source_directory'ILMOITUS.TXT 'DBDIR'
+$   IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
+$ ENDIF
+$ SET FILE/PROTECTION=(W:R)/LOG 'DBDIR'MONSTER.HELP,ILMOITUS.TXT
 $ IF .not. $SEVERITY THEN CALL FATAL "Set file/protection failed"
 $ COPY/LOG 'source_directory'COMMANDS.PAPER 'DBDIR'
 $ IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
@@ -74,7 +90,7 @@ $ CALL MAKE_FILE 'source_directory'CLD.PROTO 'image_directory'MONSTER.CLD
 $ SB_MANAGER = F$EDIT(F$GETJPI("","USERNAME"),"LOWERCASE")
 $ SB_DB1 = DBDIR
 $ SB_DB2 = CODEDIR
-$ CALL MAKE_FILE 'source_directory'INIT.PROTO 'image_directory'MONSTER.INIT
+$ IF option .ne. 4 THEN CALL MAKE_FILE 'source_directory'INIT.PROTO 'image_directory'MONSTER.INIT
 $
 $ CALL DEFINE_MONSTER
 $
@@ -98,7 +114,11 @@ $ ENDSUBROUTINE
 $!
 $ FATAL: SUBROUTINE
 $ WRITE SYS$ERROR "Install failed: ", p1
-$ SET DEFAULT 'df'
+$ SET NOON
+$ IF F$TYPE(df) .eqs. "STRING" THEN SET DEFAULT 'df'
+$ IF F$TRNLMN("FROM") .nes. "" THEN CLOSE FROM
+$ IF F$TRNLMN("TO") .nes. "" THEN CLOSE TO
+$ SET ON
 $ STOP
 $ ENDSUBROUTINE
 $!
@@ -122,7 +142,7 @@ $   THEN
 $   WRITE SYS$ERROR "Directory ''full' not exist - create it?"
 $   INQUIRE OK "Create (Y/N)"
 $   IF OK .nes. "Y" THEN GOTO again1
-$   CREATE/DIRECTORY/LOG 'full
+$   CREATE/DIRECTORY/LOG/PROTECTION=(S:RWE,O:RWE,G:E,W:E) 'full
 $   IF .not. $SEVERITY 
 $     THEN
 $       WRITE SYS$ERROR "Creating of ''full' failed"
@@ -130,8 +150,6 @@ $       GOTO again1
 $   ENDIF
 $ ENDIF
 $ CALL DIRNAME 'full' dirname
-$ SET FILE/PROTECTION=(W:E)/LOG 'dirname
-$ IF .not. $SEVERITY THEN CALL FATAL "Set file/protection failed"
 $ SET FILE/ACL=(IDENTIFIER='F$USER(),access=r+w+e+d+c)/LOG 'dirname
 $ IF .not. $SEVERITY THEN CALL FATAL "Set file/acl failed"
 $ SET FILE/ACL=(IDENTIFIER='F$USER(),OPTIONS=DEFAULT,access=r+w+e+d+c)/LOG 'dirname
@@ -147,10 +165,8 @@ $ base = p1 - ">" - "]"        ! This can fail
 $ tail = p1 - base
 $ dir = base + "." + p2 + tail
 $ IF F$PARSE(dir,,,,"SYNTAX_ONLY") .eqs. "" THEN CALL FATAL "Internal error - bad path: ''dir'"
-$ if F$PARSE(dir) .eqs. "" THEN CREATE/DIRECTORY/LOG 'dir
+$ if F$PARSE(dir) .eqs. "" THEN CREATE/DIRECTORY/LOG/PROTECTION=(S:RWE,O:RWE,G:E,W:E) 'dir
 $ CALL DIRNAME 'dir' dirname
-$ SET FILE/PROTECTION=(W:E)/LOG 'dirname
-$ IF .not. $SEVERITY THEN CALL FATAL "Set file/protection failed"
 $ SET FILE/ACL=(IDENTIFIER='F$USER(),access=r+w+e+d+c)/LOG 'dirname
 $ IF .not. $SEVERITY THEN CALL FATAL "Set file/acl failed"
 $ SET FILE/ACL=(IDENTIFIER='F$USER(),OPTIONS=DEFAULT,access=r+w+e+d+c)/LOG 'dirname
@@ -178,9 +194,14 @@ $   last = e
 $   i = i + 1
 $   GOTO again2
 $ ENDIF
-$ name = last - ">" - "]"
-$ tail = last - name
-$ dirname = disk + build + tail + name + ".DIR"
+$ name = last - ">" - "]" - "<" - "["      ! if not . in name
+$ tail = last - name 
+$ IF build .nes. "" 
+$ THEN
+$    dirname = disk + build + tail + name + ".DIR"
+$ ELSE
+$    dirname = disk + "<000000>" + name + ".DIR"
+$ ENDIF
 $ IF F$PARSE(dirname) .eqs. "" THEN CALL FATAL "Internal error - bad pathname ''dirname'"
 $ IF F$SEARCH(dirname) .eqs. "" THEN CALL FATAL "Internal error - not found ''dirname'"
 $ 'p2 == dirname
@@ -261,6 +282,7 @@ $
 $ MAKE_MON: SUBROUTINE
 $ IF F$SEARCH("MON.EXE") .nes. "" THEN EXIT
 $ CALL COMPILE GLOBAL
+$ CALL COMPILE VERSION
 $ CALL COMPILE GUTS
 $ CALL COMPILE KEYS
 $ CALL COMPILE PRIVUSERS
@@ -269,9 +291,10 @@ $ CALL COMPILE PARSER
 $ CALL COMPILE INTERPRETER
 $ CALL COMPILE QUEUE
 $ CALL COMPILE CLI
+$ CALL COMPILE ALLOC
 $ CALL COMPILE CUSTOM
 $ CALL COMPILE MON
-$ LINK MON,GLOBAL,GUTS,KEYS,PRIVUSERS,DATABASE,PARSER,INTERPRETER,QUEUE,CLI,CUSTOM
+$ LINK MON,GLOBAL,GUTS,KEYS,PRIVUSERS,DATABASE,PARSER,INTERPRETER,QUEUE,CLI,CUSTOM,ALLOC,VERSION
 $ IF .not. $SEVERITY THEN CALL FATAL "Linking of MON.EXE failed"
 $ IF F$SEARCH("MON.EXE") .eqs. "" THEN CALL FATAL "Link failed: MON.EXE not found"
 $ EXIT
@@ -294,14 +317,32 @@ $
 $ MAKE_DUMP: SUBROUTINE
 $ IF F$SEARCH("MONSTER_DUMP.EXE") .nes. "" THEN EXIT
 $ CALL COMPILE GLOBAL
+$ CALL COMPILE VERSION
 $ CALL COMPILE GUTS 
 $ CALL COMPILE PRIVUSERS
 $ CALL COMPILE DATABASE
 $ CALL COMPILE PARSER
 $ CALL COMPILE MONSTER_DUMP
-$ LINK MONSTER_DUMP,GLOBAL,GUTS,PRIVUSERS,DATABASE,PARSER
+$ LINK MONSTER_DUMP,GLOBAL,GUTS,PRIVUSERS,DATABASE,PARSER,VERSION
 $ IF .not. $SEVERITY THEN CALL FATAL "Linking of MONSTER_DUMP.EXE failed"
 $ IF F$SEARCH("MONSTER_DUMP.EXE") .eqs. "" THEN CALL FATAL "Link failed: MONSTER_DUMP.EXE not found"
+$ EXIT
+$ ENDSUBROUTINE
+$ 
+$ MAKE_REBUILD: SUBROUTINE
+$ IF F$SEARCH("MONSTER_REBUILD.EXE") .nes. "" THEN EXIT
+$ CALL COMPILE GLOBAL
+$ CALL COMPILE VERSION
+$ CALL COMPILE GUTS 
+$ CALL COMPILE PRIVUSERS
+$ CALL COMPILE DATABASE
+$ CALL COMPILE PARSER
+$ CALL COMPILE ALLOC
+$ CALL COMPILE KEYS
+$ CALL COMPILE MONSTER_REBUILD
+$ LINK MONSTER_REBUILD,GLOBAL,GUTS,PRIVUSERS,DATABASE,PARSER,VERSION,ALLOC,KEYS
+$ IF .not. $SEVERITY THEN CALL FATAL "Linking of MONSTER_REBUILD.EXE failed"
+$ IF F$SEARCH("MONSTER_REBUILD.EXE") .eqs. "" THEN CALL FATAL "Link failed: MONSTER_REBUILD.EXE not found"
 $ EXIT
 $ ENDSUBROUTINE
 $
@@ -323,10 +364,9 @@ $ ENDIF
 $ SET COMMAND 'image_directory'MONSTER.CLD
 $ IF .not. $SEVERITY THEN CALL FATAL "Defining of command MONSTER failed"
 $ WRITE SYS$OUTPUT "Command MONSTER defined"
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT "Add to your LOGIN.COM command:"
-$ WRITE SYS$OUTPUT "$ SET COMMAND ''image_directory'MONSTER.CLD"
-$ WRITE SYS$OUTPUT ""
+$ WRITE SYS$OUTPUT "(To define this in future add to your LOGIN.COM command:"
+$ WRITE SYS$OUTPUT " $ SET COMMAND ''image_directory'MONSTER.CLD"
+$ WRITE SYS$OUTPUT ")"
 $ EXIT
 $ ENDSUBROUTINE
 $
@@ -343,9 +383,10 @@ $ WRITE SYS$OUTPUT "You can: "
 $ WRITE SYS$OUTPUT "  1 =  Build new empty monster database"
 $ WRITE SYS$OUTPUT "  2 =  Convert old (Skrenta's Monster V1) database"
 $ WRITE SYS$OUTPUT "  3 =  Build new empire database with the starter's CASTLE"
-$ INQUIRE option "Select 1, 2 or 3"
-$ IF option .ne. 1 .and. option .ne. 2 .and. option .ne. 3 THEN GOTO again7
-$ option == option
+$ WRITE SYS$OUTPUT "  4 =  Only install NEW Monster image (database exist)"
+$ INQUIRE i "Select 1, 2, 3 or 4"
+$ option == f$integer(i)
+$ IF option .lt. 1 .or. option .gt. 4 THEN GOTO again7
 $ EXIT
 $ ENDSUBROUTINE
 $

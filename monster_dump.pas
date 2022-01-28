@@ -25,14 +25,16 @@ CREATION DATE:	9.2.1991
               |         | V 1.01    BOOKSPELL%   HIDDEN% was wrong !!
 	      |         | obj.numexist bug fixed in read_MONSTER
    28.05.1992 |		| V 1.02    write going field also for exit
+   20.06.1992 |         | V 1.03    write_VIRTUAL, read_VIRTUAL
 }
 
-CONST VERSION = '1.02'; { DUMPER Version }
+CONST DVERSION = '1.03'; { DUMPER Version }
 			{ version numbers MUST be dictionary order !!! }
 			{ ie. '1.00' < '1.01' }
 
 var READ_vers_101: boolean;
     READ_vers_102: boolean;
+    READ_vers_103: boolean;
  
 { DUMMY for linker }
 [global]
@@ -137,8 +139,9 @@ begin
 	if status1 = cli$_present then begin
 		{ Don't take this out please... }
 	  	writeln('Monster dumper, written  by Kari Hurtta  at University of Helsinki,  1991-1992');
-                writeln('Version: ',VERSION);
-		writeln;
+                writeln('Database version: ',DVERSION);
+		writeln('Version:          ',VERSION);
+		writeln('Distributed:      ',DISTRIBUTED);
 	end;
 
 	qualifier := 'DEBUG';
@@ -860,21 +863,13 @@ begin
     end;
 end; { read_MONSTER }
 
-{ PLAYER }
+{ PLAYER_body }
 
-procedure write_PLAYER(var f: text; player: integer);
+procedure write_PLAYER_body(var f: text; player: integer);
 var i,owner: integer;
     c: char;
 begin
-    getuser; freeuser; 
-    if debug then writeln('Writing player ',user.idents[player]);
-    write_NAME(f,'PLAYER%',T_PERS,player);
-
-    if user.idents[player][1] = ':' then begin { monster ? }
-	{ what we can write - real username is MDL number }
-	{ read_MONSTER will be update this data when reading }
-    end else write_ITEM(f,'USER%',user.idents[player]);
-
+    if debug then writeln('Writein player body #',player:1);
     getdate; freedate;
     write_ITEM(f,'DATE%',adate.idents[player]);
 
@@ -920,30 +915,134 @@ begin
 	end;
     end;
 
+end; { write_PLAYER_body }
+
+procedure skip_PLAYER_body(var f: TEXT);
+var i: integer;
+    data: string;
+begin
+    if debug then writeln('Skipping player body');
+    read_ITEM(f,'DATE%',data);
+    read_ITEM(f,'TIME%',data);
+    read_BINARY(f,'PASSWD%',data);
+    read_ITEM(f,'REAL%',data);
+    read_INTEGER(f,'ALLOW%',i);
+    read_INTEGER(f,'EXP%',i);
+    read_BLOCK(f,i);
+    read_INTEGER(f,'PRIV%',i);
+    read_INTEGER(f,'HEALTH%',i);
+    read_NAME(f,'LOC%',T_NAM,I_ROOM,i);
+    while read_NAME(f,'SPELL%',T_SPELL_NAME,I_SPELL,i) do begin
+	read_INTEGER(f,'LEVEL%',i);
+    end;
+end; { skip_PLAYER_body }
+
+procedure read_PLAYER_body(var f: text; name: integer; var flag: boolean);
+var sp,i,owner: integer;
+    data: string;
+begin
+    if debug then writeln('Reading player body #',name:1);
+
+    getdate;
+    if not read_ITEM(f,'DATE%',data) then flag := false;
+    adate.idents[name] := data;
+    putdate;
+
+    gettime;
+    if not read_ITEM(f,'TIME%',data) then flag := false;
+    atime.idents[name] := data;
+    puttime;
+
+    if read_BINARY(f,'PASSWD%',data) then begin
+	getpasswd;
+	passwd.idents[name] := data;
+	putpasswd;
+    end else begin
+	getpasswd;
+	passwd.idents[name] := '';
+	putpasswd;
+    end;
+
+    if read_ITEM(f,'REAL%',data) then begin
+	getreal_user;
+	real_user.idents[name] := data;
+	putreal_user;
+    end else begin
+	getreal_user;
+	real_user.idents[name] := '';
+	putreal_user;
+    end;
+
+    getint(N_ALLOW);
+    if not read_INTEGER(f,'ALLOW%',anint.int[name]) then flag := false;
+    putint;
+
+    getint(N_EXPERIENCE);
+    if not read_INTEGER(f,'EXP%',anint.int[name]) then flag := false;
+    putint;
+
+    getint(N_SELF);
+    if not read_BLOCK(f,anint.int[name]) then flag := false;
+    putint;
+
+    getint(N_PRIVILEGES);
+    if not read_INTEGER(f,'PRIV%',anint.int[name]) then flag := false;
+    putint;
+
+    getint(N_HEALTH);
+    if not read_INTEGER(f,'HEALTH%',anint.int[name]) then flag := false;
+    putint;
+
+    getint(N_LOCATION);
+    if not read_NAME(f,'LOC%',T_NAM,I_ROOM,anint.int[name]) then flag := false;
+    putint;
+
+                     { initialize the record containing the
+                       level of each spell they have to start;
+                       all start at zero; since the spellfile is
+                       directly parallel with mylog, we can hack
+                       init it here without dealing with SYSTEM }
+
+                     locate(spellfile,name);
+                     for i := 1 to maxspells do
+                        spellfile^.level[i] := 0;
+                     spellfile^.recnum := name;
+                     put(spellfile);
+
+    getspell(name);
+    for sp := 1 to maxspells do spell.level[sp] := 0;
+    while read_NAME(f,'SPELL%',T_SPELL_NAME,I_SPELL,sp) do begin
+	if not read_INTEGER(f,'LEVEL%',spell.level[sp]) then flag := false;
+    end;
+    putspell;
+
+end; { read_PLAYER_body }
+
+{ PLAYER }
+
+procedure write_PLAYER(var f: text; player: integer);
+begin
+    getuser; freeuser; 
+    if debug then writeln('Writing player ',user.idents[player]);
+    write_NAME(f,'PLAYER%',T_PERS,player);
+
+    if user.idents[player][1] = ':' then begin { monster ? }
+	{ what we can write - real username is MDL number }
+	{ read_MONSTER will be update this data when reading }
+    end else write_ITEM(f,'USER%',user.idents[player]);
+
+    write_PLAYER_body(f,player);
 end; { write_PLAYER }
 
 function read_PLAYER(var f: text; var name: integer): boolean;
-var sp,i,owner: integer;
-    flag: boolean;
+var flag: boolean;
     data: string;
 begin
     if not read_NEWNAME(f,'PLAYER%',T_PERS,I_PLAYER,name) then read_PLAYER := false
     else if name = 0 then begin
 	writeln('Empty/null player name!');
 	read_ITEM(f,'USER%',data);
-	read_ITEM(f,'DATE%',data);
-	read_ITEM(f,'TIME%',data);
-	read_BINARY(f,'PASSWD%',data);
-	read_ITEM(f,'REAL%',data);
-	read_INTEGER(f,'ALLOW%',i);
-	read_INTEGER(f,'EXP%',i);
-	read_BLOCK(f,i);
-	read_INTEGER(f,'PRIV%',i);
-	read_INTEGER(f,'HEALTH%',i);
-	read_NAME(f,'LOC%',T_NAM,I_ROOM,i);
-	while read_NAME(f,'SPELL%',T_SPELL_NAME,I_SPELL,i) do begin
-	    read_INTEGER(f,'LEVEL%',i);
-	end;
+	skip_PLAYER_body(f);
 	read_PLAYER := true;
     end else begin
 
@@ -960,75 +1059,76 @@ begin
 	user.idents[name] := data;
 	putuser;
 
-	getdate;
-	if not read_ITEM(f,'DATE%',data) then flag := false;
-	adate.idents[name] := data;
-	putdate;
-
-	gettime;
-	if not read_ITEM(f,'TIME%',data) then flag := false;
-	atime.idents[name] := data;
-	puttime;
-
-	if read_BINARY(f,'PASSWD%',data) then begin
-	    getpasswd;
-	    passwd.idents[name] := data;
-	    putpasswd;
-	end;
-
-	if read_ITEM(f,'REAL%',data) then begin
-	    getreal_user;
-	    real_user.idents[name] := data;
-	    putreal_user;
-	end;
-
-	getint(N_ALLOW);
-	if not read_INTEGER(f,'ALLOW%',anint.int[name]) then flag := false;
-	putint;
-
-	getint(N_EXPERIENCE);
-	if not read_INTEGER(f,'EXP%',anint.int[name]) then flag := false;
-	putint;
-
-	getint(N_SELF);
-	if not read_BLOCK(f,anint.int[name]) then flag := false;
-	putint;
-
-	getint(N_PRIVILEGES);
-	if not read_INTEGER(f,'PRIV%',anint.int[name]) then flag := false;
-	putint;
-
-	getint(N_HEALTH);
-	if not read_INTEGER(f,'HEALTH%',anint.int[name]) then flag := false;
-	putint;
-
-	getint(N_LOCATION);
-	if not read_NAME(f,'LOC%',T_NAM,I_ROOM,anint.int[name]) then flag := false;
-	putint;
-
-                     { initialize the record containing the
-                       level of each spell they have to start;
-                       all start at zero; since the spellfile is
-                       directly parallel with mylog, we can hack
-                       init it here without dealing with SYSTEM }
-
-                     locate(spellfile,name);
-                     for i := 1 to maxspells do
-                        spellfile^.level[i] := 0;
-                     spellfile^.recnum := name;
-                     put(spellfile);
-
-	getspell(name);
-	for sp := 1 to maxspells do spell.level[sp] := 0;
-	while read_NAME(f,'SPELL%',T_SPELL_NAME,I_SPELL,sp) do begin
-	    if not read_INTEGER(f,'LEVEL%',spell.level[sp]) then flag := false;
-	end;
-	putspell;
+	read_PLAYER_body(f,name,flag);
 
 	if not flag then writeln('Error in reading player ',pers.idents[name]);
 	read_PLAYER := true;
     end;
 end; { read_PLAYER }
+
+{ VIRTUAL }
+
+procedure write_VIRTUAL (var f: TEXT; player: integer);
+begin
+    getuser; freeuser; 
+
+    if debug then writeln('Writing virtual player #',player:1,' (',
+	user.idents[player],')');
+    write_INTEGER(f,'VIRTUAL%',player);
+    getpers; freepers;
+    write_ITEM(f,'NAME%',pers.idents[player]);
+    write_ITEM(f,'USER%',user.idents[player]);
+
+    write_PLAYER_body(f,player);
+end; { write_VIRTUAL }
+
+function read_VIRTUAL (var f: text; var player: integer): boolean;
+var flag,skip: boolean;
+    data: string;
+begin
+    if not read_INTEGER(f,'VIRTUAL%',player) then read_VIRTUAL := FALSE
+    else begin
+	if debug then writeln('Reading virtual player #',player);
+	flag := true; skip := false;
+	getindex(I_PLAYER);
+	if (player < 1) or (player > indx.top) then begin
+	    writeln('Virtual player id #',player:1, 'out of range.');
+	    skip := true;
+	end else if not indx.free[player] then begin
+	    writeln('Virtual player id #',player:1, 'is already reserved.');
+	    skip := true;
+	end else begin
+	    indx.free[player] := false;
+	    indx.inuse := indx.inuse +1;
+	end;
+	putindex;
+	if skip then begin
+	    read_ITEM(f,'NAME%',data);
+	    read_ITEM(f,'USER%',data);
+	    skip_PLAYER_body(f);
+
+	    read_VIRTUAL := true;
+	end else begin
+	    if not read_ITEM(f,'NAME%',data) then flag := false;
+	    getpers;
+	    pers.idents[player] := data;
+	    putpers;
+
+	    if not read_ITEM(f,'USER%',data) then flag := false;
+	    getuser;
+	    user.idents[player] := data;
+	    putuser;
+	    
+	    read_PLAYER_body(f,player,flag); 
+
+	    if not flag then writeln('Error in reading virtual player #',
+		player:1,' (',pers.idents[player],')');
+
+	    read_VIRTUAL := true;
+	end;
+    end;
+end; { read_VIRTUAL }
+
 
 { EXIT }
 
@@ -1441,7 +1541,7 @@ var block_use,
     i: integer;
 begin
     writeln('Database writing to ',dump_file,' started.');
-    write_ITEM(f,'DATABASE%',VERSION);
+    write_ITEM(f,'DATABASE%',DVERSION);
     write_ITEM(f,'BY%',userid);
 
     getindex(I_BLOCK); freeindex; block_use := indx.inuse;
@@ -1477,7 +1577,13 @@ begin
     writeln('Writing players');
     getindex(i_PLAYER); freeindex; tmp := indx;
     getuser; freeuser;
-    for i := 1 to tmp.top do if not tmp.free[i] then write_PLAYER(f,i);
+    writeln('   virtual');
+    for i := 1 to tmp.top do if not tmp.free[i] then 
+	if user.idents[i][1] = '"' then write_VIRTUAL(f,i);
+    writeln('   real');
+    for i := 1 to tmp.top do if not tmp.free[i] then 
+	if user.idents[i][1] <> '"' then write_PLAYER(f,i);
+
 
     writeln('Writing objects, pass 2');
     getindex(I_OBJECT); freeindex; tmp := indx;
@@ -1518,7 +1624,8 @@ begin
 
     READ_vers_101 := ver >= '1.01';
     READ_vers_102 := ver >= '1.02';
-    if (ver > VERSION) then writeln('Unknown version!');
+    READ_vers_103 := ver >= '1.03';
+    if (ver > DVERSION) then writeln('Unknown version!');
 
     if not read_INTEGER(f,'BLOCKCOUNT%',block_use) then begin
 	error := true;
@@ -1657,9 +1764,17 @@ begin
     writeln(j:3,' rooms readed.');
 
     writeln('Reading players');
+    if READ_vers_103 then begin
+	j := 0;
+	while read_VIRTUAL(f,i) do j := j + 1;
+	writeln(j:3,' virtual players readed.');
+    end;
     j := 0;
     while read_PLAYER(f,i) do j := j + 1;
-    writeln(j:3,' players readed.');
+    if READ_vers_103 then
+	writeln(j:3,' real players readed.')
+    else
+	writeln(j:3,' players readed.');
 
     writeln('Reading objects, pass 2'); 
     j := 0;

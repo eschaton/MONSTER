@@ -24,6 +24,9 @@ MODIFICATION HISTORY:
      Date     |   Name  | Description
 --------------+---------+-------------------------------------------------------
     31.5.1992 |	Hurtta	| Tämä headeri, add* rutiineihin ylärajan tarkistus
+    26.6.1992 |         | monster_owner, set_owner, delete_program moved from INTERPRETER.PAS
+              |         | write_debug moved from PARSER.PAS
+              |         | system_view moved from MON.PAS
 -}
 
 Var
@@ -1372,6 +1375,155 @@ begin
 
    indx.top := indx.top + amount;
    putindex;                    
+end;
+
+[global]
+procedure write_debug(a: string; b: mega_string := '');
+begin
+   if debug then begin
+      write(a,'   ');
+      if length(b) > 200 then	{ system limit printable string }
+                                { about 200 characters          }
+         writeln('(PARAMETER TOO LONG FOR PRINTING)')
+      else writeln(b);
+   end;
+end;
+
+[global] 
+function monster_owner  (code: integer; class : integer := 0): shortstring;
+begin  
+  write_debug ('%monster_owner');
+  getheader(code);
+  freeheader;
+  case class of
+    0: monster_owner := header.owner;
+    1: monster_owner := header.author;
+  end; { case }
+end; { monster_owner }
+
+[global] 
+procedure set_owner (code: integer; class : integer := 0; owner: shortstring);
+begin  
+  write_debug ('%set_owner');
+  getheader(code);
+  case class of
+    0: header.owner := owner;
+    1: header.author := owner;
+  end; { case }
+  putheader
+end; { set_owner }
+
+[global]                                 
+procedure delete_program (code: integer);
+label 1;  
+var fl: text;
+    count,apu,errorcode: integer;
+begin
+  write_debug ('%delete_program');
+  apu := code;
+  count := 0;
+  repeat
+    open (fl,file_name(code),old,sharing:=NONE,error := continue,
+          record_length := mega_length +20);
+    errorcode := status(fl);
+    if errorcode > 0 then begin
+       count := count +1;
+       write_debug ('%collision in delete_program'); 
+       if count > 10 then  begin
+          if debug then begin
+	     writeln ('%Deadlock in delete_program.');
+	     writeln ('% Error code (status): ',errorcode:1);
+	  end;
+          goto 1
+       end;
+       wait (0.2);      { collision is very rare in here }
+    end
+  until errorcode <= 0;
+  reset (fl);
+  truncate(fl);
+  close(fl);
+1:
+end; { delete_program }
+
+[global]
+procedure system_view;
+var
+	used,free,total: integer;
+
+begin
+	writeln;
+	getindex(I_BLOCK);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+
+	writeln('               used   free   total');
+	writeln('Block file   ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_LINE);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Line file    ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_ROOM);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Room file    ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_OBJECT);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Object file  ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_INT);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Integer file ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_HEADER);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Header file  ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_SPELL);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Spells       ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_PLAYER);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Players      ',used:5,'  ',free:5,'   ',total:5);
+
+	writeln;              
+end; { system_view }
+
+[ global ]
+procedure fix_view_global_flags;
+begin
+    writeln('Global flags and values:');
+    writeln;
+    writeln('Monster active: ',view_global_value(GF_ACTIVE,TRUE));
+    writeln('Database valid: ',view_global_value(GF_VALID));
+    writeln('Wartime:        ',view_global_value(GF_WARTIME));
+    writeln('Welcome text:   ',view_global_value(GF_STARTGAME));
+    writeln('NewPlayer text: ',view_global_value(GF_NEWPLAYER));
+    writeln('Global Hook:    ',view_global_value(GF_CODE));
 end;
 
 end. { enf of module }
