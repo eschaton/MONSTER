@@ -29,6 +29,9 @@ MODIFICATION HISTORY:
     31.5.1992 |		| This header, database poll time in check timer 
               |         | changed from 0 ::2 to 0 ::1 (ie. one second).
     10.6.1992 |         | in grab_line 'terminator not seen' action changed
+    14.7.1992 |		| open_terminal, close_terminal, terminal argument to
+	      |		| to grab_line
+    15.7.1992 |         | ESCape sequence length check
 -}
 
  
@@ -50,6 +53,7 @@ type
 	$UQUAD = [QUAD,UNSAFE] RECORD
 		L0,L1:UNSIGNED; END;
 
+	terminal_t = $uword;
 
         ident = packed array[1..12] of char;
                               
@@ -180,7 +184,7 @@ begin
     syscall ($readef (base_efn,code));
     if (uand(code,2 ** (tmr_efn-base_efn)) > 0) or force then begin
 	syscall($clref (tmr_efn));
-	syscall($bintim ('0 ::1',time)); { kaksi sekunttia laukeamiseen }
+	syscall($bintim (database_poltime,time)); { yksi sekuntti laukeamiseen }
 	syscall($setimr (tmr_efn,time,,,));
 	check_timer := true;
     end else check_timer := false;
@@ -222,7 +226,7 @@ end;
  
  
 [global,asynchronous]
-procedure putchars(s: mega_string; tokeyboard: boolean := false);
+procedure putchars(s: mega_string; channel: integer := -1);
 var
         msg: packed array[1..MEGA_LENGTH] of char;
         len: integer;
@@ -230,8 +234,8 @@ var
 begin
         msg := s;
         len := length(s);
-	if tokeyboard then 
-	    syscall($qiow(,inp_chan,
+	if channel >= 0 then 
+	    syscall($qiow(,channel,
 		io$_writevblk+io$m_refresh,,,,msg,len,,,,))
         else 
 	    syscall($qiow(,out_chan,io$_writevblk,,,,msg,len,,,,));
@@ -251,14 +255,15 @@ Function GetDvi	(		{ complicated,so I use library routine	}
 [global]
 procedure reprint_grab;
 begin
-    if need_reprint then putchars(''(13),tokeyboard := true);
+    if need_reprint then putchars(''(13),inp_chan);
 end;
 
 
 [global]
 procedure grab_line(prompt:string; var s:string;echo:boolean := true;
                     erase: boolean := false; edit_mode: boolean := false;
-		    procedure eof_handler);
+		    procedure eof_handler;
+		    channel: integer := -1);
 label again,out;
 Const	max_line = size(s.body);
 	Lines = 100;
@@ -334,29 +339,40 @@ var
 	terminator : shortstring;
 	esccode : integer;
 	eof_detected : boolean := false;
+	have_deccrt : boolean := false;
 
       procedure erase_line;
       begin
 	if echo then begin		
-	    if DecCRT Then putchars(chr(13)+chr(27)+'[K',true)
+	    if have_deccrt Then putchars(chr(13)+chr(27)+'[K',channel)
 	    else begin 
-		putchars(chr(13),true);			
+		putchars(chr(13),channel);			
 		for i := 1 to length (prompt) + length(line) do
-		putchars(' ',true);			
-		putchars(chr(13),true);			
+		putchars(' ',channel);			
+		putchars(chr(13),channel);			
 	    end;
 	end; 
     end; { erase_line }
 
-
+    var tmp : terminal_t;
 begin
 
-   syscall(GetDvi(DVI$_TRM,inp_chan,,result));
+
+   if channel < 0 then channel := inp_chan;
+   tmp := channel;
+
+   syscall(GetDvi(DVI$_TRM,tmp,,result));
    if not odd(result) then begin
-	writeln('SYS$INPUT must point to terminal !!!');
+	if channel <> inp_chan then begin
+	    writeln('%Error on grab_line. Notify Monster manager.');
+	    writeln('%Given terminal argument don''t point to terminal.');
+	end else writeln('SYS$INPUT must point to terminal !!!');
 	HALT;
    end;
-   putchars(''(13)''(10),tokeyboard := true);
+   syscall(GetDvi(DVI$_TT_DECCRT,tmp,,result));
+   have_deccrt := odd(result);
+
+   putchars(''(13)''(10),channel);
 
    line := ''; start := '';
 
@@ -401,7 +417,7 @@ begin
 
   syscall($clref(grab_efn));
   syscall($qio( efn  := grab_efn,
-		chan := inp_chan,
+		chan := channel,
 	        func := IO$_READVBLK+IO$M_EXTEND,
 		iosb := iosb,
 		p1   := area,
@@ -422,11 +438,11 @@ begin
 			{ setup_guts:issa }
 
     if leave_monster then begin
-	syscall($cancel(inp_chan));
+	syscall($cancel(channel));
 	if eof_counter > 10 then begin
 	    putchars(chr(10)+chr(13)+
 		'%quit monster failed. Notify Monster Manager.'+chr(13),
-		tokeyboard := true);
+		channel);
 	    leave_monster := false;
 	    goto again;
 	end else begin
@@ -441,23 +457,30 @@ begin
     end;
 
   syscall(iosb.status); { if failed .. > out }
-  terminator := '';
-  for i := 1 to iosb.trmlen do terminator := terminator + area[iosb.offtrm+i];
   line := '';
   for i := 1 to iosb.offtrm do line := line + area[i];
+  if iosb.trmlen > max_esc then begin
+	putchars(''(10)''(13),channel);
+	writeln('Too long ESCape sequence.');
+	start := line;
+	goto again;
+  end;
+
+  terminator := '';
+  for i := 1 to iosb.trmlen do terminator := terminator + area[iosb.offtrm+i];
 
   esccode := -1;
   for i := 0 to ESC_LAST do if esc_table[i] = terminator then esccode := i;
 
   case esccode of
      -1: begin	    
-	    putchars(''(10)''(13),tokeyboard := true);
+	    putchars(''(10)''(13),channel);
 	    writeln('Unknown function key.');
 	    start := line;
 	    goto again;
 	end;
      ESC_NONE: begin
-	    putchars(''(10)''(13),tokeyboard := true);
+	    putchars(''(10)''(13),channel);
 	    writeln('Terminator not seen.');
 	    if length(line) >= max_line then
 		line := substr(line,1,max_line-1);
@@ -476,7 +499,7 @@ begin
 	    if edit_mode then grab_next := -1
 	    else begin 
 		if current > 1 then current := current -1;    
-		putchars(''(13)''(0),tokeyboard := true);
+		putchars(''(13)''(0),channel);
 		erase_line;
 		start := buffer[current];
 		goto again;
@@ -486,7 +509,7 @@ begin
 	    if edit_mode then grab_next := 1
 	    else begin 
 		if current < used then current := current +1;    
-		putchars(''(13)''(0),tokeyboard := true);
+		putchars(''(13)''(0),channel);
 		erase_line;
 		start := buffer[current];
 		goto again;
@@ -500,7 +523,7 @@ begin
   out:
 
  if erase then erase_line
- else putchars(''(13)''(0),true);			
+ else putchars(''(13)''(0),channel);			
  if not edit_mode then begin			
     if echo then buffer [used] := line	
     else buffer [used] := ''			
@@ -512,7 +535,6 @@ begin
 
 end; { grab_line }       			{ end of grab line	}
 
- 
 
 [external(LIB$SPAWN)] 
    Function SPAWN      ( %DESCR command_string:     string := %IMMED 0; 
@@ -529,7 +551,26 @@ end; { grab_line }       			{ end of grab line	}
                          %DESCR cli:                STRING  := %IMMED 0
                        ): unsigned; EXTERNAL;
 
+[global]
+function open_terminal(name: string; var trm: terminal_t): boolean;
+var result: unsigned;
+begin
+	result := $assign(name,trm);
+	if not odd (result) then open_terminal := false
+	else begin
+	    syscall(GetDvi(DVI$_TRM,trm,,result));
+	    if not odd (result) then begin
+		syscall($dassgn(trm));
+		open_terminal := false;
+	    end else open_terminal := true;
+	end;
+end; { open_terminal }
 
+[global]
+procedure close_terminal(trm: terminal_t);
+begin
+    syscall($dassgn(trm));
+end; { close_terminal }
 
 Procedure ReadTerminalType;     { By Kari Hurtta }
 Var result: Unsigned;

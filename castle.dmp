@@ -1,5 +1,6 @@
-DATABASE%1.03
+DATABASE%1.04
 BY%hurtta
+CHARSET%MULTINATIONAL
 BLOCKCOUNT%133
 LINECOUNT%186
 ROOMCOUNT%46
@@ -892,9 +893,9 @@ RCOUNT%28
 ECOUNT%0
 LASTRUN% 5-MAR-1992 10:16pm
 STATLAB%start
-RCOUNT%86
-ECOUNT%86
-LASTRUN%30-JUN-1992  8:07pm
+RCOUNT%93
+ECOUNT%93
+LASTRUN%12-SEP-1992  6:04pm
 STATLAB%drop succeed
 RCOUNT%22
 ECOUNT%0
@@ -1149,7 +1150,8 @@ WTIME% 8-JUN-1992  9:50pm
 NULL*MEGA!
 FLAGS%0
 START*BLOCK!
-BLOCK%The bone is ordinary. Some dog is very intensively attached to it at the
+BLOCKB%The bone is ordinary. Some dog is very intensively attached 
+BLOCK%to it at the
 BLOCK%moment.
 VALUE%0
 STICKY%F
@@ -1303,7 +1305,8 @@ NULL*BLOCK!
 NULL*MDL!
 START*BLOCK!
 BLOCK%The forge is old and rusty, but still in usable condition.  It is 
-BLOCK%half-filled with water.  On the bottom it some pieces of metal apparently
+BLOCKB%half-filled with water.  On the bottom it some pieces of met
+BLOCK%al apparently
 BLOCK%from things the smith has done.
 VALUE%0
 STICKY%T
@@ -1353,7 +1356,7 @@ SHORTMEGA%    2:    0:    0:    0:"Ping, Pong, Pang"
 SHORTMEGA%    3:    2:    0:    0:random
 SHORTMEGA%    4:    1:    3:    0:=
 SHORTMEGA%    5:    0:    0:    0:"Home of Merlin"
-SHORTMEGA%    6:    5:    0:    0:GOSUB siirr{
+SHORTMEGA%    6:    5:    0:    0:GOSUB siirrä
 SHORTMEGA%    7:    4:    6:    0:if
 SHORTMEGA%    8:    7:    0:    0:LABEL crystal 1
 SHORTMEGA%    9:    8:    0:    0:-
@@ -1362,7 +1365,7 @@ SHORTMEGA%   11:    0:    0:    0:"Ping, Pong, Pang"
 SHORTMEGA%   12:   11:    0:    0:random
 SHORTMEGA%   13:   10:   12:    0:=
 SHORTMEGA%   14:    0:    0:    0:"wtower3"
-SHORTMEGA%   15:   14:    0:    0:GOSUB siirr{
+SHORTMEGA%   15:   14:    0:    0:GOSUB siirrä
 SHORTMEGA%   16:   13:   15:    0:if
 SHORTMEGA%   17:   16:    0:    0:LABEL crystal 2
 SHORTMEGA%   18:   17:    0:    0:-
@@ -1410,7 +1413,7 @@ SHORTMEGA%   59:   58:    0:    0:oprint
 SHORTMEGA%   60:   53:   55:   59:null
 SHORTMEGA%   61:   49:   60:    0:null
 SHORTMEGA%   62:   48:   61:    0:null
-SHORTMEGA%   63:   62:    0:    0:LABEL siirr{
+SHORTMEGA%   63:   62:    0:    0:LABEL siirrä
 SHORTMEGA%   64:   63:    0:    0:-
 SHORTMEGA%   65:    0:    0:    0:pinv
 SHORTMEGA%   66:   65:    0:    0:pdrop
@@ -1731,11 +1734,13 @@ NULL*DESCLINE!
 NULL*BLOCK!
 NULL*MDL!
 START*BLOCK!
-BLOCK%The neutron handgrenade is an ultimate weapon. Although it is simple to 
+BLOCKB%The neutron handgrenade is an ultimate weapon. Although it i
+BLOCK%s simple to 
 BLOCK%use it is not simple to build. Learn physics, you bloody humanist!
 VALUE%0
 STICKY%F
-DESCLINE%The neutron handgrenade is too dangerous weapon in the hands of fools.
+DESCLINEB%The neutron handgrenade is too dangerous weapon in
+DESCLINE% the hands of fools.
 DEFAULT*BLOCK!
 START*BLOCK!
 BLOCK%You don't have a PhD in physics. It is trivial to understand that you
@@ -1845,8 +1850,10 @@ BLOCK%
 VALUE%0
 STICKY%T
 START*BLOCK!
-BLOCK%  Take Gandalf's sargofaque?  Nah.  Just forget the idea  -  I just wonder
-BLOCK%where you got the idea?  Gandalf, within his return, would just transform
+BLOCKB%  Take Gandalf's sargofaque?  Nah.  Just forget the idea  - 
+BLOCK% I just wonder
+BLOCKB%where you got the idea?  Gandalf, within his return, would j
+BLOCK%ust transform
 BLOCK%you to a frog of the swamp...
 DEFAULT*BLOCK!
 DEFAULT*BLOCK!
@@ -1907,40 +1914,40 @@ SHORTMEGA%18:17:0:0:LABEL command
 SHORTMEGA%19:18:0:0:-
 RUNNABLE%T
 PRIV%F
-OWNER%hurtta
+OWNER%*
 CTIME% 5-AUG-1989  9:32am
 STATLAB%poof out
-RCOUNT%3
-ECOUNT%3
-LASTRUN%13-JUN-1992  4:47pm
+RCOUNT%4
+ECOUNT%4
+LASTRUN%12-SEP-1992  6:01pm
 STATLAB%poof in
-RCOUNT%67
-ECOUNT%67
-LASTRUN%30-JUN-1992  8:07pm
+RCOUNT%66
+ECOUNT%66
+LASTRUN%13-JUN-1992  4:51pm
 STATLAB%escaped
-RCOUNT%582
-ECOUNT%582
-LASTRUN%13-JUN-1992  4:47pm
+RCOUNT%583
+ECOUNT%583
+LASTRUN%12-SEP-1992  6:01pm
 STATLAB%leave
 RCOUNT%490
 ECOUNT%0
 LASTRUN%31-MAY-1992  8:00pm
 STATLAB%start
-RCOUNT%286
+RCOUNT%287
 ECOUNT%0
-LASTRUN%30-JUN-1992  8:07pm
+LASTRUN% 6-DEC-1992 12:23pm
 STATLAB%look around
 RCOUNT%966
 ECOUNT%0
-LASTRUN%30-JUN-1992  8:07pm
+LASTRUN% 6-DEC-1992 12:23pm
 STATLAB%say
 RCOUNT%272
 ECOUNT%0
 LASTRUN% 4-JUN-1992  8:03pm
 STATLAB%command
-RCOUNT%209
+RCOUNT%208
 ECOUNT%0
-LASTRUN%30-JUN-1992  8:05pm
+LASTRUN%13-JUN-1992  3:23pm
 AUTHOR%hurtta
 WTIME% 9-OCT-1989  5:26pm
 NULL*MEGA!
@@ -2333,9 +2340,10 @@ NICENAME%office
 NAMEPRINT%1
 NULL*BLOCK!
 START*BLOCK!
-BLOCK%Kaikki huoneessa olevat tavarat yms. ovat minun omaisuuttani eiv{tk{ ole
-BLOCK%valmiita mihink{{n k{ytt||n (jos koskaan ovatkaan). Jos k{llit jotain
-BLOCK%k{sittelen sinua ansiosi mukaan! 
+BLOCKB%Kaikki huoneessa olevat tavarat yms. ovat minun omaisuuttani
+BLOCK% eivätkä ole
+BLOCK%valmiita mihinkään käyttöön (jos koskaan ovatkaan). Jos källit jotain
+BLOCK%käsittelen sinua ansiosi mukaan! 
 BLOCK% 
 BLOCK%            Graah! :-)
 BLOCK%
@@ -2351,13 +2359,20 @@ GRPNAM1%in Great Hall.
 GRPNAM2%in control center
 DETAIL%diploma
 START*BLOCK!
-BLOCK%**************************************************************************
-BLOCK%*                                                                        *
-BLOCK%*                            DIPLOMA                                     *
-BLOCK%*                                                                        *
-BLOCK%*      Goodgulf the Grey, Official Wizard of Next Level                  *
-BLOCK%*                                                                        *
-BLOCK%**************************************************************************
+BLOCKB%************************************************************
+BLOCK%**************
+BLOCKB%*                                                           
+BLOCK%             *
+BLOCKB%*                            DIPLOMA                        
+BLOCK%             *
+BLOCKB%*                                                           
+BLOCK%             *
+BLOCKB%*      Goodgulf the Grey, Official Wizard of Next Level     
+BLOCK%             *
+BLOCKB%*                                                           
+BLOCK%             *
+BLOCKB%************************************************************
+BLOCK%**************
 TRAPTO%0
 TRAPCHANCE%0
 DEFAULT*DESCLINE!
@@ -2428,8 +2443,10 @@ NAMEPRINT%0
 START*BLOCK!
 BLOCK%Now you are in the eastern end of the castle's central yard.  The sand
 BLOCK%you are stepping on seems a bit dirty as the horses have been using it
-BLOCK%for their unknown purposes.  In this end of the yard there are exits to
-BLOCK%the kitchen, where the cooks are preparing a banquet for the lord of the
+BLOCKB%for their unknown purposes.  In this end of the yard there a
+BLOCK%re exits to
+BLOCKB%the kitchen, where the cooks are preparing a banquet for the
+BLOCK% lord of the
 BLOCK%castle, to the eastern tower of the castle and to the stable.
 NULL*BLOCK!
 WHICH%0
@@ -2529,7 +2546,8 @@ NAMEPRINT%0
 START*BLOCK!
 BLOCK%This is the first floor of the eastern tower of the castle.  The room
 BLOCK%itself is not too large, but there is still room for the open door
-BLOCK%to the yard and for the ladders seemingly going in the vertical direction.
+BLOCKB%to the yard and for the ladders seemingly going in the verti
+BLOCK%cal direction.
 NULL*BLOCK!
 WHICH%0
 MAGICOBJ%%%NULL%%
@@ -2615,7 +2633,8 @@ BLOCK%chairs.  They are probably used by the sentries guarding the castle
 BLOCK%at the war time, but now as it is peace there are no guards.
 BLOCK%On the table there is a deck of cards. 
 BLOCK%
-BLOCK%The ladders continue up and down.  There are also exits to the north to
+BLOCKB%The ladders continue up and down.  There are also exits to t
+BLOCK%he north to
 BLOCK%the entrenchment and to the west to the balcony.
 BLOCK%
 BLOCK%There are small windows facing the world outside of the castle as well
@@ -2778,8 +2797,10 @@ OWNER%#
 NICENAME%wtower3
 NAMEPRINT%0
 START*BLOCK!
-BLOCK%You are in a dim hall at the top of wester tower. On the south wall of 
-BLOCK%that hall is a little window. There is a long table at the middle of the
+BLOCKB%You are in a dim hall at the top of wester tower. On the sou
+BLOCK%th wall of 
+BLOCKB%that hall is a little window. There is a long table at the m
+BLOCK%iddle of the
 BLOCK%hall.
 NULL*BLOCK!
 WHICH%0
@@ -2848,7 +2869,8 @@ NAMEPRINT%0
 START*BLOCK!
 BLOCK%
 BLOCK%The western tower is not a comforting place.  There are sentries
-BLOCK%coming and going, their faces like engraved to the stone of the castle.
+BLOCKB%coming and going, their faces like engraved to the stone of 
+BLOCK%the castle.
 BLOCK%The other reason for the incomfortability is the grating on the floor,
 BLOCK%leading to the dungeon.  Someone is calling "Elbereth" for his help.
 BLOCK%Someone has left the lock of the grating open  -  he should be hanged
@@ -2927,8 +2949,10 @@ START*BLOCK!
 BLOCK%
 BLOCK%  Uh, where am I?
 BLOCK%
-BLOCK%  It is damned dark in here, but in the dim light you can obtain a guard
-BLOCK%abowe you.  The bones here and there tell you their own story about the
+BLOCKB%  It is damned dark in here, but in the dim light you can ob
+BLOCK%tain a guard
+BLOCKB%abowe you.  The bones here and there tell you their own stor
+BLOCK%y about the
 BLOCK%meaning of being here.  Is this the end?
 NULL*BLOCK!
 WHICH%0
@@ -3057,7 +3081,8 @@ BLOCK%hard to get out of this place, as the guard on the gate is not easy
 BLOCK%to bribe.
 START*BLOCK!
 BLOCK%
-BLOCK%The bridge leading out of the castle is to the west; to the east there is
+BLOCKB%The bridge leading out of the castle is to the west; to the 
+BLOCK%east there is
 BLOCK%the yard of the castle.
 WHICH%2
 MAGICOBJ%%%NULL%%
@@ -3078,8 +3103,10 @@ NICENAME%Home
 NAMEPRINT%0
 START*BLOCK!
 BLOCK%This is the home of Gandalf, the old wizard.  In this very room he has
-BLOCK%made things not spoken aloud but seen in many places.  Actually, Gandalf 
-BLOCK%made this very room to be his study and wants just a few visitors, if any.
+BLOCKB%made things not spoken aloud but seen in many places.  Actua
+BLOCK%lly, Gandalf 
+BLOCKB%made this very room to be his study and wants just a few vis
+BLOCK%itors, if any.
 BLOCK%
 BLOCK%The walls are covered with shelves full of books of magic.  The books
 BLOCK%cover creation of monsters and evil objects, spirit of planning and
@@ -3088,7 +3115,8 @@ BLOCK%
 BLOCK%It is told that the old Gandalf might have a delicate sense of humor,
 BLOCK%but also capability for frantic rage.  If you ever happen to meet him,
 START*BLOCK!
-BLOCK%think twice before arquing with him  -  you never can tell whether he is
+BLOCKB%think twice before arquing with him  -  you never can tell w
+BLOCK%hether he is
 BLOCK%in a good mood or not...
 BLOCK%
 BLOCK%It is also told the old Gandalf had always some evil ideas in his mind
@@ -3389,13 +3417,17 @@ OWNER%#
 NICENAME%over gate
 NAMEPRINT%0
 START*BLOCK!
-BLOCK%  Watch your step  -  the architect was a bit drunk while planning this
-BLOCK%castle so there is one little mistake in the design: if someone wants to 
-BLOCK%enter through the gate there is a possibility of danger to anyone being 
+BLOCKB%  Watch your step  -  the architect was a bit drunk while pl
+BLOCK%anning this
+BLOCKB%castle so there is one little mistake in the design: if some
+BLOCK%one wants to 
+BLOCKB%enter through the gate there is a possibility of danger to a
+BLOCK%nyone being 
 BLOCK%here at that moment;  I save you from the dirty details while being 
 BLOCK%concerned of your stomach...  There is still some blood in the floor.
 BLOCK%
-BLOCK%  I suggest you to get out of here either to the south or to the north.
+BLOCKB%  I suggest you to get out of here either to the south or to
+BLOCK% the north.
 NULL*BLOCK!
 WHICH%0
 MAGICOBJ%%%NULL%%
@@ -3405,7 +3437,8 @@ GRPNAM1%in the yard below.
 GRPNAM2%on the bridge.
 DETAIL%blood
 START*BLOCK!
-BLOCK%  What do you think blood looks like?  I assure you, it IS red, ketchup-
+BLOCKB%  What do you think blood looks like?  I assure you, it IS r
+BLOCK%ed, ketchup-
 BLOCK%like stuff that runs also in your veins.
 DETAIL%machinery
 START*BLOCK!
@@ -3684,7 +3717,8 @@ OWNER%#
 NICENAME%ent24
 NAMEPRINT%0
 START*BLOCK!
-BLOCK%  What a view!  -  Well, that's what the entrenchment is for, for seeing
+BLOCKB%  What a view!  -  Well, that's what the entrenchment is for
+BLOCK%, for seeing
 BLOCK%the surroundings of the castle.  The entrenchment continues to the
 BLOCK%north, to the south there is the eastern tower.
 NULL*BLOCK!
@@ -3706,8 +3740,10 @@ OWNER%#
 NICENAME%balcony1
 NAMEPRINT%0
 START*BLOCK!
-BLOCK%Hm  -  I hope you don't suffer from dread for high places as it is quite
-BLOCK%a drop to the yard below.  This balcony sorrounds the yard in the southern
+BLOCKB%Hm  -  I hope you don't suffer from dread for high places as
+BLOCK% it is quite
+BLOCKB%a drop to the yard below.  This balcony sorrounds the yard i
+BLOCK%n the southern
 BLOCK%wall of the castle, leading from the eastern tower to the armory room.
 BLOCK%
 BLOCK%There are huge oak doors to the south.
@@ -3929,7 +3965,8 @@ BLOCK%that someone has use this place as toilet. Well, you must admite
 BLOCK%that this is quite good place for that use, since only few
 BLOCK%people would come into place like that and their are four corners.
 BLOCK% 
-BLOCK%Floor in this place is square, which one side might be about six feets.
+BLOCKB%Floor in this place is square, which one side might be about
+BLOCK% six feets.
 BLOCK%You can't see furnitures here. If their have been, someone has     
 BLOCK%take them. So, only material what can you see around here is
 START*BLOCK!
@@ -3937,7 +3974,8 @@ BLOCK%old gray stone and we should not forget dirt.
 BLOCK%
 BLOCK%Their are piles of it in a center of rooms as some one would have been
 BLOCK%trying to hide something below it. Well, it might be that he just
-BLOCK%have wanted to cover all those holes between flagstones, however you can
+BLOCKB%have wanted to cover all those holes between flagstones, how
+BLOCK%ever you can
 BLOCK%see them everywhere, since builders have made lousy stonework in roof,
 BLOCK%walls and floor, where some of them has been filled with dirt.
 BLOCK%
@@ -3949,7 +3987,8 @@ GRPNAM1%
 GRPNAM2%
 DETAIL%corners
 START*BLOCK!
-BLOCK%You look corners, one after one, and you find out that all urine, which
+BLOCKB%You look corners, one after one, and you find out that all u
+BLOCK%rine, which
 BLOCK%has come from adventurers like yours, have drained through the 
 BLOCK%holes of floor into earth or whatever their is below the floorstones.
 DETAIL%dirt piles
@@ -4141,7 +4180,8 @@ BLOCK%
 BLOCK%There are two big video monitors on north wall.
 BLOCK%Monitor #1 follows situation in Great Hall and #2 at Cross Roads.
 BLOCK%
-BLOCK%There is one large programmable monitor; it is of the newest modell and
+BLOCKB%There is one large programmable monitor; it is of the newest
+BLOCK% modell and
 BLOCK%is controlled by speech.  The key word is monitor.
 NULL*BLOCK!
 WHICH%0
@@ -4327,7 +4367,8 @@ OWNER%#
 NICENAME%room of sentries
 NAMEPRINT%0
 START*BLOCK!
-BLOCK%The room of sentries is a rest place for the soldiers guarding the castle.
+BLOCKB%The room of sentries is a rest place for the soldiers guardi
+BLOCK%ng the castle.
 BLOCK%Here they spent their leisure time, if they are not in the village's
 BLOCK%inn.  The hard job requires hard funs; that's why the guards spend a
 BLOCK%good deal of their life pissed.
@@ -4478,10 +4519,10 @@ DEFAULT*BLOCK!
 VIRTUAL%1
 NAME%Debugger
 USER%"debugger"
-DATE%30-JUN-1992  8:07pm
+DATE% 6-DEC-1992 12:24pm
 TIME%
 PASSWD%1
-BIN%42
+BIN%97
 REAL%leino
 ALLOW%20
 EXP%5000000
@@ -4497,7 +4538,7 @@ BLOCK%   cliroutine DEBUG
 BLOCK%   qualifier REMOTE , syntax=DEBUG_REMOTE
 PRIV%127
 HEALTH%500
-LOC%great hall
+LOC%gate
 PLAYER%Dragon
 DATE%13-JUN-1992  4:47pm
 TIME%
@@ -4521,7 +4562,8 @@ BLOCK%week.  He is wearing a you-don't-want-to-know-but-it-sure-is-dirty.
 BLOCK%
 BLOCK%  Actually, the man might be a gentle, humorous, human as well as
 BLOCK%intelligent, but for some reason you get the feeling that he is very
-BLOCK%keen on torturing rats and pulling wings of the fly.  Well, you guessed
+BLOCKB%keen on torturing rats and pulling wings of the fly.  Well, 
+BLOCK%you guessed
 BLOCK%right!
 BLOCK%
 PRIV%0
@@ -4585,7 +4627,8 @@ BIN%229
 REAL%jlaiho
 ALLOW%20
 EXP%1000100
-DESCLINE%The man is badly wounded  -  a black arrow sticks through his chest.
+DESCLINEB%The man is badly wounded  -  a black arrow sticks 
+DESCLINE%through his chest.
 PRIV%0
 HEALTH%1
 LOC%ent23
@@ -4604,7 +4647,8 @@ TIME%
 ALLOW%20
 EXP%700000
 START*BLOCK!
-BLOCK%The thing you are looking at is presumably the most discusting creature
+BLOCKB%The thing you are looking at is presumably the most discusti
+BLOCK%ng creature
 BLOCK%in the world!
 PRIV%0
 HEALTH%210
@@ -4631,7 +4675,7 @@ PRIV%0
 HEALTH%210
 LOC%smithy
 PLAYER%Gatekeeper
-DATE%12-JUN-1992  5:53pm
+DATE% 6-DEC-1992 12:24pm
 TIME%
 PASSWD%1
 BIN%213
@@ -4657,7 +4701,7 @@ PRIV%0
 HEALTH%210
 LOC%yard2
 PLAYER%Treasurer
-DATE%30-JUN-1992  8:07pm
+DATE%12-SEP-1992  6:04pm
 TIME%
 ALLOW%20
 EXP%700000
@@ -5255,7 +5299,8 @@ KIND%1
 TOSLOT%2
 NULL*DESCLINE!
 DEFAULT*BLOCK!
-DESCLINE%You leave the fresh air of the yard and enter the smithy of the castle.
+DESCLINEB%You leave the fresh air of the yard and enter the 
+DESCLINE%smithy of the castle.
 DESCLINE%# went to see the Smith.
 START*BLOCK!
 BLOCK%# comes out to the yard, still sweaping the swet from his
@@ -6523,7 +6568,8 @@ TO%%%NULL%%
 KIND%0
 TOSLOT%0
 DEFAULT*DESCLINE!
-DESCLINE%Why don't you just go out instead of hitting your head against the wall
+DESCLINEB%Why don't you just go out instead of hitting your 
+DESCLINE%head against the walls?
 NULL*BLOCK!
 DEFAULT*BLOCK!
 DEFAULT*BLOCK!
@@ -6539,7 +6585,8 @@ TO%%%NULL%%
 KIND%0
 TOSLOT%0
 DEFAULT*DESCLINE!
-DESCLINE%Why don't you just go out instead of hitting your head against the wall
+DESCLINEB%Why don't you just go out instead of hitting your 
+DESCLINE%head against the walls?
 NULL*BLOCK!
 DEFAULT*BLOCK!
 DEFAULT*BLOCK!
@@ -6555,7 +6602,8 @@ TO%%%NULL%%
 KIND%0
 TOSLOT%0
 DEFAULT*DESCLINE!
-DESCLINE%Why don't you just go out instead of hitting your head against the wall
+DESCLINEB%Why don't you just go out instead of hitting your 
+DESCLINE%head against the wall
 NULL*BLOCK!
 DEFAULT*BLOCK!
 DEFAULT*BLOCK!
@@ -6571,7 +6619,8 @@ TO%%%NULL%%
 KIND%0
 TOSLOT%0
 DEFAULT*DESCLINE!
-DESCLINE%Why don't you just go out instead of hitting your head against the wall
+DESCLINEB%Why don't you just go out instead of hitting your 
+DESCLINE%head against the wall
 NULL*BLOCK!
 DEFAULT*BLOCK!
 DEFAULT*BLOCK!
@@ -6941,7 +6990,8 @@ TOSLOT%1
 NULL*DESCLINE!
 DEFAULT*BLOCK!
 START*BLOCK!
-BLOCK%  Hey, look at THAT!  Yap, the machinery you see in front of you controls
+BLOCKB%  Hey, look at THAT!  Yap, the machinery you see in front of
+BLOCK% you controls
 BLOCK%the gate.
 BLOCK%
 DESCLINE%# went to the south.
@@ -7144,7 +7194,8 @@ TOSLOT%1
 DESCLINE%The large doors open to the south.
 START*BLOCK!
 BLOCK%Auch!  The groom's hairy, thick hand grabs your to your hair as you
-BLOCK%are leaving.  In a single twist of his hand he throws you onto a pile of
+BLOCKB%are leaving.  In a single twist of his hand he throws you on
+BLOCK%to a pile of
 BLOCK%...Yach!  This stuff really stinks!
 NULL*BLOCK!
 DESCLINE%# didn't want to clean the floor of the stable any more.
@@ -8455,7 +8506,7 @@ START*MEGA!
 MEGA%40:0:0:0:"Naturally, the guard gathers all his gold as taxes to the ki
 MEGA%ng."
 SHORTMEGA%-41:40:0:0:17
-SHORTMEGA%J250:0
+SHORTMEGA%J247:0
 SHORTMEGA%-43:39:41:42:24
 SHORTMEGA%-44:37:43:0:22
 SHORTMEGA%45:0:0:0:"leave permission"
@@ -8464,7 +8515,7 @@ SHORTMEGA%47:0:0:0:"Gatekeeper grabs all your leave permissions"
 SHORTMEGA%-48:47:0:0:15
 SHORTMEGA%49:0:0:0:"Gatekeeper grabs all his leave permissions"
 SHORTMEGA%-50:49:0:0:17
-SHORTMEGA%J257:1:45
+SHORTMEGA%J254:1:45
 SHORTMEGA%-52:48:50:51:24
 SHORTMEGA%-53:46:52:0:22
 SHORTMEGA%54:0:0:0:"Bridge"
@@ -8486,7 +8537,7 @@ SHORTMEGA%-67:45:0:0:53
 SHORTMEGA%68:0:0:0:"gives a leave permission to the guard."
 SHORTMEGA%-69:12:68:0:17
 SHORTMEGA%70:0:0:0:"800"
-SHORTMEGA%J241:1:70
+SHORTMEGA%J238:1:70
 SHORTMEGA%-72:69:71:0:24
 SHORTMEGA%-73:66:67:72:24
 SHORTMEGA%H6:1:73:Get permission
@@ -8509,7 +8560,7 @@ SHORTMEGA%-90:89:0:0:15
 SHORTMEGA%91:0:0:0:"...and succeeds in the attempt!"
 SHORTMEGA%-92:91:0:0:17
 SHORTMEGA%93:0:0:0:"50"
-SHORTMEGA%J241:1:93
+SHORTMEGA%J238:1:93
 SHORTMEGA%-95:90:92:94:24
 SHORTMEGA%J63:0
 SHORTMEGA%-97:88:95:96:24
@@ -8527,7 +8578,7 @@ SHORTMEGA%108:0:0:0:"tries to bribe guard with a sack of gold"
 SHORTMEGA%-109:12:108:0:1
 SHORTMEGA%-110:109:0:0:17
 SHORTMEGA%-111:107:110:0:24
-SHORTMEGA%J271:0
+SHORTMEGA%J268:0
 SHORTMEGA%J104:0
 SHORTMEGA%-114:111:112:113:24
 SHORTMEGA%H6:1:114:Bribe
@@ -8562,7 +8613,7 @@ SHORTMEGA%-139:138:0:0:29
 SHORTMEGA%140:0:0:0:"yes"
 SHORTMEGA%-141:139:140:0:69
 SHORTMEGA%J131:0
-SHORTMEGA%J289:1:138
+SHORTMEGA%J286:1:138
 SHORTMEGA%-144:14:143:0:22
 SHORTMEGA%-145:141:142:144:22
 SHORTMEGA%H6:1:145:say
@@ -8635,9 +8686,9 @@ SHORTMEGA%-201:200:0:0:15
 SHORTMEGA%-202:21:76:0:45
 SHORTMEGA%-203:202:0:0:37
 SHORTMEGA%204:0:0:0:"groom"
-SHORTMEGA%J277:1:204
+SHORTMEGA%J274:1:204
 SHORTMEGA%206:0:0:0:"man"
-SHORTMEGA%J277:1:206
+SHORTMEGA%J274:1:206
 SHORTMEGA%-208:201:203:205:24:         1:207
 SHORTMEGA%-209:77:208:78:22
 START*MEGA!
@@ -8656,129 +8707,126 @@ SHORTMEGA%216:0:0:0:"'s leg seemingly useless while attaching the irons."
 SHORTMEGA%-217:215:216:0:1
 SHORTMEGA%-218:217:0:0:17
 SHORTMEGA%-219:211:213:218:24
-SHORTMEGA%220:0:0:0:_pinv
-SHORTMEGA%-221:220:165:0:11
-SHORTMEGA%-222:221:78:167:22
-SHORTMEGA%-223:160:185:0:47
-SHORTMEGA%224:0:0:0:_monster name
-SHORTMEGA%225:0:0:0:"100"
-SHORTMEGA%-226:224:225:0:68
-SHORTMEGA%-227:226:0:0:24
-SHORTMEGA%-228:222:223:227:24
-SHORTMEGA%-229:209:219:228:24
-SHORTMEGA%H6:1:229:attack
-SHORTMEGA%231:230:0:0:-
+SHORTMEGA%-220:160:185:0:47
+SHORTMEGA%221:0:0:0:_monster name
+SHORTMEGA%222:0:0:0:"100"
+SHORTMEGA%-223:221:222:0:68
+SHORTMEGA%-224:223:0:0:24
+SHORTMEGA%-225:168:220:224:24
+SHORTMEGA%-226:209:219:225:24
+SHORTMEGA%H6:1:226:attack
+SHORTMEGA%228:227:0:0:-
 SHORTMEGA%H6:1:196:leave
-SHORTMEGA%233:232:0:0:-
-SHORTMEGA%-234:12:0:0:30
-SHORTMEGA%235:0:0:0:"1500"
-SHORTMEGA%-236:234:235:0:38
-SHORTMEGA%237:0:0:0:_p1
-SHORTMEGA%-238:234:237:0:31
-SHORTMEGA%-239:238:0:0:35
-SHORTMEGA%-240:236:239:0:22
-SHORTMEGA%H6:1:240:GvExp
-SHORTMEGA%242:241:0:0:-
-SHORTMEGA%243:0:0:0:! Tax:
-SHORTMEGA%J257:1:36
-SHORTMEGA%H5:1:244:gold
-SHORTMEGA%246:0:0:0:_gold
-SHORTMEGA%J263:1:246
-SHORTMEGA%-248:245:247:0:24
-SHORTMEGA%H4:1:248:gold
-SHORTMEGA%H6:1:249:Tax
-SHORTMEGA%251:250:0:0:-
-SHORTMEGA%252:0:0:0:_item
-SHORTMEGA%-253:252:237:0:2
-SHORTMEGA%-254:252:0:0:53
-SHORTMEGA%-255:253:254:0:22
-SHORTMEGA%H2:2:35:255:item
-SHORTMEGA%H6:1:256:Get it
-SHORTMEGA%258:257:0:0:-
-SHORTMEGA%259:0:0:0:"treasurer"
-SHORTMEGA%-260:237:0:0:50
-SHORTMEGA%-261:260:0:0:9
-SHORTMEGA%-262:259:261:0:44
-SHORTMEGA%H6:1:262:Leave gold
-SHORTMEGA%264:263:0:0:-
-SHORTMEGA%265:0:0:0:! Paying:
-SHORTMEGA%-266:36:0:0:53
-SHORTMEGA%-267:36:0:0:50
-SHORTMEGA%-268:267:0:0:9
-SHORTMEGA%-269:259:268:0:44
-SHORTMEGA%-270:266:269:0:24
-SHORTMEGA%H6:1:270:Drop gold
-SHORTMEGA%272:271:0:0:-
-SHORTMEGA%273:0:0:0:! Listalta poisto:
-SHORTMEGA%-274:237:0:0:46
-SHORTMEGA%-275:274:76:0:45
-SHORTMEGA%-276:237:275:0:47
-SHORTMEGA%H6:1:276:poista
-SHORTMEGA%278:277:0:0:-
-SHORTMEGA%279:0:0:0:! Komennot
-SHORTMEGA%-280:237:0:0:54
-SHORTMEGA%281:0:0:0:"Gatekeeper"
-SHORTMEGA%-282:280:281:0:2
-SHORTMEGA%-283:237:0:0:55
-SHORTMEGA%-284:283:0:0:54
-SHORTMEGA%-285:283:0:0:55
-SHORTMEGA%-286:285:0:0:29
-SHORTMEGA%J307:2:284:286
-SHORTMEGA%-288:282:287:0:22
-SHORTMEGA%H6:1:288:parse
-SHORTMEGA%290:289:0:0:-
-SHORTMEGA%291:0:0:0:"add"
-SHORTMEGA%-292:237:291:0:2
-SHORTMEGA%293:0:0:0:_p2
-SHORTMEGA%J318:1:293
-SHORTMEGA%295:0:0:0:"del"
-SHORTMEGA%-296:237:295:0:2
-SHORTMEGA%J323:1:293
-SHORTMEGA%298:0:0:0:"Gatekeeper: my commands are:"
-SHORTMEGA%-299:298:0:0:15
-SHORTMEGA%300:0:0:0:"say gatekeeper add <player name>"
-SHORTMEGA%-301:300:0:0:15
-SHORTMEGA%302:0:0:0:"say gatekeeper del <player name>"
-SHORTMEGA%-303:302:0:0:15
-SHORTMEGA%-304:299:301:303:24
-SHORTMEGA%-305:296:297:304:22
-SHORTMEGA%-306:292:294:305:22
-SHORTMEGA%H6:1:306:komento
-SHORTMEGA%308:307:0:0:-
-SHORTMEGA%309:0:0:0:"List is now: "
-SHORTMEGA%-310:309:21:0:15
-SHORTMEGA%H6:1:310:my list
-SHORTMEGA%312:311:0:0:-
-SHORTMEGA%-313:237:0:0:65
-SHORTMEGA%-314:21:313:0:12
-SHORTMEGA%-315:314:0:0:37
-SHORTMEGA%J311:0
-SHORTMEGA%-317:315:316:0:24
-SHORTMEGA%H6:1:317:c add
-SHORTMEGA%319:318:0:0:-
-SHORTMEGA%-320:21:313:0:45
-SHORTMEGA%-321:320:0:0:37
-SHORTMEGA%-322:321:316:0:24
-SHORTMEGA%H6:1:322:c del
-SHORTMEGA%324:323:0:0:-
+SHORTMEGA%230:229:0:0:-
+SHORTMEGA%-231:12:0:0:30
+SHORTMEGA%232:0:0:0:"1500"
+SHORTMEGA%-233:231:232:0:38
+SHORTMEGA%234:0:0:0:_p1
+SHORTMEGA%-235:231:234:0:31
+SHORTMEGA%-236:235:0:0:35
+SHORTMEGA%-237:233:236:0:22
+SHORTMEGA%H6:1:237:GvExp
+SHORTMEGA%239:238:0:0:-
+SHORTMEGA%240:0:0:0:! Tax:
+SHORTMEGA%J254:1:36
+SHORTMEGA%H5:1:241:gold
+SHORTMEGA%243:0:0:0:_gold
+SHORTMEGA%J260:1:243
+SHORTMEGA%-245:242:244:0:24
+SHORTMEGA%H4:1:245:gold
+SHORTMEGA%H6:1:246:Tax
+SHORTMEGA%248:247:0:0:-
+SHORTMEGA%249:0:0:0:_item
+SHORTMEGA%-250:249:234:0:2
+SHORTMEGA%-251:249:0:0:53
+SHORTMEGA%-252:250:251:0:22
+SHORTMEGA%H2:2:35:252:item
+SHORTMEGA%H6:1:253:Get it
+SHORTMEGA%255:254:0:0:-
+SHORTMEGA%256:0:0:0:"treasurer"
+SHORTMEGA%-257:234:0:0:50
+SHORTMEGA%-258:257:0:0:9
+SHORTMEGA%-259:256:258:0:44
+SHORTMEGA%H6:1:259:Leave gold
+SHORTMEGA%261:260:0:0:-
+SHORTMEGA%262:0:0:0:! Paying:
+SHORTMEGA%-263:36:0:0:53
+SHORTMEGA%-264:36:0:0:50
+SHORTMEGA%-265:264:0:0:9
+SHORTMEGA%-266:256:265:0:44
+SHORTMEGA%-267:263:266:0:24
+SHORTMEGA%H6:1:267:Drop gold
+SHORTMEGA%269:268:0:0:-
+SHORTMEGA%270:0:0:0:! Listalta poisto:
+SHORTMEGA%-271:234:0:0:46
+SHORTMEGA%-272:271:76:0:45
+SHORTMEGA%-273:234:272:0:47
+SHORTMEGA%H6:1:273:poista
+SHORTMEGA%275:274:0:0:-
+SHORTMEGA%276:0:0:0:! Komennot
+SHORTMEGA%-277:234:0:0:54
+SHORTMEGA%278:0:0:0:"Gatekeeper"
+SHORTMEGA%-279:277:278:0:2
+SHORTMEGA%-280:234:0:0:55
+SHORTMEGA%-281:280:0:0:54
+SHORTMEGA%-282:280:0:0:55
+SHORTMEGA%-283:282:0:0:29
+SHORTMEGA%J304:2:281:283
+SHORTMEGA%-285:279:284:0:22
+SHORTMEGA%H6:1:285:parse
+SHORTMEGA%287:286:0:0:-
+SHORTMEGA%288:0:0:0:"add"
+SHORTMEGA%-289:234:288:0:2
+SHORTMEGA%290:0:0:0:_p2
+SHORTMEGA%J315:1:290
+SHORTMEGA%292:0:0:0:"del"
+SHORTMEGA%-293:234:292:0:2
+SHORTMEGA%J320:1:290
+SHORTMEGA%295:0:0:0:"Gatekeeper: my commands are:"
+SHORTMEGA%-296:295:0:0:15
+SHORTMEGA%297:0:0:0:"say gatekeeper add <player name>"
+SHORTMEGA%-298:297:0:0:15
+SHORTMEGA%299:0:0:0:"say gatekeeper del <player name>"
+SHORTMEGA%-300:299:0:0:15
+SHORTMEGA%-301:296:298:300:24
+SHORTMEGA%-302:293:294:301:22
+SHORTMEGA%-303:289:291:302:22
+SHORTMEGA%H6:1:303:komento
+SHORTMEGA%305:304:0:0:-
+SHORTMEGA%306:0:0:0:"List is now: "
+SHORTMEGA%-307:306:21:0:15
+SHORTMEGA%H6:1:307:my list
+SHORTMEGA%309:308:0:0:-
+SHORTMEGA%-310:234:0:0:65
+SHORTMEGA%-311:21:310:0:12
+SHORTMEGA%-312:311:0:0:37
+SHORTMEGA%J308:0
+SHORTMEGA%-314:312:313:0:24
+SHORTMEGA%H6:1:314:c add
+SHORTMEGA%316:315:0:0:-
+SHORTMEGA%-317:21:310:0:45
+SHORTMEGA%-318:317:0:0:37
+SHORTMEGA%-319:318:313:0:24
+SHORTMEGA%H6:1:319:c del
+SHORTMEGA%321:320:0:0:-
 RUNNABLE%T
 PRIV%F
 OWNER%#
 CTIME%13-NOV-1989 10:47pm
 STATLAB%enter
-RCOUNT%1
+RCOUNT%4
 ECOUNT%0
-LASTRUN%12-JUN-1992  5:52pm
+LASTRUN% 6-DEC-1992 12:24pm
 STATLAB%look
-RCOUNT%1
-ECOUNT%1
-LASTRUN%12-JUN-1992  5:52pm
+RCOUNT%4
+ECOUNT%4
+LASTRUN% 6-DEC-1992 12:24pm
 STATLAB%leave
-RCOUNT%2
+RCOUNT%5
 ECOUNT%0
-LASTRUN%12-JUN-1992  5:53pm
+LASTRUN% 6-DEC-1992 12:24pm
 AUTHOR%hurtta
-WTIME% 4-JUN-1992  9:58pm
+WTIME%12-SEP-1992  6:01pm
 START*MEGA!
 MEGA%maaalto, mgustafsson, lamminjoki, "arthur", tapaninen, sefl_fystkm, pe
 MEGA%isa, mkukkonen, "hendrix", "sea-dog", "case", okkola, jlaiho, silvonen
@@ -9110,17 +9158,17 @@ RCOUNT%10
 ECOUNT%10
 LASTRUN%17-APR-1992  1:20pm
 STATLAB%enter
-RCOUNT%133
-ECOUNT%133
-LASTRUN%30-JUN-1992  8:07pm
-STATLAB%look
-RCOUNT%183
-ECOUNT%183
-LASTRUN%30-JUN-1992  8:07pm
-STATLAB%leave
 RCOUNT%134
 ECOUNT%134
-LASTRUN%30-JUN-1992  8:07pm
+LASTRUN%12-SEP-1992  6:04pm
+STATLAB%look
+RCOUNT%184
+ECOUNT%184
+LASTRUN%12-SEP-1992  6:04pm
+STATLAB%leave
+RCOUNT%135
+ECOUNT%135
+LASTRUN%12-SEP-1992  6:04pm
 AUTHOR%
 WTIME%
 NULL*MEGA!
@@ -9241,7 +9289,8 @@ START*BLOCK!
 BLOCK%Really want to have a swim?  Why, it is all your's!
 BLOCK%
 BLOCK%While dropping and dropping the wind dries all of your wet  -  you
-BLOCK%are becoming to feel cold.  Don't get cold  -  Merlin takes quite a lot
+BLOCKB%are becoming to feel cold.  Don't get cold  -  Merlin takes 
+BLOCK%quite a lot
 BLOCK%for curing a flu!
 BLOCK%
 BLOCK%SPLASH!
@@ -9938,7 +9987,8 @@ DEFAULT*BLOCK!
 START*BLOCK!
 BLOCK%Oh, F U . . !
 BLOCK%
-BLOCK%Don't you know jumping down from high places is NOT good for your health?
+BLOCKB%Don't you know jumping down from high places is NOT good for
+BLOCK% your health?
 BLOCK%
 DESCLINE%Wheeeeeeeeeeeeeeeeeeww!......  Bump.
 DEFAULT*BLOCK!
@@ -10142,7 +10192,8 @@ TOSLOT%2
 NULL*DESCLINE!
 DEFAULT*BLOCK!
 START*BLOCK!
-BLOCK%  Hey, look at THAT!  Yap, the machinery you see in front of you controls
+BLOCKB%  Hey, look at THAT!  Yap, the machinery you see in front of
+BLOCK% you controls
 BLOCK%the gate.
 BLOCK%
 DESCLINE%# went to the north.
@@ -10684,7 +10735,8 @@ BLOCK%a light touch the stone seems to move by itself and
 BLOCK%piles of dirt move to cover that stone.
 BLOCK%Their is something really strange below that stone.
 START*BLOCK!
-BLOCK%Below the piles of dirt, you find enough big hole between two flagstones.
+BLOCKB%Below the piles of dirt, you find enough big hole between tw
+BLOCK%o flagstones.
 BLOCK%Actually, it isn't big one, but you can put your hands on it and
 BLOCK%if you have little strength and lot of will power, you might,
 BLOCK%just might, be able to lift one of those two flagstones.
@@ -11506,7 +11558,8 @@ START*BLOCK!
 BLOCK%With that tankard?  How much did you actually drink?
 BLOCK%
 BLOCK%Use your brains  -  if you are caugth drunk, swinging that tankard,
-BLOCK%you will be in the dungeon before you can say "Gimme one more, pleashe!".
+BLOCKB%you will be in the dungeon before you can say "Gimme one mor
+BLOCK%e, pleashe!".
 NULL*BLOCK!
 DESCLINE%# went out.
 DESCLINE%# arrived.

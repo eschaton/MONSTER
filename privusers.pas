@@ -1,10 +1,17 @@
 [environment,inherit ('sys$library:starlet','global') ]
 module privusers(output);
 
+const max_message_lines = 50;
+
 var timestring : string := '';
     default_allow: [global] integer := 0;
     min_room: [global] integer := 0;
     min_accept: [global] integer := 0;
+
+    msg: array [1 .. max_message_lines] of string;
+    msg_count: 0 .. max_message_lines := 0;
+
+    alloc_dcl_access: boolean := true;
 
 function image_name: string;
 var
@@ -42,13 +49,17 @@ end; { image_name }
 Function strip_line(line: string): string;
 var ok: boolean;
 begin
-    while index(line,' ') = 1 do
-	line := substr(line,2,length(line)-1);
+    ok := true;
+    while ok do begin
+	ok := line > '';
+	if ok then ok := chartable[line[1]].kind = ct_space;
+	if ok then line := substr(line,2,length(line)-1);
+    end;
 
     ok := true;
     while ok do begin
 	ok := line > '';
-	if ok then ok := line[length(line)] = ' ';
+	if ok then ok := chartable[line[length(line)]].kind = ct_space;
 	if ok then line := substr(line,1,length(line)-1);
     end; { ok }
     strip_line := line;
@@ -62,31 +73,6 @@ var path: string;
     counter: integer;
     current_line: string;
 
-    function get_line: string;
-    var line: string;
-	pos: integer;
-	ok: boolean;
-    begin
-	ok := false;
-	repeat
-	    if eof(init) then begin
-		get_line := '';
-		ok := true;
-	    end else begin
-		readln(init,line);
-		counter := counter +1;
-		current_line := line;
-		pos := index(line,'!');
-		if pos > 0 then line := substr(line,1,pos-1);
-
-		line := strip_line(line);
-
-		get_line := line;
-		ok := line > '';
-	    end;
-	until ok;
-    end;    { get_line }
-
     procedure message(s: string);
     begin
 	writeln('%Error in ',path);
@@ -96,6 +82,44 @@ var path: string;
 	writeln('%Notify Monster Manager.');
 	halt;
     end; { message }
+
+    function get_line (exact: boolean := false): string;
+    var line: string;
+	pos,i: integer;
+	ok,quoted: boolean;
+    begin
+	ok := false;
+	repeat
+	    if eof(init) then begin
+		get_line := '';
+		ok := true;
+		counter := counter +1;
+		current_line := '';
+	    end else begin
+		readln(init,line);
+		counter := counter +1;
+		current_line := line;
+		
+		if not exact then begin
+		    quoted := false;
+		    pos := 0;
+		    for i := 1 to length(line) do
+			if line[i] = '"' then quoted := not quoted
+			else if (line[i] = '!') and not quoted 
+			    and (pos = 0) then 
+				pos := i;
+
+		    if quoted then message('Bailing out quote !');
+		    if pos > 0 then line := substr(line,1,pos-1);
+
+		    line := strip_line(line);
+		end; { exact }
+
+		get_line := line;
+		ok := (line > '') or exact;
+	    end;
+	until ok;
+    end;    { get_line }
 
     function item_value(item: string): string;
     var line: string;
@@ -198,8 +222,138 @@ var path: string;
 	    hidden   := true;
 	end;	    
     end; { read_leveltable }
+
+
+    procedure read_chartable;
+    var	new_charset: string;
 	
-	   
+	procedure set_chartable(line: string);
+
+	    function cut_word(var line: string): string;
+	    var result: string;
+		quoted,ready: boolean;
+		i: integer;
+	    begin
+		quoted := false;
+		ready  := false;
+		result := '';
+		i := 1;
+		ready := i > length(line);
+		while not ready do begin
+		    if line[i] = '"' then quoted := not quoted;
+		    if (chartable[line[i]].kind <> ct_space) or quoted then 
+			result := result + line[i]
+		    else if (chartable[line[i]].kind = ct_space) and not quoted
+			and (result > '') then ready := true;
+		    i := i + 1;
+		    if i > length(line) then ready := true;
+		end;
+		if quoted then message ('Bailing out quote: ' + result);
+	    
+		if i  > length(line) then line := ''
+		else line := substr(line,i,length(line)-i+1);
+
+		cut_word := result;
+	    end; { cut_word }
+
+	    function parse_char(word: string): char;
+	    var code: integer;
+	    begin
+		if word = '' then message ('Character specification expected.');
+		if word[1] = '"' then begin
+		    if length(word) <> 3 then 
+			message('Bad character specification: ' + word);
+		    if word[3] <> '"' then 
+			message('Bad character specification: ' + word);
+		    parse_char := word[2];
+		end else begin
+		    readv(word,code,error := continue);
+		    if statusv <> 0 then 
+			message('Bad value of character spefication: ' + word);
+		    if (code < 0) or (code > 255) then
+			message ('Character code out of range: ' + word);
+		    parse_char := chr(code);
+		end;		
+	    end; { parse char }
+
+	    var word: string;
+	    ch: char;
+	    T: charrec;
+	begin
+	    word := cut_word(line);
+	    if word = 'char' then begin
+		chartable_charset := '';
+		word := cut_word(line); ch := parse_char(word);
+		with T do begin
+		    kind := ct_none;
+		    lcase := ch;
+		    ucase := ch;
+		    word := cut_word(line);
+		    while word > '' do begin
+			if word = 'none' then kind := ct_none
+			else if word = 'letter' then kind := ct_letter
+			else if word = 'special' then kind := ct_special
+			else if word = 'space' then kind := ct_space
+			else if word = 'upper' then begin
+			    word := cut_word(line);
+			    ucase := parse_char(word);
+			end else if word = 'lower' then begin
+			    word := cut_word(line);
+			    lcase := parse_char(word);
+			end else message('Bad argument: '+word);
+			word := cut_word(line);
+		    end; { while }
+		end; { with }
+		chartable[ch] := T;
+	    end else if word = 'charset' then begin
+		if new_charset <> 'UNKNOWN' then 
+		    message('Charset defined twice');
+		word := cut_word(line);
+		if (word = '') then message ('Charset name expected.');
+		if word[1] = '"' then begin
+		    if word[length(word)] <> '"' then
+			message ('Bad charset specification: ' + word);
+		    word := substr(word,2,length(word)-2);
+		end;
+		new_charset := word;
+		word := cut_word(line);
+		if (word > '') then 
+		    message ('Too many arguments: ' + word);
+	    end else message ('"char" or "charset" expected: ' + word);
+	end; { set_chartable }
+
+    var line : string;
+    begin
+	new_charset := 'UNKNOWN';
+
+	if get_line <> 'CHARTABLE:' then message('CHARTABLE: expected');
+	line := get_line;
+	while (line <> 'END OF CHARTABLE') and (line <> '') do begin
+	    set_chartable(line);
+	    line := get_line;
+	end;
+	if chartable_charset = '' then chartable_charset := new_charset;
+	if line <> 'END OF CHARTABLE' then message('END OF CHARTABLE expected.');
+    end; { read_chartable }
+
+    procedure read_message;
+    var line : string;
+    begin
+	if get_line <> 'CLOSED MESSAGE:' then 
+	    message('CLOSED MESSAGE: expected');
+	line := get_line(true);			{ don't uncomment }
+	while (strip_line(line) <> 'END OF MESSAGE') and not eof(init) do begin
+	    if msg_count >= max_message_lines then
+		message('Too many lines in CLOSED MESSAGE');
+	    msg_count := msg_count + 1;
+	    msg[msg_count] := line;
+	    line := get_line(true);		{ don't uncomment }
+	end;
+	if strip_line(line) <> 'END OF MESSAGE' then 
+	    message('END OF MESSAGE expected.');
+
+    end;
+	
 begin
     counter := 0;
     current_line := '';
@@ -249,36 +403,23 @@ begin
     min_room      := item_number('min_room');
     min_accept     := item_number('min_accept');
 
+    read_chartable;
+
+    database_poltime := item_value('database_poltime');
+
+    read_message;
+
+    max_mdl_buffer  := item_number('mdl_buffers');
+    alloc_dcl_access := item_value('allow_dcl_access') = 'true';
+
     close (init);
-
 end;	{ Get_Environment }
-
 
 [ global ]
 procedure write_message;
-var ch: char;
-    fyle : text;
+var i: integer;
 begin
-   open(fyle,
-        root+'ILMOITUS.TXT',
-        access_method:=sequential,
-        history:= readonly,
-        sharing:=readonly,
-	error:=continue);
-   if status(fyle) <> 0 then
-	writeln('%Can''t type ILMOITUS.TXT. Notify Monster Manager.')
-   else begin
-       reset(fyle);
-       while not eof(fyle) do begin
-	  while not eoln(fyle) do begin
-	     read(fyle,ch);
-	     write(ch)
-	  end;
-	  readln(fyle);
-	  writeln
-       end;
-       close(fyle);
-   end;
+    for i := 1 to msg_count do writeln(msg[i]);
 end;	{ write_message }
 
 [global]

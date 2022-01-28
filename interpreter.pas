@@ -31,6 +31,17 @@ MODIFICATION HISTORY:
    26.6.1992  |         | monster_owner, set_owner, delete_program moved to DATABASE.PAS
    29.6.1992  |         | MDL-funktio or sallii nyt enemmin kuin 3 parametria
               |         | MDL-funktio and parametrien m‰‰r‰ voi nyt vaihdella
+   14.7.1992  |         | load k‰ytt‰‰ nyt grab_line:‰, jos luku tapahtuu
+              |         | p‰‰tteelt‰
+   15.7.1992  |         | boolean and, boolean or
+   16.7.1992  |         | get global flag palauttaa nyt lippun nimen, jos tosi
+              |         | eik‰ teksti‰ "TRUE"
+   17.7.1992  |         | or else, and then
+   20.8.1992  |         | e_strip now uses chartable
+   28.8.1992  |         | max_buffer = 5 > 20
+   05.9.1992  |         | Osittainen muttujien esittelyn tarkistus
+   13.9.1992  |         | name_string dynaaminen, pool on nyt osoitin 
+              |         | (dynaamiseen) taulukkoon, max_mdl_buffer kertoo koon
 --------------+---------+-------------------------------------------------------
 
 -}
@@ -82,7 +93,7 @@ kaksoispiste,
 kaksoispiste,
 <parametrien lukum‰‰r‰ - 3>,
 kaksoispiste,
-<loput parametrit kaksoipistell‰ erotettuina>,
+<loput parametrit kaksoispistell‰ erotettuina>,
 EOLN
 
 Tapaus 4:
@@ -108,13 +119,13 @@ EOLN
 }
 
 
-const atom_length = shortlen;   
-
+const 
+      atom_length = shortlen;   
 
       string_length = mega_length;
 
  
-      max_functions = 80;  { esimerkiksi null,get, ...   }
+      max_functions = 81;  { esimerkiksi null,get, ...   }
       max_headers   = 10;  { esimerkiksi SUBMIT, FOR ... }
       max_labels    = 50; 
 
@@ -125,11 +136,21 @@ const atom_length = shortlen;
 				{ parametrit tulostetaan kukin omalle 
 				    rivilleen }
 
-	max_buffer = 5;		{ Puskurien lukum‰‰r‰ }
+
 
 	ERROR_ID = 70;		{ virheen numero }
 	LABEL_ID = 6;		{ LABEL headerin numero }
 	GOSUB_ID = 3;		{ GOSUB headerin numero }
+
+        external_labels = 'enter, leave, say, attack, look, look you,' +
+			  'command, start, escaped, poof in, poof out, ' +
+			  'say, look_detail, look around, wrong dir, ' +
+			  'get fail, get succeed, drop succeed, drop you, ' +
+			  'use succeed, look you, summon, learn';
+	external_vars = 'player name, monster name, target, speech, command, ' +
+			'detail, direction, book name';
+
+	define_var_headers = [ 2, 4 ] ;
                       
 type  atom_t = shortstring; 			    { Muuttujat ja k‰skyt   }
 						    { ja listan alkiot	    }
@@ -143,11 +164,13 @@ type  atom_t = shortstring; 			    { Muuttujat ja k‰skyt   }
 
       paramtable = array [ 1 .. max_param ] of integer;
 
+      name_string(maxlen: integer) = [hidden]
+	array [1 .. maxlen] of char;
 
       atom = record				    { yksi ohjelman k‰sky   }
 		nametype: name_type;
                 name: integer;
-                long_name: ^string_t;
+                long_name: ^name_string;
 		params: paramtable
                 { p1,p2,p3: integer }
              end;                 
@@ -162,6 +185,8 @@ type  atom_t = shortstring; 			    { Muuttujat ja k‰skyt   }
 	time: 0 .. maxint;			{ Kuinka paljon aikaa	    }
 						{ k‰ytˆst‰ }
     end; { buffer }
+
+    pool_array(n: integer) = array [ 1 .. n] of buffer;
                       
 Var	line_i: string_t := '';
       code_running : boolean := false; { est‰‰ p‰‰lekk‰isen suorittamisen }
@@ -169,8 +194,8 @@ Var	line_i: string_t := '';
       cl,ql: class;       
       error_counter : integer := 0;
 
-	pool : array [ 1 .. max_buffer ] of buffer;
-	current_buffer : 1 .. max_buffer;
+	pool : ^pool_array;
+	current_buffer : integer;
 
 	monster_level: integer;	    { 0 jos ei tasoa } 
 	used_attack:   integer;
@@ -276,9 +301,10 @@ Value ftable := (
 	('===',2,2),			    { 75 }
 	('spell level',0,0),		    { 76 }
 	('set spell level',1,1),	    { 77 }
-	('',0,0),		{ 78 }
-	('',0,0),		{ 79 }
-	('',0,0)		{ 80 }
+	('boolean and',	1,  max_param),	    { 78 }
+	('boolean or',	1,  max_param),	    { 79 }
+	('or else',2, max_param),	    { 80 }
+	('and then',2, max_param)	    { 81 }
     ); 
 
     htable := (
@@ -446,7 +472,7 @@ end;	{ count_params }
 procedure clear_program (buffer: integer);
 var ln,i: integer;
 begin
-    with pool[buffer] do begin
+    with pool^[buffer] do begin
 	for ln := 1 to used do with table [ ln ] do begin
 	    for i := 1 to max_param do params[i] := 0;
 	    if long_name <> nil then dispose(long_name);
@@ -461,8 +487,29 @@ begin
     end;
 end; { clear program }
    
+function ns(name: array [ low .. hi: integer] of char): string_t;
+var i: integer;
+    s: string_t;
+begin
+    s := '';
+    for i := low to hi do s := s + name[i];
+    ns := s;
+end; { ns }
 
-procedure parse (var source,result: text);       
+procedure as(var name: array [ low .. hi: integer] of char;
+	     s: string_t);
+var i: integer;
+begin
+    if length(s) <> hi - low +1 then begin
+	writeln('%Illegal assigment in procedure as.');
+	writeln('% Notify Monster Manager.');
+	halt;
+    end;
+    for i := 1 to length(s) do name[low + i -1] := s[i];
+end; { as }
+
+procedure parse (function reader (var line: string_t): boolean;
+		var result: text);       
 label 999;
 var atom_count: integer;
     atom_readed: boolean;
@@ -478,16 +525,24 @@ var atom_count: integer;
     line: string_t;
     linep,atom_line_p: integer;
     linecount: integer;
+    eof_flag: boolean := false;
 
     procedure read_line;
     begin
-	if EOF(source) then begin
+	if eof_flag then begin
+	    write_debug('%read_line: eof_flag = true already');
 	    line := '';
 	    linep := 0;
 	    linecount := linecount +1;
 	    atom_line_p := -1;
+	end else if not reader(line) then begin
+	    write_debug('%read_line: EOF');
+	    line := '';
+	    linep := 0;
+	    linecount := linecount +1;
+	    atom_line_p := -1;
+	    eof_flag := true;
 	end else begin
-	    READLN(source,line);
 	    linep := 1;
 	    atom_line_p := -1;
 	    linecount := linecount +1;
@@ -497,7 +552,7 @@ var atom_count: integer;
     function LINE_EOF: boolean;
     begin
 	if linep > 0 then LINE_EOF := false
-	else LINE_EOF := eof(source);
+	else LINE_EOF := eof_flag;
     end; { LINE_EOF }
 
     function LINE_EOLN: boolean;
@@ -532,20 +587,26 @@ var atom_count: integer;
 	end;
     end; { LINE_error }
 
+    function locate_label(name: string_t): integer;
+    var loc, j: integer;
+    begin
+	loc := 0;
+	for j := 1 to label_count do
+	    if EQ(name,labels[j].name) then loc := j;
+	locate_label := loc;
+    end; { locate_label }
+
     procedure replace_GOSUB;
-    var i,j,loc: integer;
+    var i,loc: integer;
     begin
 	for i := 1 to atom_count do
-	    with pool[current_buffer].table[i] do
+	    with pool^[current_buffer].table[i] do
 		if nametype = n_header then if name = GOSUB_ID then begin
-		    loc := 0;
-		    for j := 1 to label_count do
-			if EQ(long_name^,labels[j].name) then loc := j;
-
+		    loc := locate_label(ns(long_name^));
 		    if loc = 0 then begin
 			LINE_error;
-			writeln('Error: GOSUB ',long_name^);
-			writeln('       without LABEL ',long_name^);
+			writeln('Error: GOSUB ',ns(long_name^));
+			writeln('       without LABEL ',ns(long_name^));
 			error_flag := true;
 		    end else begin
 			dispose(long_name);
@@ -556,7 +617,128 @@ var atom_count: integer;
 		end;
     end; { replace_GOSUB }
 
-	  procedure write_comment; forward;
+    procedure do_list(list: string_t; procedure doit(atom: atom_t));
+    var index: integer;
+	atom: atom_t;
+    begin
+	index := 1;
+	while index <= length(list) do
+	begin
+	    atom := clean_spaces(cut_atom(list,index,','));
+	    doit(atom);
+	end;
+    end; { do_list }
+
+    function in_list(list: string_t; atom: atom_t): boolean;
+    var flag: boolean;
+	procedure check_one(a: atom_t);
+	begin
+	    if a = atom then flag := true;
+	end; { check_one }
+    begin
+	flag := false;
+	do_list(list,check_one);
+	in_list := flag;
+    end; { in_list }
+	
+    procedure walk_tree(pos: integer;
+			current_label: string;
+			visited_labels: string_t;
+			defined_vars: string_t);
+    label OUT;
+	procedure add_list(var list: string_t; atom: atom_t);
+	begin
+	    if length(list) + length(atom) > string_length - 2 then begin
+		writeln('% List overflow in walk tree !!');
+		writeln('% Aborting checking.');
+		goto OUT;
+	    end;
+	    if list > '' then list := list + ', ';
+	    list := list + atom;
+	end; { add_list }
+
+	function pvar(i :integer): atom_t;
+	var A: atom_t;
+	begin
+	    writev(A,'p',i:1);
+	    pvar := A;
+	end; { pvar }
+
+    var i: integer;
+	tmp: string_t;
+    begin
+	with pool^[current_buffer].table[pos] do begin
+	    case nametype of
+		n_function:
+		    for i := 1 to count_params(params) do
+			walk_tree(params[i],current_label,
+				  visited_labels,defined_vars);
+		n_head: begin
+		    writeln('%Error on walk_tree. Nodetype = n_head');
+		    writeln('%Notify Monster Manager.');
+		    goto OUT;
+		    end;
+		n_header: begin
+			if name = LABEL_ID then begin
+			    add_list(visited_labels,ns(long_name^));
+			    current_label := ns(long_name^);
+			end;
+			if name in define_var_headers then begin
+			    add_list(defined_vars,ns(long_name^));
+			end;
+			for i := 1 to count_params(params) do
+			    walk_tree(params[i],current_label,
+				  visited_labels,defined_vars);
+		    end;
+		n_const : ;
+		n_error : ;
+		n_comment : ;
+		n_variable : begin
+		    if not in_list(defined_vars,ns(long_name^)) then begin
+			writeln('Warning: Variable ' + ns(long_name^) + 
+				' not defined');
+			writeln('         in LABEL ' + current_label +
+			        ' when called with following');
+			writeln('         path: ' + visited_labels + '.');
+			writeln;
+		    end;
+		end;
+		n_gosub: begin
+		    if not in_list(visited_labels,
+			ns(pool^[current_buffer].table[name].long_name^)) then begin
+			    tmp := defined_vars;
+			    add_list(tmp,pvar(1));
+			    add_list(tmp,pvar(2));
+			    add_list(tmp,pvar(3));
+			    for i := 4 to count_params(params) do 
+				add_list(tmp,pvar(i));
+			    walk_tree(name,current_label,visited_labels,tmp);
+		    end;
+		    for i := 1 to count_params(params) do
+			walk_tree(params[i],current_label,
+			    visited_labels,defined_vars);
+
+		end;
+	    end; { case }
+	end; { with }
+	OUT:
+    end; { walk_tree }
+				
+    procedure check_variables;
+	procedure check_one(atom: atom_t);
+	var loc: integer;
+	begin
+	    loc := locate_label(atom);
+	    if loc > 0 then walk_tree(labels[loc].loc,
+				      '',
+				      '',
+				      external_vars);
+	end; { check_one }
+    begin
+	do_list(external_labels,check_one);
+    end; { check_variables }
+
+    procedure write_comment; forward;
 
 	  function read_comment: string_t;
              var bf: string_t; 
@@ -751,24 +933,24 @@ var atom_count: integer;
 	  begin
 	    loc := 0;
 	    for i := 1 to atom_count -1 do
-		if pool[current_buffer].table[atom_count].nametype =
-		    pool[current_buffer].table[i].nametype  
-		then if pool[current_buffer].table[atom_count].name =
-		    pool[current_buffer].table[i].name 
-		then if (pool[current_buffer].table[atom_count].long_name 
+		if pool^[current_buffer].table[atom_count].nametype =
+		    pool^[current_buffer].table[i].nametype  
+		then if pool^[current_buffer].table[atom_count].name =
+		    pool^[current_buffer].table[i].name 
+		then if (pool^[current_buffer].table[atom_count].long_name 
 			= nil) =
-		    (pool[current_buffer].table[i].long_name = nil) 
+		    (pool^[current_buffer].table[i].long_name = nil) 
 		then begin
-		   if pool[current_buffer].table[i].long_name = nil then flag 
+		   if pool^[current_buffer].table[i].long_name = nil then flag 
 			:= true
 		   else flag := 
-		    EQ(pool[current_buffer].table[atom_count].long_name^,
-			pool[current_buffer].table[i].long_name^);
+		    EQ(pool^[current_buffer].table[atom_count].long_name^,
+			pool^[current_buffer].table[i].long_name^);
 		    { EQ: NonPadding comparison }
 
 		    if flag then for j := 1 to max_param do
-			if pool[current_buffer].table[atom_count].params[j] <>
-			    pool[current_buffer].table[i].params[j] then
+			if pool^[current_buffer].table[atom_count].params[j] <>
+			    pool^[current_buffer].table[i].params[j] then
 				flag := false;
 
 		    if flag then loc := i;
@@ -777,7 +959,7 @@ var atom_count: integer;
 	    
 		if loc = 0 then search_atom := atom_count
 		else begin
-		    with pool[current_buffer].table [ atom_count ] do begin
+		    with pool^[current_buffer].table [ atom_count ] do begin
 			for i := 1 to max_param do params[i] := 0;
 			    if long_name <> nil then dispose(long_name);
 			long_name := nil;
@@ -801,39 +983,47 @@ var atom_count: integer;
                goto 999
             end;
             atom_count := atom_count + 1;
-	    pool[current_buffer].table[atom_count].params[1] := p1;
-	    pool[current_buffer].table[atom_count].params[2] := p2;
-	    pool[current_buffer].table[atom_count].params[3] := p3;
-	    pool[current_buffer].table[atom_count].name := 0;
-	    new(pool[current_buffer].table[atom_count].long_name);
-            pool[current_buffer].table[atom_count].long_name^ := '!!!';
+	    pool^[current_buffer].table[atom_count].params[1] := p1;
+	    pool^[current_buffer].table[atom_count].params[2] := p2;
+	    pool^[current_buffer].table[atom_count].params[3] := p3;
+	    pool^[current_buffer].table[atom_count].name := 0;
+            pool^[current_buffer].table[atom_count].long_name := nil;
 
 	    case name[1] of
 		'_': begin
-		    pool[current_buffer].table[atom_count].nametype  
+		    pool^[current_buffer].table[atom_count].nametype  
 			:= n_variable;
-
-		    pool[current_buffer].table[atom_count].long_name^
-			:= substr(name,2,length(name)-1);
+		    new(pool^[current_buffer].table[atom_count].long_name,
+			length(name)-1);
+		    as(pool^[current_buffer].table[atom_count].long_name^
+			,substr(name,2,length(name)-1));
 		end;
 		'"': begin
-		    pool[current_buffer].table[atom_count].nametype  
+		    pool^[current_buffer].table[atom_count].nametype  
 			:= n_const;
-
-		    pool[current_buffer].table[atom_count].long_name^      
-			    := substr(name,2,length(name)-2);
-
-
-
+		    if length(name) > 2 then begin
+			new(pool^[current_buffer].table[atom_count].long_name,
+			    length(name)-2);
+			as(pool^[current_buffer].table[atom_count].long_name^,
+			    substr(name,2,length(name)-2));
+		    end else pool^[current_buffer].table[atom_count].long_name
+			:= nil;
 		end;
 		'!':  begin
-		    pool[current_buffer].table[atom_count].nametype := n_comment;
-		    pool[current_buffer].table[atom_count].long_name^ := name
+		    pool^[current_buffer].table[atom_count].nametype := 
+			n_comment;
+		    new(pool^[current_buffer].table[atom_count].long_name,
+			length(name));
+		    as(pool^[current_buffer].table[atom_count].long_name^,
+			name);
 
 		end;
 		'-':  begin
-		    pool[current_buffer].table[atom_count].nametype := n_head;
-		    pool[current_buffer].table[atom_count].long_name^ := name
+		    pool^[current_buffer].table[atom_count].nametype := n_head;
+		    new(pool^[current_buffer].table[atom_count].long_name,
+			length(name));
+		    as(pool^[current_buffer].table[atom_count].long_name^,
+			name);
 
 		end;
 	    end; { case }
@@ -860,11 +1050,12 @@ var atom_count: integer;
                goto 999
             end;
             atom_count := atom_count + 1;
-	    pool[current_buffer].table[atom_count].name     := code;
-	    pool[current_buffer].table[atom_count].nametype := n_header;
-	    pool[current_buffer].table[atom_count].params   := params;
-	    new(pool[current_buffer].table[atom_count].long_name);
-	    pool[current_buffer].table[atom_count].long_name^     := atom;
+	    pool^[current_buffer].table[atom_count].name     := code;
+	    pool^[current_buffer].table[atom_count].nametype := n_header;
+	    pool^[current_buffer].table[atom_count].params   := params;
+	    new(pool^[current_buffer].table[atom_count].long_name,
+		length(atom)));
+	    as(pool^[current_buffer].table[atom_count].long_name^,atom);
 	    if code = LABEL_ID then begin 
 		if label_count >= max_labels then begin
 		    LINE_error;
@@ -903,9 +1094,9 @@ var atom_count: integer;
                goto 999
             end;
             atom_count := atom_count + 1;
-	    pool[current_buffer].table[atom_count].name := code;
-	    pool[current_buffer].table[atom_count].nametype := n_function;
-	    pool[current_buffer].table[atom_count].params := params;
+	    pool^[current_buffer].table[atom_count].name := code;
+	    pool^[current_buffer].table[atom_count].nametype := n_function;
+	    pool^[current_buffer].table[atom_count].params := params;
             put_atom_2 := search_atom;
           end;
 
@@ -1123,24 +1314,25 @@ var atom_count: integer;
 	  var count,num,i: integer;
 	  begin 
 	    rewrite(result);
-	    with pool[current_buffer] do 		
+	    with pool^[current_buffer] do 		
 	    	for count := 1 to atom_count do with table [ count ] do 
 		begin
 		used := count;
 	        { --- }		
 		case nametype of
 		    n_comment: begin
-			writeln(result,count:1,':0:0:0:',long_name^)
+			writeln(result,count:1,':0:0:0:',ns(long_name^))
 		    end;
 		    n_head: begin
 			writeln(result,count:1,':',params[1]:1,':0:0:-');
 		    end;
 		    n_const: begin
 			write(result,count:1,':0:0:0:"');
-			writeln(result,long_name^,'"');
+			if long_name = nil then writeln(result,'"')
+			else writeln(result,ns(long_name^),'"');
 		    end;
 		    n_variable: begin
-			writeln(result,count:1,':0:0:0:_',long_name^);
+			writeln(result,count:1,':0:0:0:_',ns(long_name^));
 		    end;
 		    n_gosub: begin
 			num := count_params(params);
@@ -1152,7 +1344,7 @@ var atom_count: integer;
 			num := count_params(params);
 			write(result,'H',name:1,':',num:1);
 			for i := 1 to num do write(result,':',params[i]:1);
-			writeln(result,':',long_name^);
+			writeln(result,':',ns(long_name^));
 		    end;
 		    n_function: begin
 			write(result,-count:1,':',params[1]:1,':',
@@ -1174,7 +1366,6 @@ var atom_count: integer;
 	write_debug('%parse');
 
 	clear_program(current_buffer);
-	reset (source);
 
 	line := '';
 	linecount := 0;
@@ -1203,6 +1394,7 @@ var atom_count: integer;
            end;
         end;
 	replace_GOSUB;
+	check_variables;
         999:
 	if error_flag then begin
 	    LINE_error;
@@ -1210,7 +1402,6 @@ var atom_count: integer;
 	    clear_program(current_buffer);
 	end else dump_buffer;
 
-        close(source);
 end; { parse }
          
 function alloc_buffer(program_number: integer): integer;
@@ -1221,10 +1412,10 @@ begin
     write_debug('%alloc_buffer');
     found := 0;
     biggest := 1;
-    for i := 1 to max_buffer do with pool[i] do begin
+    for i := 1 to max_mdl_buffer do with pool^[i] do begin
 	if used > 0 then begin
 	    if current_program = program_number then found := i;
-	    if pool[biggest].time < time then biggest := i;
+	    if pool^[biggest].time < time then biggest := i;
 	    if time < maxint then time := time+1;
 	end else if found = 0 then found := i;
     end; { for }
@@ -1246,7 +1437,7 @@ var ln,i,cn: integer;
        linetype: char;
 begin
     reset (source);
-    with pool[buffer] do begin
+    with pool^[buffer] do begin
 	used := 0;
 	time := 0;
 	while not (eof(source)) do begin
@@ -1365,8 +1556,10 @@ begin
 		    case code_type of 
 			n_function,n_head,n_error,n_gosub: long_name := nil;
 			n_header,n_variable,n_const,n_comment: begin
-			    new(long_name);
-			    long_name^ := atom;
+			    if length(atom) > 0 then begin
+				new(long_name,length(atom));
+				as(long_name^,atom);
+			    end else long_name := nil;
 			end;
 		    end; { case }
 		end
@@ -1423,11 +1616,11 @@ var line_i: string_t;
     var atom_name : string_t;
 	count,i,j: integer;
 
-    begin with pool [buffer] do begin
+    begin with pool^ [buffer] do begin
 	if item = 0 then nice_print('""')
         else with table[item] do begin
            if long_name = nil then atom_name := ''
-           else atom_name := long_name^;
+           else atom_name := ns(long_name^);
 
 	   case nametype of 
 		n_function: begin
@@ -1486,7 +1679,7 @@ var line_i: string_t;
 		end;
 		n_error: nice_print( '/' + atom_name + '/');
 		n_gosub: begin
-		    nice_print('GOSUB '+table[name].long_name^);
+		    nice_print('GOSUB '+ns(table[name].long_name^));
 		    count := count_params(params);
 		    nice_print('(');
 		    for i := 1 to count do begin
@@ -1508,7 +1701,7 @@ var line_i: string_t;
     end; { with } end; { put_atom }
 
 begin { print_program }
-    with pool[buffer] do begin
+    with pool^[buffer] do begin
 	line_i := '';
 	for i := 1 to used do if table [i].nametype = n_head then begin
 	    if line_i >'' then l_print(line_i);
@@ -1517,7 +1710,7 @@ begin { print_program }
 	    put_atom(i,0)
 	end else if table [i].nametype = n_comment then begin
 	    if line_i >'' then l_print(line_i);
-	    if table[i].long_name <> nil then line_i := table[i].long_name^
+	    if table[i].long_name <> nil then line_i := ns(table[i].long_name^)
 	    else line_i := '<error>';
 	end;
 	l_print(line_i);
@@ -1564,10 +1757,10 @@ function exec_program (label_name: atom_t; monster: atom_t;
          label_name := clean_spaces (label_name);
          result := '';
          position := 0;
-	 with pool[buffer] do begin
+	 with pool^[buffer] do begin
 	    for i:= 1 to used do if table[i].nametype = n_header then
 		    if table[i].name = 6 { LABEL } then
-			if table[i].long_name^ = label_name then 
+			if ns(table[i].long_name^) = label_name then 
 			    position := i;
 	    if position > 0 then begin
 		found := true; { t‰m‰ pit‰‰ olla ennen eval_atom:ia koska }
@@ -1593,7 +1786,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
             result := vars[i].value;
          write_debug('%eval_variable result: ',result);	
          eval_variable := result
-      end; { eval variable }                            
+      end; { eval_variable }                            
 
       procedure set_variable ( variable: atom_t; value: string_t);
       var i,point : integer;
@@ -1606,7 +1799,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
            point := i;
         if point > 0 then vars[point].value := value
         else write_debug('%set variable - no variable');
-      end; { eval variable }                                     
+      end; { set_variable }                                     
 
       procedure define_variable (variable: atom_t);    
       begin
@@ -1638,6 +1831,70 @@ function exec_program (label_name: atom_t; monster: atom_t;
 	write_debug('%  -> : ',s);
       end;
 
+      function e_boolean_and(params: paramtable): string_t;
+      var result: string;
+	  bresult: boolean := true;
+	  i: integer;
+      begin
+	write_debug('%e_boolean_and');
+	for i := 1 to count_params(params) do 
+	    if clean_spaces(eval_atom (params[i])) = '' then 
+		bresult := false;
+	if bresult then result := 'TRUE'
+	else result := '';
+        write_debug ('%e_boolean_and result: ',result);
+	e_boolean_and := result;
+      end; { e_boolean_and }
+
+      function e_boolean_or(params: paramtable): string_t;
+      var result: string;
+	  bresult: boolean := false;
+	  i: integer;
+      begin
+	write_debug('%e_boolean_or');
+	for i := 1 to count_params(params) do 
+	    if clean_spaces(eval_atom (params[i])) > '' then 
+		bresult := true;
+	if bresult then result := 'TRUE'
+	else result := '';
+        write_debug ('%e_boolean_or result: ',result);
+	e_boolean_or := result;
+      end; { e_boolean_or }
+
+      function e_or_else(params: paramtable): string_t;
+      var result: string_t := '';
+	  i,n: integer;
+	  cont: boolean := true;
+      begin
+        write_debug('%e_or_else');
+	n := count_params(params);
+	i := 1;
+	while cont and (i <= n) do begin
+	    result := eval_atom (params[i]);
+	    if result > '' then cont := false;
+	    i := i +1;
+	end; 
+	write_debug('%e_or_else result: ',result);
+	e_or_else := result;
+      end; { e_or_else }
+
+      function e_and_then(params: paramtable): string_t;
+      var result: string_t := '';
+	  i,n: integer;
+	  cont: boolean := true;
+      begin
+        write_debug('%e_and_then');
+	n := count_params(params);
+	i := 1;
+	while cont and (i <= n) do begin
+	    result := eval_atom (params[i]);
+	    if result = '' then cont := false;
+	    i := i +1;
+	end; 
+	write_debug('%e_and_then result: ',result);
+	e_and_then := result;
+      end; { e_and_then }
+      
       function e_plus (params: paramtable): string_t;
       var a,result: string_t;
 	    i: integer;
@@ -1825,7 +2082,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
 	    var value: INTEGER;
 	    begin
 		if lookup_flag(value,atom) then 
-		    if read_global_flag(value) then action := 'TRUE'
+		    if read_global_flag(value) then action := atom
 		    else action := ''
 		else action := '';
 	    end;
@@ -2014,7 +2271,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
 
       begin
          write_debug('%e_duplicate');
-         owner := x_monster_owner(pool[buffer].current_program);
+         owner := x_monster_owner(pool^[buffer].current_program);
          priv := int_ask_privilege(monster,'owner') or 
 		system_code or spell_mode;
 	 result := meta_do(p1,action);
@@ -2035,7 +2292,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
 
       begin
          write_debug('%e_pduplicate');
-         owner := x_monster_owner(pool[buffer].current_program);
+         owner := x_monster_owner(pool^[buffer].current_program);
          priv := int_ask_privilege(monster,'owner') or 
 	    system_code or spell_mode;
          result := '';
@@ -2060,7 +2317,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
 
       begin
          write_debug('%e_destroy');
-         owner := x_monster_owner(pool[buffer].current_program);
+         owner := x_monster_owner(pool^[buffer].current_program);
          priv := int_ask_privilege(monster,'owner') or 
 	    system_code or spell_mode;
          result := meta_do (p1,action);
@@ -2081,7 +2338,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
 
       begin
          write_debug('%e_pdestroy');
-         owner := x_monster_owner(pool[buffer].current_program);
+         owner := x_monster_owner(pool^[buffer].current_program);
          priv := int_ask_privilege(monster,'owner') or 
 	    system_code or spell_mode;
          result := '';
@@ -2100,7 +2357,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
          write_debug('%e_move - p1: ',line_i);
          if length(line_i) > atom_length then 
             line_i := substr(line_i,1,atom_length);
-         if int_poof(monster,line_i,x_monster_owner(pool[buffer].current_program),
+         if int_poof(monster,line_i,x_monster_owner(pool^[buffer].current_program),
             int_ask_privilege(monster,'poof')
 	    or system_code or spell_mode,privilegion) then result := line_i
          else result := '';
@@ -2116,7 +2373,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
          write_debug('%e_pmove - p1: ',line_i);
          if length(line_i) > atom_length then 
             line_i := substr(line_i,1,atom_length);
-         if int_poof(myname,line_i,x_monster_owner(pool[buffer].current_program),
+         if int_poof(myname,line_i,x_monster_owner(pool^[buffer].current_program),
             int_ask_privilege(monster,'poof')
 	    or system_code or spell_mode,privilegion) then result := line_i
          else result := '';
@@ -2311,13 +2568,12 @@ function exec_program (label_name: atom_t; monster: atom_t;
          write_debug('%e_strip - p1: ',a);
          result := '';
          for index := 1 to length(a) do begin
-             if (a[index] >= 'A') and (a[index] <= 'Z') then 
-                result := result + chr(ord(a[index]) - ord('A') + ord('a'))
-             else if (a[index] >= 'a') and (a[index] <= 'z') then
+	     if a[index] in ['0'..'9'] then
                 result := result + a[index]
-             else if a[index] in ['0'..'9'] then
-                result := result + a[index]
-             else result := result + ' ';
+	     else if chartable[a[index]].kind = ct_letter then
+		result := result + chartable[a[index]].lcase
+	     else if chartable[a[index]].kind = ct_none then { DISCARD }
+	     else result := result + ' ';
          end;
          { result := clean_spaces(result); }
          write_debug('%e_strip result: ',result);
@@ -2339,7 +2595,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
          else begin
             code := int_get_code(name);
             if code = 0 then result := ''
-            else if (x_monster_owner(pool[buffer].current_program) <> 
+            else if (x_monster_owner(pool^[buffer].current_program) <> 
 			x_monster_owner(code) ) 
 		    and not int_ask_privilege(monster,'manager') 
 		    and not system_code then 
@@ -2482,8 +2738,8 @@ function exec_program (label_name: atom_t; monster: atom_t;
       begin
         write_debug('%e_set_experience');
         result := '';
-        owner  := x_monster_owner(pool[buffer].current_program); { get owner of this }
-        owner2 := x_monster_owner(pool[buffer].current_program,1); { and code owner }
+        owner  := x_monster_owner(pool^[buffer].current_program); { get owner of this }
+        owner2 := x_monster_owner(pool^[buffer].current_program,1); { and code owner }
         if eval_number(p1,exp) and 
            (  (int_ask_privilege(monster,'experience') and 
               (userid <> owner) and (userid <> owner2)) 
@@ -2499,7 +2755,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
       var result: string_t;
       begin
          write_debug ('%e_get_state');
-         getheader(pool[buffer].current_program);
+         getheader(pool^[buffer].current_program);
          freeheader;
          result := header.state;
          write_debug ('%e_get_state - result: ',result);
@@ -2512,7 +2768,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
          write_debug('%e_set_state');
          a := eval_atom(p1);
          write_debug('%e_set_state - p1: ',a);
-         getheader(pool[buffer].current_program);
+         getheader(pool^[buffer].current_program);
          header.state := a;
          putheader;   
          write_debug('e_set_state - result: ',a);
@@ -2534,7 +2790,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
          code := int_get_code(a1);
          if code = 0 then result := ''
          else if (x_monster_owner(code) <> 
-		x_monster_owner(pool[buffer].current_program))
+		x_monster_owner(pool^[buffer].current_program))
 	    and ((x_monster_owner(code) <> pub) or 
 		 not int_ask_privilege(monster,'owner')) 
 	    and not system_code then result := ''
@@ -2565,7 +2821,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
          code := int_get_code(a1);
          if code = 0 then result := ''
          else if (x_monster_owner(code) <> 
-		x_monster_owner(pool[buffer].current_program))
+		x_monster_owner(pool^[buffer].current_program))
 	    and ((x_monster_owner(code) <> pub) or 
 		not int_ask_privilege(monster,'owner')) 
 	    and not system_code then result := ''
@@ -2756,7 +3012,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
 	       not system_code then
                result := ''
             else if send_submit(monster,
-		pool[buffer].current_program,label_name,r1,r2) then
+		pool^[buffer].current_program,label_name,r1,r2) then
                writev(result,r1:1)
             else result := '';           
          end else result := '';
@@ -2933,7 +3189,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
 	code := int_get_code(a);
 	if (code = 0) or
 	    not privilegion or
-	    ((code = pool[buffer].current_program) and 
+	    ((code = pool^[buffer].current_program) and 
 	      not manager
 	    ) or 
 	    ( not same_room(a) and
@@ -3231,6 +3487,10 @@ function exec_program (label_name: atom_t; monster: atom_t;
 	    75: { === } result := e_equal3(p1,p2);
 	    76: { spell level } result := e_spell_level;
 	    77: { set spell level } result := e_set_spell_level(p1);
+	    78: { boolean and } result := e_boolean_and(params);
+	    79: { boolean or } result := e_boolean_or(params);
+	    80: { or else } result := e_or_else(params);
+	    81: { and then } result := e_and_then(params);
 	end; { case }
 
 	write_debug('%eval_function result: ',result);
@@ -3340,7 +3600,7 @@ function exec_program (label_name: atom_t; monster: atom_t;
          var_pointer := var_count; 
          eval_step;
          if item = 0 then eval_atom := ''
-         else with pool[buffer].table[item] do begin
+         else with pool^[buffer].table[item] do begin
 	    {
             if long_name=nil then atom_name := name
             else atom_name := long_name^;
@@ -3358,10 +3618,12 @@ function exec_program (label_name: atom_t; monster: atom_t;
 	    }
 	    case nametype of 
 		n_function: eval_atom := eval_function(name,params);
-		n_header:   eval_atom := eval_header(name,long_name^,params);
-		n_variable: eval_atom := eval_variable(long_name^);
+		n_header:   eval_atom := eval_header(name,ns(long_name^),
+			    params);
+		n_variable: eval_atom := eval_variable(ns(long_name^));
 		n_gosub:    eval_atom := eval_gosub(name,params);
-		n_const:    eval_atom := long_name^;
+		n_const:    if long_name = nil then eval_atom := ''
+			    else eval_atom := ns(long_name^);
 		otherwise error_counter := error_counter +1;
 	    end;
          end;                     
@@ -3405,7 +3667,7 @@ end; { exec program }
 function current_run: integer;
 begin
   if not code_running then current_run := 0
-  else current_run := pool[current_buffer].current_program;
+  else current_run := pool^[current_buffer].current_program;
 end; { current_run }
 
 [global]
@@ -3572,7 +3834,7 @@ begin
 	if header.runnable and (health <> 0) then begin
 	    current_buffer := alloc_buffer(code);
 
-	    with pool[current_buffer] do begin  
+	    with pool^[current_buffer] do begin  
 
 		{ ladataan monsterin koodi }
 		if (current_program <> code) or 
@@ -3624,7 +3886,7 @@ begin
 		    putheader;              
 		    current_version := header.version;
 		end;
-	    end; { with pool }
+	    end; { with pool^ }
 
         ok := false;
         i := 0;
@@ -3743,7 +4005,7 @@ begin
     freeheader;
 
     current_buffer := alloc_buffer(code);
-    with pool [current_buffer] do begin
+    with pool^[current_buffer] do begin
 	{ ladataan monsterin koodi }
 	if (current_program <> code) or 
 	    (header.version <> current_version) then begin
@@ -3809,12 +4071,49 @@ procedure load (code: integer; source: string_l;
 
 label 1;
 var o_file,s_file: text;
+    s_terminal: terminal_t;
     count,i,errorcode,s_errorcode: integer;
+
+    function reader_file(var line: string_t): boolean;
+    begin
+	write_debug('%reader_file');
+	if EOF(s_file) then reader_file := false
+	else begin
+	    readln(s_file,line);
+	    reader_file := true;
+	end;
+    end; { reader_file }
+
+    function reader_terminal(var line: string_t): boolean;
+    var eof_flag : boolean;
+	s: string;
+	procedure leave;
+	begin
+	    write_debug('%leave');
+	    eof_flag := true;
+	end; { leave }
+    begin
+	write_debug('%reader_terminal');
+	eof_flag := false;
+	grab_line('MDL> ',s,eof_handler := leave, channel := s_terminal);
+	line := s;
+	reader_terminal := not eof_flag;
+    end; { reader_terminal }
+
+    var read_from_terminal : boolean;
 begin
     write_debug('%load');
+    if open_terminal(source,s_terminal) then begin
+	read_from_terminal := true;
+	s_errorcode := 0;
+    end else begin
+	read_from_terminal := false;
+
 	open(s_file,source,old,error := continue,
 	    record_length := string_length +20,
 	    default := def );
+    end;
+
 	s_errorcode := status(s_file);
 	if s_errorcode <= 0 then begin  
 	    count := 0;   
@@ -3857,7 +4156,11 @@ begin
 	    end;  
 
 	    current_buffer := alloc_buffer(code);
-	    parse (s_file,o_file);
+	    if read_from_terminal then	parse(reader_terminal,o_file)
+	    else begin
+		reset(s_file);
+		parse (reader_file,o_file);
+	    end;
                                                        
 	    getheader(code);
 	    header.version := (header.version +1) mod 100000;
@@ -3871,6 +4174,9 @@ begin
 	    putheader;
 
 	1:
+	    if read_from_terminal then close_terminal(s_terminal)
+	    else close(s_file);
+
 	end else case s_errorcode of
 	    3: { PAS$K_FILNOTFOU } writeln('Error: File not found.');
 	    4: { PAS$K_INVFILSYN } writeln('Error: Illegal file name.');
@@ -3886,7 +4192,8 @@ var i: integer;
 begin     
     write_debug ('%init_interpreter');
     { alustetaan ohjelma puskuri }
-    for i := 1 to max_buffer do with pool[i] do begin
+    new(pool,max_mdl_buffer); (* max_mdl_buffer asetetaan privusers.pas:issa *)
+    for i := 1 to max_mdl_buffer do with pool^[i] do begin
 	used := 0;
 	current_program := 0;
 	current_version := 0;

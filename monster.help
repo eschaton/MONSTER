@@ -341,9 +341,13 @@ Syntax:        Brief
 Description:   Toggles brief printing of room description off or on
 :claim
 Syntax:        Claim
+               Claim room
                Claim <object>
+               Claim object <object>
                Claim <monster>
+               Claim monster <monster>
                Claim <spell>
+               Claim spell <spell>
 
 Description:   Sets the ownership of <object> or <monster> or <spell> or
                   this room to you
@@ -408,12 +412,16 @@ Requirements:  You are the owner of the object
                   if owner of this room is System
 :disown
 Syntax:        Disown
+               Disown room
                Disown <object>
+               Disown object <object>
                Disown <monster>
+               Disown monster <monster>
                Disown <spell>
+               Disown spell <spell>
 
 Description:   Sets ownership of <object> or <monster> or <spell>
-                  this room to Disowned
+                  or this room to Disowned
 Requirements:  You happen to be the owner of the target
                or you have the Owner -privilege, if target is this room
                or you have the Owner -privilege, 
@@ -528,7 +536,7 @@ Requirements: You are the owner of this room
 Syntax:       Bear <monster>
 Alias:        Create monster <monster>
 
-Description:  Creates a new monster with name <object>
+Description:  Creates a new monster with name <monster>
 Requirements: You are owner of this room
               or room is public
               or you have the Owner -privilege
@@ -707,6 +715,7 @@ Options:      Exits               Lists exits you can inspect here
               Levels              Shows all the experience levels
               Quotas              Show your quotas
               Spells              Show your spell level or what spells you know
+              Charset             Show name of used character set
 :summon
 Syntax:       Summon <spell name>
               <victim name> (type to prompt)
@@ -779,10 +788,13 @@ Requirements: You have the Manager -privilege (which is rare)
 
 :public
 Syntax:       Public
-              Public <room>
+              Public room
               Public <object>
+              Public object <object>
               Public <monster>
+              Public monster <monster>
               Public <spell>
+              public spell <spell>
 
 Description:  Sets the ownership of room or object or monster or spell
                   or this room to Public

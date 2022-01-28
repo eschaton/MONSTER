@@ -36,7 +36,9 @@ SYNTAX:	function	->	name (p) / name (p,p) / name (p,p,p) /
 				privilege / userid / pprint raw / print raw /
 				oprint raw / print null / mheal / mattack /
 				list / lookup direction / get global flag /
-                                spell level / set spell level / prog
+                                spell level / set spell level / prog /
+                                boolean and / boolean or /
+				or else / and then
 
 	program		->	sentence +
 
@@ -60,8 +62,11 @@ Summary:	+	concatenate all parameters
 		pget	player get items (defined by parameter) from ground
 		drop	monster drop (defined by parameter) items to ground
 		pdrop	player drop items (defined by parameter) items to ground
-		and	select the common elements of two parameters
-		or 	select all elements from two parameters
+		and	select the common elements of parameters
+		or 	select all elements from parameters
+                boolean and       returns "TRUE" if all parameters are non-null
+                boolean or        returns "TRUE" if least one paramater is 
+                                     non-null
 		move	monster jump to some room (defined by parameter)
 		pmove	player jump to some room (defined by parameter)
 		pprint	print message to players 
@@ -102,7 +107,8 @@ Summary:	+	concatenate all parameters
 				first parameter div second parameter
 		get state	get value of permanent code variable
 		set state	set value of permanent code variable
-		get global flag	read value of given flags
+		get global flag	returns global flags, what have true from
+                                    given flags
 		less	return TRUE if first value is lower than second value
 		number	return value of parameter if parameter is integer
 		health  return health of any player
@@ -153,6 +159,10 @@ Summary:	+	concatenate all parameters
 					of current spell
 		set spell level	set spell level of summoner (or learner)
 					of current spell
+		or else		evalutes paramaters until some paramater
+					return no null result
+		and then	avalutes paramaters until some paramater
+					returns null result
 
 The commands do not print anything except:
 	pdrop		may print unwear or unwield meassage
@@ -247,7 +257,7 @@ The following commands return a numeric value:
 	set spell level
 
 The following commands return TRUE or null string:
-	not, less, get global flag (if parameter isn't list)
+	not, less, boolean and, boolean or
 
 Example of object's list:
 	shovel, hat, ruby, note
@@ -292,14 +302,14 @@ Return:		+	concatenated parameters
 		quotient	first div second	> numeric value
 		get state	permanent variable
 		set state	parameter's value
-		get global flag	List of TRUEs			> item list
+		get global flag	List of true flags	> item list
 		less	"" or "TRUE"
 		number	"" or parameter's value		> numeric value
 		health	health of given player		> numeric value
 		set experience	parameter's value	> numeric value
-		all players	list of players			> item list 
-		all rooms	list of rooms			> item list
-		all objects	list of objects			> item list 
+		all players	list of players		> item list 
+		all rooms	list of rooms		> item list
+		all objects	list of objects		> item list 
 		control	second parameter
 		include	second parameter  or "" 
 		exclude	unmatched items from first parameter	> item list
@@ -323,6 +333,10 @@ Return:		+	concatenated parameters
 		list	concentenated lists			> item list
 		spell level	summoner's spell level  > numeric value
 		set spell level parameter's value       > numeric value
+		boolean and     "" or "TRUE"
+		boolean or      "" or "TRUE"
+		or else		last evaluted parameter
+		and then	last evaluted paramater
                                                         
 The following commands don't work with a hook, except by using a 
 control function:
@@ -445,6 +459,10 @@ drop		(<object list>)
 pdrop		(<object list>) 
 and		(<item list 1>,<item list 2>,...,<item list n>) 
 or		(<item list 1>,...,<item list n>) 
+boolean and     (<boolean value 1>,...,<boolean value n>)
+boolean or      (<boolean value 1>,...,<boolean value n>)
+or else		(<condition 1>,...,<condition n>)
+and then	(<condition 1>,...,<condition n>)
 move		(<room's name>) 
 pmove		(<room's name>) 
 pprint		(<message part 1>,...,<message part n>) 

@@ -26,22 +26,23 @@ CREATION DATE:	9.2.1991
 	      |         | obj.numexist bug fixed in read_MONSTER
    28.05.1992 |		| V 1.02    write going field also for exit
    20.06.1992 |         | V 1.03    write_VIRTUAL, read_VIRTUAL
+    9.07.1992 |         | If reading of dump failed, mark it as invalid,
+              |         | added (incomplete) end of dump file check to end
+   12.08.1992 |         | Dummy player_here removed (now defined in module
+              |         | PARSER)
+    5.12.1992 |         | Warning about charset
 }
 
-CONST DVERSION = '1.03'; { DUMPER Version }
+CONST DVERSION = '1.04'; { DUMPER Version }
 			{ version numbers MUST be dictionary order !!! }
 			{ ie. '1.00' < '1.01' }
 
 var READ_vers_101: boolean;
     READ_vers_102: boolean;
     READ_vers_103: boolean;
- 
-{ DUMMY for linker }
-[global]
-function player_here(id: integer; var slot: integer): boolean;
-begin
-    player_here := false;
-end;
+    READ_vers_104: boolean;
+
+    READ_error: boolean; 
 
 { DUMMY for linker }
 [global]
@@ -202,6 +203,7 @@ end; { read_ITEM }
 
 procedure write_DESCLINE(var f: text; linenum: integer);
 var error: boolean;
+    line: string;
 begin
 
     if linenum = DEFAULT_LINE then 
@@ -216,8 +218,13 @@ begin
 
 	if not error then begin
 	    getline(linenum);
-	    write_ITEM(f,'DESCLINE%',oneliner.theline);
 	    freeline;
+	    line := oneliner.theline;
+	    if length(line) > 65 then begin
+		    write_ITEM(f,'DESCLINEB%',substr(line,1,50));
+		    line := substr(line,51,length(line)-50);
+	    end;
+	    write_ITEM(f,'DESCLINE%',line);
 	end else begin
 	    writeln('Nonexisted description line #',linenum:1);
 	    write_ITEM(f,'DEFAULT*DESCLINE','!')
@@ -226,7 +233,8 @@ begin
 end; { write_DESCLINE }
 
 function read_DESCLINE(var f: text; var linenum: integer): boolean;
-var data: string;
+var data,datab: string;
+    ok: boolean;
 begin
     if read_ITEM(f,'DEFAULT*DESCLINE',data) then begin
 	linenum := DEFAULT_LINE;
@@ -234,14 +242,32 @@ begin
     end else if read_ITEM(f,'NULL*DESCLINE',data) then begin
 	linenum := 0;
 	read_DESCLINE := true;
-    end else if read_ITEM(f,'DESCLINE%',data) then begin
-	if alloc_general(I_LINE,linenum) then begin
-	    getline(linenum);
-	    oneliner.theline := data;
-	    putline;
-	    read_DESCLINE := true;
-	end else read_DESCLINE := false;
-    end else read_DESCLINE := false;
+    end else begin
+	ok := false;
+	if READ_vers_104 then 
+	    IF read_ITEM(f,'DESCLINEB%',datab) then ok := true;
+	if read_ITEM(f,'DESCLINE%',data) then begin
+	    if alloc_general(I_LINE,linenum) then begin
+		if ok then data := datab + data;
+		getline(linenum);
+		oneliner.theline := data;
+		putline;
+		read_DESCLINE := true;
+	    end else begin
+		writeln('Can''t allocate space for desciption line!');
+		READ_error := true;
+		linenum := 0;
+		read_DESCLINE := true;
+	    end;
+	end else begin
+	    if ok then begin
+		writeln('Partial description line readed !');
+		read_ERROR := true;
+		linenum := 0;
+		read_DESCLINE := true;
+	    end else read_DESCLINE := false;
+	end;
+    end;
 end; { read_DESCLINE }
 
 { BLOCK }
@@ -249,6 +275,7 @@ end; { read_DESCLINE }
 procedure write_BLOCK(var f: text; code: integer);
 var i : integer;
     error: boolean;
+    line: string;
 begin
     if code < 0 then write_DESCLINE(f,-code)
     else if code = DEFAULT_LINE then 
@@ -264,8 +291,14 @@ begin
 	if not error then begin
 	    getblock(code);
 	    write_ITEM(f,'START*BLOCK','!');
-	    for i := 1 to block.desclen do 
-		write_ITEM(f,'BLOCK%',block.lines[i]);
+	    for i := 1 to block.desclen do begin
+		line := block.lines[i];
+		if length(line) > 70 then begin
+		    write_ITEM(f,'BLOCKB%',substr(line,1,60));
+		    line := substr(line,61,length(line)-60);
+		end;
+		write_ITEM(f,'BLOCK%',line);
+	    end;
 	    freeblock;
 	end else begin
 	    writeln('Nonexisted block desciption #',code:1);
@@ -275,6 +308,23 @@ begin
 end; { write_BLOCK }
 
 function read_BLOCK(var f: text; var code: integer): boolean;
+    function getit(var data: string): boolean;
+    var datab: string;
+    begin
+	if READ_vers_104 then 
+	    if read_ITEM(f,'BLOCKB%',datab) then
+		if read_ITEM(f,'BLOCK%',data) then begin
+		    data := datab + data;
+		    getit := true;
+		end else begin
+		    writeln('Partial block description line !');
+		    read_ERROR := true;
+		    data := datab;
+		    getit := true;
+		end
+	    else getit := read_ITEM(f,'BLOCK%',data)
+	else getit := read_ITEM(f,'BLOCK%',data);
+    end; { getit }
 var data: string;
 begin
     if read_DESCLINE(f,code) then begin
@@ -290,13 +340,19 @@ begin
 	if alloc_general(I_block,code) then begin
 	    getblock(code);
 	    block.desclen := 0;
-	    while read_ITEM(f,'BLOCK%',data) do begin
+	    while getit(data) do begin
 		block.desclen := block.desclen +1;
 		block.lines[block.desclen] := data;
 	    end;
 	    putblock;
 	    read_BLOCK := true;
-	end else read_BLOCK := false;
+	end else begin
+	    writeln('Can''t allocate space for description block !!');
+	    READ_error := true;
+	    while getit(data) do ;
+	    code := 0;
+	    read_BLOCK := true;
+	end;
     end else read_BLOCK := false;
 end; { read_BLOCK }
 
@@ -379,6 +435,7 @@ begin
 	    data := data + chr(c);
 	end;
 	if not flag then writeln('Error in reading binary string.');
+	READ_error := READ_error or not flag;
 	read_BINARY := true;
     end;
 end;
@@ -426,6 +483,7 @@ begin
 	else if data = '' then begin
 	    writeln('Empty name for class ',class:1,'/',iclass:1);
 	    writeln(' Treated as null name.');
+	    READ_error := true;
 	    name := 0;
 	end else begin
 	    get_namfile(class,rec);
@@ -436,8 +494,11 @@ begin
 	    for i := 1 to indx.top do 
 		if not indx.free[i] then
 		    if rec.idents[i] = data then name := i;
-	    if name = 0 then writeln('Reference error in class ',
+	    if name = 0 then begin
+		READ_error := true;
+		writeln('Reference error in class ',
 		    class:1,'/',iclass:1, ' name ',data);
+	    end;
 	end;
 	read_NAME := true;
     end;
@@ -455,6 +516,7 @@ begin
 	else if data = '' then begin
 	    writeln('Empty name for class ',class:1,'/',iclass:1);
 	    writeln(' Treated as null name.');
+	    READ_error := true;
 	    name := 0;
 	end else begin
 	    get_namfile(class,rec);
@@ -466,8 +528,11 @@ begin
 	    { must to come same order as original so that 
 		Great Hall, Void and Pit of Fire gets right number }
 
-	    if name = 0 then writeln('Overflow error in class ',
+	    if name = 0 then begin
+		READ_error := true;
+		writeln('Overflow error in class ',
 		    class:1,'/',iclass:1, ' name ',data)
+	    end
 	    else begin
 		indx.free[name] := false;
 		indx.inuse := indx.inuse +1;
@@ -547,8 +612,10 @@ begin
 	for i := 1 to indx.top do 
 	    if indx.free[i] then code := i;
 
-	if code = 0 then writeln('Overflow error in mdl store.')
-	else begin
+	if code = 0 then begin
+	    READ_error := true;
+	    writeln('Overflow error in mdl store.')
+	end else begin
 	    indx.free[code] := false;
 	    indx.inuse := indx.inuse +1;
 	    
@@ -593,6 +660,7 @@ begin
 	end;
 	putindex;
 	if not flag then writeln('Error in reading mdl code.');
+	READ_error := READ_error or not flag;
 	read_MDL := true;
     end;
 end;
@@ -650,6 +718,7 @@ var id: integer;
 begin
    if not read_NEWNAME(f,'OBJECT%',T_OBJNAM,I_OBJECT,object) then read_OBJECT := false
    else if object = 0 then begin
+      READ_error := true;
       writeln('Object with empty/null name!');
       read_ITEM(f,'OWNER%',s);
       read_ITEM(f,'NAME%',s);
@@ -726,6 +795,7 @@ begin
       putobj;
       if not flag then writeln('Error in reading object ',
 	objnam.idents[object]);
+      READ_error := READ_error or not flag;
       read_OBJECT := true;
    end;
 end; { read_OBJECT }
@@ -756,6 +826,7 @@ var id: integer;
 begin
    if not read_NAME(f,'OBJECT2%',T_OBJNAM,I_OBJECT,object) then read_OBJECT2 := false
    else if object = 0 then begin
+	READ_error := true;
 	writeln('Empty/null/unknown object name!');
       read_NAME(f,'HOME%',T_NAM,I_ROOM,id);
       read_NAME(f,'GETOBJREQ%',T_OBJNAM,I_OBJECT,id);
@@ -783,6 +854,7 @@ begin
       putobj;
       if not flag then writeln('Error in reading object ',
 	    objnam.idents[object]);
+	READ_error := READ_error or not flag;
       read_OBJECT2 := true;
    end;
 end; { read_OBJECT2 }
@@ -825,7 +897,10 @@ begin
 	getpers; freepers; getindex(I_PLAYER); freeindex;
 	for i := 1 to indx.top do if not indx.free[i] then
 	    if pers.idents[i] = data then id := i;
-	if id = 0 then writeln('Monster''s name ',data,' not found.');
+	if id = 0 then begin
+	    READ_error := true;
+	    writeln('Monster''s name ',data,' not found.');
+	end;
 
 	getuser;
 	if id > 0 then writev(user.idents[id],':',rec.parm:1); { update username }
@@ -837,14 +912,17 @@ begin
 	for i := 1 to maxhold do rec.holding[i] := 0;
 	i := 1;
 	while read_NAME(f,'HOLD%',T_OBJNAM,I_OBJECT,a) do begin
-	    rec.holding[i] := a;
+	    if a = 0 then flag := false (* skip *)
+	    else begin
+		rec.holding[i] := a;
 
-	    getobj(a);   
-	    obj.numexist := obj.numexist + 1;   { Update counter }
-	    putobj;
+		getobj(a);   
+		obj.numexist := obj.numexist + 1;   { Update counter }
+		putobj;
 
 
-	    i := i +1;
+		i := i +1;
+	    end; 
 	end;
 	getint(N_EXPERIENCE); freeint;
 	if id > 0 then rec.experience := anint.int[id];
@@ -859,6 +937,7 @@ begin
 	if id > 0 then rec.self := anint.int[id];
 
 	if not flag then writeln('Error in loading monster ',rec.name);
+	READ_error := READ_error or not flag;
 	read_MONSTER := true;
     end;
 end; { read_MONSTER }
@@ -938,7 +1017,7 @@ begin
 end; { skip_PLAYER_body }
 
 procedure read_PLAYER_body(var f: text; name: integer; var flag: boolean);
-var sp,i,owner: integer;
+var sp,i,owner,filler: integer;
     data: string;
 begin
     if debug then writeln('Reading player body #',name:1);
@@ -1012,7 +1091,11 @@ begin
     getspell(name);
     for sp := 1 to maxspells do spell.level[sp] := 0;
     while read_NAME(f,'SPELL%',T_SPELL_NAME,I_SPELL,sp) do begin
-	if not read_INTEGER(f,'LEVEL%',spell.level[sp]) then flag := false;
+	if sp = 0 then begin
+	    read_INTEGER(f,'LEVEL%',filler); (* SKIP ! *)
+	    flag := false;
+	end
+	else if not read_INTEGER(f,'LEVEL%',spell.level[sp]) then flag := false;
     end;
     putspell;
 
@@ -1040,6 +1123,7 @@ var flag: boolean;
 begin
     if not read_NEWNAME(f,'PLAYER%',T_PERS,I_PLAYER,name) then read_PLAYER := false
     else if name = 0 then begin
+	READ_error := true;
 	writeln('Empty/null player name!');
 	read_ITEM(f,'USER%',data);
 	skip_PLAYER_body(f);
@@ -1062,6 +1146,7 @@ begin
 	read_PLAYER_body(f,name,flag);
 
 	if not flag then writeln('Error in reading player ',pers.idents[name]);
+	READ_error := READ_error or not flag;
 	read_PLAYER := true;
     end;
 end; { read_PLAYER }
@@ -1093,9 +1178,11 @@ begin
 	getindex(I_PLAYER);
 	if (player < 1) or (player > indx.top) then begin
 	    writeln('Virtual player id #',player:1, 'out of range.');
+	    READ_error := true;
 	    skip := true;
 	end else if not indx.free[player] then begin
 	    writeln('Virtual player id #',player:1, 'is already reserved.');
+	    READ_error := true;
 	    skip := true;
 	end else begin
 	    indx.free[player] := false;
@@ -1123,7 +1210,7 @@ begin
 
 	    if not flag then writeln('Error in reading virtual player #',
 		player:1,' (',pers.idents[player],')');
-
+	    READ_error := READ_error or not flag;
 	    read_VIRTUAL := true;
 	end;
     end;
@@ -1212,6 +1299,7 @@ begin
 	    if (from > 0) then writeln('Error in loading exit ',
 		nam.idents[from],'/',direct[slot])
 	    else writeln('Error in loading exit #',from:1,'/',direct[slot]);
+	    READ_error := true;
 	end;
 	read_EXIT := true;
     end;
@@ -1234,6 +1322,7 @@ begin
     if not read_NEWNAME(f,'SPELL%',T_SPELL_NAME,I_SPELL,spell) then
 	read_SPELL := false
     else if spell = 0 then begin
+	READ_error := true;
 	writeln('Empty/null spell name!');
 	read_MDL(f,j);
 	read_SPELL := true;
@@ -1318,6 +1407,7 @@ begin
     if not read_NEWNAME(f,'ROOM%',T_NAM,I_ROOM,id) then
 	read_ROOM := false
     else if id = 0 then begin 
+	READ_error := true;
 	writeln('Empty/null room name!');
 	read_ITEM(f,'OWNER%',data);
 	read_ITEM(f,'NICENAME%',data);
@@ -1371,14 +1461,19 @@ begin
 	end;
 	i := 1;
 	while read_NAME(f,'OBJHERE%',T_OBJNAM,I_OBJECT,intdata) do begin
-	    here.objs[i] := intdata;
-	    if not read_INTEGER(f,'OBJHIDE%',here.objhide[i]) then flag := false;
+	    if intdata = 0 then begin
+		read_INTEGER(f,'OBJHIDE%',intdata); (* skip ! *)
+		flag := false;
+	    end else begin
+		here.objs[i] := intdata;
+		if not read_INTEGER(f,'OBJHIDE%',here.objhide[i]) then flag := false;
 
-	    getobj(here.objs[i]);   
-	    obj.numexist := obj.numexist + 1;   { Update counter }
-	    putobj;
+		getobj(here.objs[i]);   
+		obj.numexist := obj.numexist + 1;   { Update counter }
+		putobj;
 
-	    i := i+1;
+		i := i+1;
+	    end;
 	end;
 
 	if not read_DESCLINE(f,here.objdesc) then flag := false;
@@ -1413,6 +1508,7 @@ begin
 
 	putroom;
 	if not flag then writeln('Error in reading room ',here.nicename);
+	READ_error := READ_error or not flag;
 	read_ROOM := true;
     end;
 end;
@@ -1445,6 +1541,7 @@ begin
     if not read_NAME(f,'ROOM2%',T_NAM,I_ROOM,id) then
 	read_ROOM2 := false
     else if id = 0 then begin
+	READ_error := true;
 	writeln('Empty/null/unknown room name!');
 
 	for i := 1 to maxexit do begin
@@ -1486,6 +1583,7 @@ begin
 	
 	putroom;
 	if not flag then writeln('Error in reading room ',here.nicename);
+	READ_error := READ_error or not flag;
 	read_ROOM2 := true;
     end;
 end;
@@ -1525,6 +1623,7 @@ begin
 	putglobal;
 
 	if not flag then writeln('Error in reading global #',id);
+	READ_error := READ_error or not flag;
 	read_GVAL := true;
     end;
 end;
@@ -1543,6 +1642,7 @@ begin
     writeln('Database writing to ',dump_file,' started.');
     write_ITEM(f,'DATABASE%',DVERSION);
     write_ITEM(f,'BY%',userid);
+    write_ITEM(f,'CHARSET%',chartable_charset);
 
     getindex(I_BLOCK); freeindex; block_use := indx.inuse;
     getindex(I_LINE); freeindex; line_use := indx.inuse;
@@ -1609,9 +1709,11 @@ var block_use,
     i,j: integer;
     ver,user: string;
     error: boolean;
+    dump_charset : string;
 begin
     writeln('Database reading from ',dump_file,' started.');
     error := false;
+    READ_error := false;
     if not read_ITEM(f,'DATABASE%',ver) then begin
 	error := true;
 	goto loppu;
@@ -1625,7 +1727,21 @@ begin
     READ_vers_101 := ver >= '1.01';
     READ_vers_102 := ver >= '1.02';
     READ_vers_103 := ver >= '1.03';
-    if (ver > DVERSION) then writeln('Unknown version!');
+    READ_vers_104 := ver >= '1.04';
+    if (ver > DVERSION) then writeln('WARNING: Unknown version!');
+
+    if not read_ITEM(f,'CHARSET%',dump_charset) then
+	dump_charset := 'UNKNOWN';
+    if (dump_charset = 'UNKNOWN') or (chartable_charset = 'UNKNOWN') then begin
+	writeln('WARNING: Dumped database''s charset is ',dump_charset,' and');
+	writeln('         charset for building database is ',
+	    chartable_charset,'.');
+    end else if (dump_charset <> chartable_charset) then begin
+	writeln('WARNING: Dumped database''s charset is ',dump_charset,' and');
+	writeln('         charset for building database is ',
+	    chartable_charset,'.');
+	writeln('         No conversions implemented.');
+    end;
 
     if not read_INTEGER(f,'BLOCKCOUNT%',block_use) then begin
 	error := true;
@@ -1772,7 +1888,7 @@ begin
     j := 0;
     while read_PLAYER(f,i) do j := j + 1;
     if READ_vers_103 then
-	writeln(j:3,' real players readed.')
+	writeln(j:3,' real players and monsters readed.')
     else
 	writeln(j:3,' players readed.');
 
@@ -1791,8 +1907,28 @@ begin
     while read_GVAL(f,i) do j := j +1;
     writeln(j:3,' global data readed.');
 
+    if READ_error then writeln('Error(s) detected during read !!!');
+
+    if not eof(f) then begin
+	(* This not detect if end of dump file have one extra line,
+	 * because read_ITEM will read it for next line check !!!!
+	 *)
+	writeln('Expected end of dump file NOT detected !');
+	writeln('  (Reading of dump file out of sync ?)');
+	error := true;
+    end;
+
+    if error or READ_error then begin
+	writeln('Marking created database as invalid.');
+	getglobal;
+	global.int[GF_VALID] := 0;	{ FALSE }
+	putglobal;
+	writeln;
+    end;
+
 loppu:
-    if error then writeln('Dump file is invalid.');
+    if error or READ_error then writeln('Dump file is invalid.')
+    else writeln('Database created.');
 end;
 
 var play,exist: indexrec;

@@ -3,13 +3,15 @@ $ SET NOON
 $ SET ON
 $ ON WARNING THEN CALL FATAL "ERROR !!"
 $ df = F$ENVIRONMENT("DEFAULT")
-$
+$ scrd = F$PARSE("SYS$SCRATCH:",,,,"SYNTAX_ONLY") - ".;"
+$ 
 $! Questions
 $ CALL PATHNAME bn 'F$ENVIRONMENT("PROCEDURE")
 $ source_directory == ""
 $ CALL QUERY_DIR source_directory "Give source (distribution) directory" 'bn
+$ CALL SUBDIR_NAME 'scrd' MONSTER_106_WORK def_work
 $ work_directory == ""
-$ CALL ASK_DIR work_directory "Give work directory for compilation" 'df
+$ CALL ASK_DIR work_directory "Give work directory for compilation" 'def_work'
 $ option == 0
 $ CALL ASK_OPTION
 $ database_directory == ""
@@ -45,9 +47,10 @@ $! Actions
 $ SET DEFAULT 'work_directory'
 $ CALL CHECK_FILE 'source_directory'MONSTER.HELP
 $ CALL CHECK_FILE 'source_directory'COMMANDS.PAPER
-$ IF option .ne. 4 THEN CALL CHECK_FILE 'source_directory'ILMOITUS.TXT
+$ ! IF option .ne. 4 THEN CALL CHECK_FILE 'source_directory'ILMOITUS.TXT
 $ CALL CHECK_FILE 'source_directory'CLD.PROTO
 $ IF option .ne. 4 THEN CALL CHECK_FILE 'source_directory'INIT.PROTO
+$ IF option .eq. 4 THEN CALL CHECK_FILE 'source_directory'INIT.APPEND
 $ CALL CHECK_FILE 'source_directory'CONVERT.BATCH
 $ CALL CHECK_FILE 'source_directory'FIX.BATCH
 $
@@ -74,12 +77,12 @@ $ COPY/LOG 'source_directory'CONVERT.BATCH,FIX.BATCH 'image_directory
 $ IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
 $ COPY/LOG 'source_directory'MONSTER.HELP 'DBDIR'
 $ IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
-$ IF option .ne. 4 
-$   THEN
-$   COPY/LOG 'source_directory'ILMOITUS.TXT 'DBDIR'
-$   IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
-$ ENDIF
-$ SET FILE/PROTECTION=(W:R)/LOG 'DBDIR'MONSTER.HELP,ILMOITUS.TXT
+$ !IF option .ne. 4 
+$ !  THEN
+$ !  COPY/LOG 'source_directory'ILMOITUS.TXT 'DBDIR'
+$ !  IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
+$ !ENDIF
+$ SET FILE/PROTECTION=(W:R)/LOG 'DBDIR'MONSTER.HELP
 $ IF .not. $SEVERITY THEN CALL FATAL "Set file/protection failed"
 $ COPY/LOG 'source_directory'COMMANDS.PAPER 'DBDIR'
 $ IF .not. $SEVERITY THEN CALL FATAL "Copy failed"
@@ -97,6 +100,7 @@ $
 $ IF option .eq. 1 THEN CALL BUILD_DATABASE
 $ IF option .eq. 2 THEN CALL CONVERT_DATABASE
 $ IF option .eq. 3 THEN CALL BUILD_CASTLE
+$ IF option .eq. 4 THEN CALL EDIT_INIT
 $
 $ WRITE SYS$OUTPUT ""
 $ WRITE SYS$OUTPUT "Add to your LOGIN.COM command:"
@@ -118,6 +122,8 @@ $ SET NOON
 $ IF F$TYPE(df) .eqs. "STRING" THEN SET DEFAULT 'df'
 $ IF F$TRNLMN("FROM") .nes. "" THEN CLOSE FROM
 $ IF F$TRNLMN("TO") .nes. "" THEN CLOSE TO
+$ IF F$TRNLMN("APPEND") .nes. "" THEN CLOSE APPEND
+$ IF F$TRNLMN("INSFILE") .nes. "" THEN CLOSE INSFILE
 $ SET ON
 $ STOP
 $ ENDSUBROUTINE
@@ -148,6 +154,10 @@ $     THEN
 $       WRITE SYS$ERROR "Creating of ''full' failed"
 $       GOTO again1
 $   ENDIF
+$ ELSE
+$   CALL DIRNAME 'full' dname
+$   SET FILE/PROTECTION=(W:E)/LOG 'dname
+$   IF .not. $SEVERITY THEN CALL FATAL "Set file/protection failed"
 $ ENDIF
 $ CALL DIRNAME 'full' dirname
 $ SET FILE/ACL=(IDENTIFIER='F$USER(),access=r+w+e+d+c)/LOG 'dirname
@@ -160,12 +170,27 @@ $ 'p1 == full
 $ EXIT
 $ ENDSUBROUTINE
 $!
-$ CREATE_SUBDIR: SUBROUTINE
+$ SUBDIR_NAME: SUBROUTINE
 $ base = p1 - ">" - "]"        ! This can fail
 $ tail = p1 - base
 $ dir = base + "." + p2 + tail
 $ IF F$PARSE(dir,,,,"SYNTAX_ONLY") .eqs. "" THEN CALL FATAL "Internal error - bad path: ''dir'"
-$ if F$PARSE(dir) .eqs. "" THEN CREATE/DIRECTORY/LOG/PROTECTION=(S:RWE,O:RWE,G:E,W:E) 'dir
+$ 'p3 == dir
+$ EXIT
+$ ENDSUBROUTINE
+$!
+$ CREATE_SUBDIR: SUBROUTINE
+$ CALL SUBDIR_NAME 'p1' 'p2' subdir_
+$ dir = subdir_
+$ IF F$PARSE(dir) .eqs. "" 
+$ THEN 
+$   CREATE/DIRECTORY/LOG/PROTECTION=(S:RWE,O:RWE,G:E,W:E) 'dir
+$   IF .not. $SEVERITY THEN CALL FATAL "Create/directory failed"
+$ ELSE
+$   CALL DIRNAME 'dir' dname
+$   SET FILE/PROTECTION=(W:E)/LOG 'dname
+$   IF .not. $SEVERITY THEN CALL FATAL "Set file/protection failed"
+$ ENDIF
 $ CALL DIRNAME 'dir' dirname
 $ SET FILE/ACL=(IDENTIFIER='F$USER(),access=r+w+e+d+c)/LOG 'dirname
 $ IF .not. $SEVERITY THEN CALL FATAL "Set file/acl failed"
@@ -178,6 +203,7 @@ $ EXIT
 $ ENDSUBROUTINE
 $!
 $ DIRNAME: SUBROUTINE
+$ node = F$PARSE(p1,,,"NODE","SYNTAX_ONLY")     ! Usually empty
 $ disk = F$PARSE(p1,,,"DEVICE","SYNTAX_ONLY")
 $ path = F$PARSE(p1,,,"DIRECTORY","SYNTAX_ONLY")
 $ IF disk .eqs. "" .or. path .eqs. "" THEN CALL FATAL "Internal error - bad path ''p1'"
@@ -198,9 +224,9 @@ $ name = last - ">" - "]" - "<" - "["      ! if not . in name
 $ tail = last - name 
 $ IF build .nes. "" 
 $ THEN
-$    dirname = disk + build + tail + name + ".DIR"
+$    dirname = node + disk + build + tail + name + ".DIR"
 $ ELSE
-$    dirname = disk + "<000000>" + name + ".DIR"
+$    dirname = node + disk + "<000000>" + name + ".DIR"
 $ ENDIF
 $ IF F$PARSE(dirname) .eqs. "" THEN CALL FATAL "Internal error - bad pathname ''dirname'"
 $ IF F$SEARCH(dirname) .eqs. "" THEN CALL FATAL "Internal error - not found ''dirname'"
@@ -240,11 +266,83 @@ $ CLOSE from
 $ CALL FATAL "Creating of ''p2' failed"
 $ EXIT
 $ ENDSUBROUTINE
-$
+$!
+$ APPEND_FILE: SUBROUTINE
+$ COPY/LOG 'p1 'p2
+$ IF .not. $SEVERITY THEN CALL FATAL "Backup copy failed"
+$ OPEN/ERROR=error21 from 'p1
+$ OPEN/ERROR=error22 append 'p3
+$ WRITE SYS$OUTPUT "Creating new ''P1'"
+$ OPEN/WRITE/ERROR=error23 to 'p1
+$again21:
+$ READ/END_OF_FILE=out21 from line
+$ temp=F$EDIT(line,"TRIM,UNCOMMENT")
+$ IF temp .eqs. "" THEN GOTO none21
+$ IF F$LOCATE(p4,temp) .eq. 0 THEN GOTO found21
+$none21:
+$ WRITE to line
+$ GOTO again21
+$found21:
+$ WRITE to line
+$again22:
+$ READ/END_OF_FILE=out22 append line
+$ IF F$LOCATE("%INSERT ",line) .eq. 0 .and. line .nes. ""
+$ THEN
+$    inssym = f$extract(8,F$length(line)-8,line)
+$    file_ = ins_'inssym
+$    OPEN/ERROR=error24 insfile 'file_
+$    WRITE SYS$OUTPUT "Inserting ''file_' to ''P1'"
+$again24:
+$    READ/END_OF_FILE=out24 insfile line
+$    WRITE to line
+$    GOTO again24
+$out24:
+$    CLOSE insfile
+$again25:                                   ! Skip default text
+$    READ/END_OF_FILE=out23 append line
+$    IF F$LOCATE("%ENDINSERT",line) .ne. 0 .or. line .eqs. "" THEN GOTO again25
+$    goto out23
+$error24:
+$    WRITE SYS$OUTPUT "Can't open ''file_' - using default text for ''P1'"
+$again23:
+$    READ/END_OF_FILE=out23 append line
+$    IF F$LOCATE("%ENDINSERT",line) .eq. 0 .and. line .nes. "" THEN GOTO out23
+$    WRITE to line
+$    GOTO again23
+$out23:
+$ line=""                                                      ! Buggy
+$ ENDIF
+$ write to line
+$ GOTO again22
+$out22:
+$ CLOSE from
+$ CLOSE append
+$ CLOSE to
+$ EXIT 
+$out21:
+$ CLOSE from
+$ CLOSE append
+$ CLOSE to
+$ CALL FATAL "Label ''p4' don't found from ''p1'"
+$ EXIT
+$error21:
+$ CALL FATAL "Opening of ''p1' failed"
+$ EXIT
+$error22:
+$ CLOSE from
+$ CALL FATAL "Opening of ''p3' failed"
+$ EXIT
+$error23:
+$ CLOSE from
+$ CLOSE append
+$ CALL FATAL "Creating of new ''p1' failed"
+$ EXIT
+$ ENDSUBROUTINE
+$!
 $ QUERY_DIR: SUBROUTINE
 $again5:
 $ WRITE SYS$OUTPUT P2
-$ WRITE SYS$OUTPUT "Default: ",P3
+$ IF P3 .nes. "" THEN WRITE SYS$OUTPUT "Default: ",P3
 $ INQUIRE dir "Directory"
 $ IF dir .eqs. "" THEN dir = P3
 $ path = F$PARSE(dir) - ".;"
@@ -384,6 +482,7 @@ $ WRITE SYS$OUTPUT "  1 =  Build new empty monster database"
 $ WRITE SYS$OUTPUT "  2 =  Convert old (Skrenta's Monster V1) database"
 $ WRITE SYS$OUTPUT "  3 =  Build new empire database with the starter's CASTLE"
 $ WRITE SYS$OUTPUT "  4 =  Only install NEW Monster image (database exist)"
+$ WRITE SYS$OUTPUT "       and edit MONSTER.INIT"
 $ INQUIRE i "Select 1, 2, 3 or 4"
 $ option == f$integer(i)
 $ IF option .lt. 1 .or. option .gt. 4 THEN GOTO again7
@@ -399,5 +498,13 @@ $
 $ BUILD_CASTLE: SUBROUTINE
 $ MONSTER/BUILD 'source_directory'CASTLE.DMP
 yes
+$ EXIT
+$ ENDSUBROUTINE
+$!
+$ EDIT_INIT: SUBROUTINE
+$ ins_message :== "''DBDIR'ILMOITUS.TXT"
+$ CALL APPEND_FILE 'image_directory'MONSTER.INIT -
+  'image_directory'MONSTER.INIT_OLD 'source_directory'INIT.APPEND -
+  "min_accept:"
 $ EXIT
 $ ENDSUBROUTINE

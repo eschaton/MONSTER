@@ -1,4 +1,4 @@
-! Monster initialization file   - written by Kari Hurtta
+! Monster initialization file    (c) Kari Hurtta
 ! 
 ! Name of this file must be MONSTER.INIT
 ! The file must be located in the same direction as the monster's image.
@@ -17,13 +17,13 @@ gen_debug:   false
 !                  be able to be enabled, if we want to do test runs under
 !                  an unprivileged userid		
 
-REBUILD_OK: false
+REBUILD_OK: true
 
 !		  if this is true, the MM can blow away and reformat the
 !		  entire universe. It's a good idea to set this to false
 
-root:    MONSTER_DATABASE_MON_: ! world database
-coderoot:MONSTER_DATABASE_CODE_:  ! mdl database
+root:    DATABASE_:
+coderoot:DATABASE_CODE_: ! mdl database
         
 !		  This is where the Monster database goes.
 !		  The root directory must be  world:e  and
@@ -47,7 +47,7 @@ Champion,           6000,        0,      40,       70,      10,    nohidden
 Conjurer,           12000,       16,     50,       70,      12,    nohidden
 Magician,           20000,       0,      60,       70,      15,    nohidden
 Enchanter,          40000,       2,      80,       75,      20,    nohidden
-Sorcerer,           70000,       256,    100,      80,      20,    nohidden
+Sorcerer,           70000,       256,      100,      80,      20,    nohidden
 Warlock,            120000,      4,      120,      85,      35,    nohidden
 Apprentice wizard,  300000,      8,      150,      85,      50,    nohidden
 Wizard,             700000,      64,     300,      90,      80,    nohidden
@@ -71,8 +71,49 @@ protect_exp: 700000
 !  gives protection agaist violence
 
 Playtime: +++++++++--------+++++++
-! Closed at 09-17 in workdays
+! Eli suomeksi:
+! Monster on suljettu arkisin 09-17.
+
+!Playtime: ++++++++++++++++++++++++   ! Miten niin suljettu ?
+!                                       onpa taas suljettu.
 
 default_allow: 20    ! How many rooms players made at default
 min_room:      5     ! How many rooms players can made without exit request
 min_accept:    5     ! How many accepts must players made
+
+
+! default chartable is Multinational
+CHARTABLE:  ! This modifies default chartable - one character per line
+END OF CHARTABLE
+
+! Time of between database polling in VMS delta-time format
+database_poltime: 0 ::1          !  One second
+
+! Message what is written when playtime: -entry closes Monster
+CLOSED MESSAGE:
+Welcome to the game Monster!
+
+But what now?
+
+Goodgulf the Grey appears in a puff of orange smoke!
+He is very angry...
+
+"What are you doing here? The Dungeon is now closed!"
+
+He waves his Iron Staff and yells "Begone!"
+
+You disappear in a burst of multicolored light...
+
+On wall you see announcement:
+
+**********************************************************************
+*                                                                    *
+*                    Dungeon is closed on weekdays                   *
+*                         between 09.00-17.00                        *
+*                                                                    *
+**********************************************************************
+
+END OF MESSAGE
+
+mdl_buffers: 20
+allow_dcl_access: true

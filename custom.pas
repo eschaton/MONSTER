@@ -31,6 +31,10 @@ MODIFICATION HISTORY:
    25.06.1992 |         | Moved to module ALLOC
    25.06.1992 | Hurtta  | Allocation routines moved to module ALLOC from 
               |         | module CUSTOM
+    8.08.1992 |         | Now do_program (custom object) prints help when 
+              |         | ambiquous name
+   12.08.1992 |         | function parse_pers moved to module PARSER
+              |         | myslot moved to module PARSER
 }
 
 var system_id,disowned_id,public_id: [global] shortstring;
@@ -44,7 +48,7 @@ var system_id,disowned_id,public_id: [global] shortstring;
 
 	{ userid moved to module ALLOC }
 
-	myslot: [global] integer := 1;	{ here.people[myslot]... is this player }
+        { myslot moved to module PARSER }
 
 	myname: [global] shortstring;	
 				{ personal name this player chose (setname) }
@@ -1036,54 +1040,7 @@ begin
 	end;
 end;
 
-[global] function parse_pers(var pnum: integer;s: string): boolean;
-var
-	persnum: integer;
-	i,poss,maybe,num: integer;
-	pname: string;
-
-begin
-	gethere;
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to maxpeople do begin
-{		if here.people[i].username <> '' then begin	}
-
-		if here.people[i].kind > 0 then begin
-			pname := lowcase(here.people[i].name);
-
-			if s = pname then
-				num := i
-			else if index(pname,s) = 1 then begin
-				maybe := maybe + 1;
-				poss := i;
-			end;
-		end;
-	end;
-	if num <> 0 then begin
-		persnum := num;
-		parse_pers := true;
-	end else if maybe = 1 then begin
-		persnum := poss;
-		parse_pers := true;
-	end else if maybe > 1 then begin
-		persnum := 0;
-		parse_pers := false;
-	end else begin
-		persnum := 0;
-		parse_pers := false;
-	end;
-	if persnum > 0 then begin
-		if here.people[persnum].hiding > 0 then
-			parse_pers := false
-		else begin
-			parse_pers := true;
-			pnum := persnum;
-		end;
-	end;
-end;
+{ function parse_pers moved to module PARSER }
 
 [global] function lookup_level(var n: integer;s:string): boolean;
 var
@@ -1767,7 +1724,7 @@ var
     end;
 
 begin
-	if lookup_dir(dir,dirnam) then begin
+	if lookup_dir(dir,dirnam,true) then begin
 	   if can_alter(dir) then begin
 
 		log_action(c_custom,0);
@@ -2408,7 +2365,7 @@ begin
     gethere;
     if checkhide then begin
 	if object_name = '' then writeln('To customize an object, type CUSTOM OBJECT <object name>.')
-	else if lookup_obj(objnum,object_name) then begin
+	else if lookup_obj(objnum,object_name,true) then begin
 	    if not is_owner(location,TRUE) then begin
 		writeln('You may only work on your objects when you are in one of your own rooms.');
 	    end else if obj_owner(objnum) then begin
@@ -2967,7 +2924,7 @@ begin
   if not is_owner(location,TRUE) then { is_owner make gethere }
      writeln('You must be in one of your own rooms to customize a monster.')
   else if name = '' then writeln('To customize a monster, type CUSTOM MONSTER <monster name>.')
-  else if parse_pers(mslot,name) then begin
+  else if parse_pers(mslot,name,true) then begin
 
      mname := here.people[mslot].name;
      def := trim_filename(mname);

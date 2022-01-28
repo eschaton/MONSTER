@@ -1,12 +1,13 @@
+
 [inherit ('GlobaL') ]
-MODULE Global;
+MODULE Version;
 
 VAR
     { externally definated of this have in GLOBAL.PAS }
 
     VERSION : [global] string
-	:= 'Monster Helsinki 1.05';
+	:= 'Monster Helsinki 1.06';
     DISTRIBUTED : [global] string
-	:= '1.7.1992';
+	:= '7.12.1992';
 
 END.

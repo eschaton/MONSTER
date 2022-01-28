@@ -22,11 +22,11 @@ CREATION DATE: (unknown) ?.??.1988
  
 DESIGN ISSUES:
  
-    
+    Create nice multiplayer game
  
 VERSION:
  
-    Monster Helsinki 1.04
+    Monster Helsinki 1.05u
     
  
 MODIFICATION HISTORY:
@@ -42,6 +42,15 @@ MODIFICATION HISTORY:
               |         |  module ALLOC, REBUILD moved to MONSTER_REBUILD.PAS
               |         |  system_view, fix_view_global_flags moved to DATABASE.PAS
               |         |  FIX moved to MONSTER_REBUILD.PAS
+     9.7.1992 |         |  Claim accepts now type argument (room, object, 
+              |         |     monster, spell)
+    17.7.1992 |         |  Disown and Public accepts now also type argument
+    18.8.1992 |         |  Functions obj_here, player_here, obj_hold and 
+              |         |     parse_obj moved to module PARSER
+    13.9.1992 |         |  Bug fix in disown_user
+   24.10.1992 |		|  You can't longer complete fill room with monsters
+   28.10.1992 |		|  Flag: allow_dcl_access
+    5.12.1992 |		|  chartable_charset, show charset -command
 -}
 
 
@@ -332,65 +341,7 @@ end;
 { returns true if object N is in this room. if nohidden is true, not found
   hidden objects (hurtta@finuh) }
 
-function obj_here(n: integer; nohidden: boolean := false): boolean;
-var
-	i: integer;
-	found: boolean;
-
-begin
-    i := 1;
-    found := false;
-    while (i <= maxobjs) and (not found) do begin
-	if here.objs[i] = n then begin
-	    if not nohidden then found := true
-	    else if here.objhide[i] = 0 then found := true
-	    else i := i + 1;
-	end else i := i + 1;
-    end;
-    obj_here := found;
-end;
-
-[global]    { for PARSER module }
-function player_here(id: integer; var slot: integer): boolean;
-    { suppose that gethere and getpers have made }
-var i: integer;
-    name: shortstring;
-begin
-    slot := 0;
-    name := lowcase(pers.idents[id]);
-    for i := 1 to maxpeople do
-	if here.people[i].kind > 0 then
-		if lowcase(here.people[i].name) = name then slot := i;
-    player_here := slot > 0;
-end; { player_here }
-
-
-{ returns true if object N is being held by the player (id slot)}
-
-function obj_hold(n: integer; slot: integer := 0): boolean;
-var
-	i: integer;
-	found: boolean;
-
-begin
-	if slot = 0 then slot := myslot;
-	
-	if n = 0 then
-		obj_hold := false
-	else begin
-		i := 1;
-		found := false;
-		while (i <= maxhold) and (not found) do begin
-			if here.people[slot].holding[i] = n then
-				found := true
-			else
-				i := i + 1;
-		end;
-		obj_hold := found;
-	end;
-end;
-
-
+{ functions obj_here, player_here and obj_hold moved to module PARSER }
 
 { return the slot of an object that is HERE }
 function find_obj(objnum: integer): integer;
@@ -407,65 +358,7 @@ begin
 	end;
 end;
 
-
-
-
-{ similar to lookup_obj, but only returns true if the object is in
-  this room or is being held by the player }
-{ and s may be in the middle of the objact name -- Leino@finuh }
-
-function parse_obj (var pnum: integer;
-			s: string;
-			override: boolean := false): boolean;
-var
-	i,poss,maybe,num: integer;
-	tmp: string;
-	found: boolean;
-
-begin
-	getobjnam;
-	freeobjnam;
-	getindex(I_OBJECT);
-	freeindex;
-
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	found := false;
-	for i := 1 to indx.top do begin
-		if not(indx.free[i]) then begin
-			if s = objnam.idents[i] then
-				num := i
-			else if ((index(objnam.idents[i],s) = 1) or
-				(index(objnam.idents[i],' '+s) > 0)) and
-				(obj_here(i) or obj_hold(i)) then begin
-				maybe := maybe + 1;
-				poss := i;
-			end;
-		end;
-	end;
-	if num <> 0 then begin
-		found := obj_here(num) or obj_hold(num);
-		if found then
-			pnum := num;
-		parse_obj := found;
-	end else if maybe = 1 then begin
-		found := obj_here(poss) or obj_hold(poss);
-		if found then
-			pnum := poss;
-		parse_obj := found;
-	end else if maybe > 1 then begin
-		if lookup_obj (poss, s) then begin
-			found := obj_here(poss) or obj_hold(poss);
-			if found then
-				pnum := poss;
-			parse_obj := found;
-		end else parse_obj := false;
-	end else begin
-		parse_obj := false;
-	end;
-end;
+{ function parse_obj moved to module PARSER }
 
 { functions parse_pers, is_owner, room_owner, can_alter and can_make moved to 
   module CUSTOM }
@@ -652,7 +545,8 @@ var
 begin
 	if s = '' then grab_line('Direction? ',s,eof_handler := leave);
 
-	if lookup_dir(dir,s,true) then begin
+	if s = '?' then command_help('accept')
+	else if lookup_dir(dir,s,true) then begin
 		if can_make(dir) then begin
 			getroom;
 			here.exits[dir].kind := 5;
@@ -688,7 +582,8 @@ var
 begin
 	if s = '' then grab_line('Direction? ',s,eof_handler := leave);
 
-	if not(is_owner) then
+	if s = '?' then command_help('refuse')
+	else if not(is_owner) then
 		{ is_owner prints error message itself }
 	else if lookup_dir(dir,s,true) then begin
 		getroom;
@@ -2639,7 +2534,8 @@ begin
 	if s = '' then grab_line('Direction? ',s,eof_handler := leave);
 
 	gethere;
-	if checkhide then begin
+	if s = '?' then command_help('unlink')
+	else if checkhide then begin
 	if lookup_dir(dir,s,true) then begin
 		if can_alter(dir) then begin
 			if here.exits[dir].toloc = 0 then
@@ -2657,8 +2553,6 @@ end;
 { slead and bite moved to PARSER.PAS }
 
 { function desc_allowed moved to module CUSTOM }
-
-
 
 { procedure do_descibe moved to module CUSTOM }
 
@@ -2761,7 +2655,7 @@ begin
 	end else if maybe = 1 then begin
 		lookup_cmd := poss;
 	end else if maybe > 1 then
-		lookup_cmd := error	{ "Ambiguous" }
+		lookup_cmd := error	{ "Ambiquous" }
 	else
 		lookup_cmd := error;	{ "Command not found " }
 end;
@@ -2897,6 +2791,7 @@ begin
 	    if not lookup_user(n,s) then begin
 		    writeln('User not in log info, attempting to disown anyway.');
 		    theuser := s;
+		    n := -1;
 	    end else begin
 		    theuser := user.idents[n];
 
@@ -2950,9 +2845,12 @@ begin
 			    end;
 	    if count > 0 then 
 			writeln('Disowned ',count:1,' codes.');
-		    
-	    sub_counter(N_NUMROOMS,n,get_counter(N_NUMROOMS,n));
-	    sub_counter(N_ACCEPT,n,get_counter(N_ACCEPT,n));
+		 
+	    if n > 0 then begin  { resets counters to zero }
+		sub_counter(N_NUMROOMS,n,get_counter(N_NUMROOMS,n));
+		sub_counter(N_ACCEPT,n,get_counter(N_ACCEPT,n));
+	    end; 
+
 	end else
 		writeln('No user specified.');
 end;
@@ -4119,12 +4017,17 @@ var
 
 begin
 	if s = '' then grab_line('Spell? ',s,eof_handler := leave);
+
+	if s = '?' then begin
+	    command_help('summon');
+	    goto exit_label;
+	end;
 	sname := s;
 	grab_line('Victim? ',s,eof_handler := leave);
 	vname := s;
 
 	if not lookup_spell(sid,sname) then writeln('Unkown spell.')
-	else if not parse_pers(vslot,vname) then writeln('Victim isn''t here.')
+	else if not parse_pers(vslot,vname,true) then writeln('Victim isn''t here.')
 	else begin
 	    getspell(mylog);
 	    freespell;
@@ -4359,7 +4262,7 @@ begin
 	if put_token(loc,targslot,here.people[myslot].hiding) then begin
 		if hiding then begin
 			log_event(myslot,E_HPOOFOUT,0,0,log_name,location);
-			log_event(myslot,E_HPOOFIN,0,0,log_name,loc);
+			log_event(targslot,E_HPOOFIN,0,0,log_name,loc);
 		end else begin
 			log_event(myslot,E_POOFOUT,0,0,log_name,location);
 			log_event(targslot,E_POOFIN,0,0,log_name,loc);
@@ -4446,9 +4349,10 @@ begin
 			if s='' then begin
 				grab_line('What room? ',s,
 					eof_handler := leave);
-				if lookup_room(loc,s) then
-					xpoof(loc);
-			end else if parse_pers(n,s) then
+				if lookup_room(loc,s,true) then
+					xpoof(loc)
+				else writeln('No room ',s,'.');
+			end else if parse_pers(n,s,true) then
 					poof_other(n)
 				else
 					writeln('I can see no-one named ',s,' here.');
@@ -4464,7 +4368,7 @@ begin
             sown := here.owner;
             if s = '' then grab_line('What room? ',s,eof_handler := leave);
             if (s = '') or (s='?') then command_help('poof')
-            else if lookup_room(loc,s) then begin
+            else if lookup_room(loc,s,true) then begin
               gethere(loc);
               town := here.owner;
               if (sown <> userid) or (town <> userid) then
@@ -5829,195 +5733,286 @@ var
 	tmp: string;
 	oldowner : integer;
 
-begin
-	if length(s) = 0 then begin	{ claim this room }
-		getroom;
-		if not exact_user(oldowner,here.owner) then oldowner := 0;
-		if (here.owner = disowned_id) or 
-		    (owner_priv and (here.owner <> system_id)) or
-		    manager_priv then begin { minor change by leino@finuha }
-					    { and hurtta@finuh }
-			here.owner := userid;
-			putroom;
-			change_owner(oldowner,mylog);
-			if here.hook > 0 then set_owner(here.hook,0,userid);
-			getown;
-			own.idents[location] := userid;
-			putown;
-			log_event(myslot,E_CLAIM,0,0);
-			writeln('You are now the owner of this room.');
-		end else begin
-			freeroom;
-			if here.owner = public_id then
-				writeln('This is a public room.  You may not claim it.')
-			else if here.owner = system_id then
-				writeln('The system own this room.  You may not claim it.')
-			else
-				writeln('This room has an owner.');
-		end;
-	end else if lookup_obj(n,s) then begin
-		getobjown;
-		freeobjown;
-      	  	{*** Let the MM claim any object ***}
-		{ jlaiho@finuh }
-		if ( (objown.idents[n] = public_id) 
-		    and (not owner_priv) ) then { minor change by leino@finuha }
-		    writeln('That is a public object.  You may DUPLICATE it, but may not CLAIM it.')
-		else if ( (objown.idents[n] = system_id) 
-		    and (not manager_priv) ) then { minor change by hurtta@finuha }
-		    writeln('That is a system''s object. ')
-		else if ( (objown.idents[n] <> disowned_id) 
-		    and (not owner_priv) ) then { minor change by leino@finuha }
-		    writeln('That object has an owner.')
-		else begin
-			getobj(n);
-			freeobj;
-			if obj.numexist = 0 then
-				ok := true
-			else begin
-				if obj_hold(n) or obj_here(n) then
-					ok := true
-				else
-					ok := false;
-			end;
-                        
-			if ok then begin
-				getobjown;
-				objown.idents[n] := userid;
-				putobjown;
-				if obj.actindx > 0 then
-					set_owner(obj.actindx,0,userid);
-				tmp := obj.oname;
-				log_event(myslot,E_OBJCLAIM,0,0,tmp);
-				writeln('You are now the owner of ',tmp,'.');
-			end else
-				writeln('You must have one to claim it.');
-		end;
-	end else if lookup_pers(n,s) then begin
-		if parse_pers(mslot,s) then begin   { parse_pers make gethere }
-			if here.people[mslot].kind = P_MONSTER then begin
-          			code := here.people[mslot].parm;
-				if ( (monster_owner(code) = public_id) 
-				    and (not owner_priv) ) then 
-				    writeln('That is a public monster.')
-				else if ( (monster_owner(code) = system_id) 
-				    and (not manager_priv) ) then
-				    writeln('That is a system''s monster.')
-				else if ( (monster_owner(code) <> disowned_id) 
-				    and (not owner_priv) ) then 
-				    writeln('That monster has an owner.')
-				else begin
-					set_owner(code,0,userid);
-					tmp := here.people[mslot].name;
-					log_event(myslot,E_OBJCLAIM,0,0,tmp);
-					writeln('You are now the owner of ',tmp,'.');
-				end;
-			end else writeln ('That isn''t a monster.');			
-                end else writeln ('That monster isn''t here.');
-	end else if lookup_spell(n,s) then begin
-	    if ( (spell_owner(n) = public_id) and (not owner_priv) ) then 
-				    writeln('That is a public spell.')
-	    else if ( (spell_owner(n) = system_id) and (not manager_priv) ) then
-				    writeln('That is a system''s spell.')
-	    else if ( (spell_owner(n) <> disowned_id) and (not owner_priv) ) then 
-				    writeln('That spell has an owner.')
-	    else begin
-					getint(N_SPELL);
-					freeint;
-					code := anint.int[n];
-					set_owner(code,0,userid);
-					tmp := spell_name.idents[n];
-					log_event(myslot,E_OBJCLAIM,0,0,tmp);
-					writeln('You are now the owner of ',tmp,'.');
+	procedure claim_room;
+	begin
+	    getroom;
+	    if not exact_user(oldowner,here.owner) then oldowner := 0;
+	    if (here.owner = disowned_id) or 
+		(owner_priv and (here.owner <> system_id)) or
+		manager_priv then begin { minor change by leino@finuha }
+					{ and hurtta@finuh }
+		here.owner := userid;
+		putroom;
+		change_owner(oldowner,mylog);
+		if here.hook > 0 then set_owner(here.hook,0,userid);
+		getown;
+		own.idents[location] := userid;
+		putown;
+		log_event(myslot,E_CLAIM,0,0);
+		writeln('You are now the owner of this room.');
+	    end else begin
+		freeroom;
+		if here.owner = public_id then
+		    writeln('This is a public room.  You may not claim it.')
+		else if here.owner = system_id then
+		    writeln('The system own this room.  You may not claim it.')
+		else
+		    writeln('This room has an owner.');
 	    end;
+	end; { claim_room }
+
+	procedure claim_object(n: integer; s: string);
+	begin
+	    getobjown;
+	    freeobjown;
+	    {*** Let the MM claim any object ***}
+	    { jlaiho@finuh }
+	    if ( (objown.idents[n] = public_id) 
+		and (not owner_priv) ) then { minor change by leino@finuha }
+		writeln('That is a public object.  You may DUPLICATE it, but may not CLAIM it.')
+	    else if ( (objown.idents[n] = system_id) 
+		and (not manager_priv) ) then { minor change by hurtta@finuha }
+		writeln('That is a system''s object. ')
+	    else if ( (objown.idents[n] <> disowned_id) 
+		and (not owner_priv) ) then { minor change by leino@finuha }
+		writeln('That object has an owner.')
+	    else begin
+		getobj(n);
+		freeobj;
+		if obj.numexist = 0 then
+		    ok := true
+		else begin
+		    if obj_hold(n) or obj_here(n) then
+			    ok := true
+		    else
+			    ok := false;
+		end;
+                        
+		if ok then begin
+		    getobjown;
+		    objown.idents[n] := userid;
+		    putobjown;
+		    if obj.actindx > 0 then
+			set_owner(obj.actindx,0,userid);
+		    tmp := obj.oname;
+		    log_event(myslot,E_OBJCLAIM,0,0,tmp);
+		    writeln('You are now the owner of ',tmp,'.');
+		end else
+			writeln('You must have one to claim it.');
+		end;
+	end; { claim_object }
+
+	procedure claim_monster(n: integer; s: string);
+	begin
+	    if parse_pers(mslot,s) then begin   { parse_pers make gethere }
+		if here.people[mslot].kind = P_MONSTER then begin
+		    code := here.people[mslot].parm;
+		    if ( (monster_owner(code) = public_id) 
+			and (not owner_priv) ) then 
+			writeln('That is a public monster.')
+		    else if ( (monster_owner(code) = system_id) 
+			and (not manager_priv) ) then
+			writeln('That is a system''s monster.')
+		    else if ( (monster_owner(code) <> disowned_id) 
+			and (not owner_priv) ) then 
+			writeln('That monster has an owner.')
+		    else begin
+			set_owner(code,0,userid);
+			tmp := here.people[mslot].name;
+			log_event(myslot,E_OBJCLAIM,0,0,tmp);
+			writeln('You are now the owner of ',tmp,'.');
+		    end;
+		end else writeln ('That isn''t a monster.');			
+	    end else writeln ('That monster isn''t here.');
+	end; { claim_monster }
+
+	procedure claim_spell(n: integer; s: string);
+	begin
+	    if ( (spell_owner(n) = public_id) and (not owner_priv) ) then 
+		writeln('That is a public spell.')
+	    else if ( (spell_owner(n) = system_id) and (not manager_priv) ) then
+		writeln('That is a system''s spell.')
+	    else if ( (spell_owner(n) <> disowned_id) and (not owner_priv) ) then 
+		writeln('That spell has an owner.')
+	    else begin
+		getint(N_SPELL);
+		freeint;
+		code := anint.int[n];
+		set_owner(code,0,userid);
+		tmp := spell_name.idents[n];
+		log_event(myslot,E_OBJCLAIM,0,0,tmp);
+		writeln('You are now the owner of ',tmp,'.');
+	    end;
+	end; { claim_spell }
+label 0;
+    procedure leave;
+    begin
+	writeln('QUIT');
+	goto 0;
+    end;
+
+var what: shortstring;
+    ns: string;
+    g: o_type;
+begin
+	ns := s;
+	what := bite(ns);
+	if length(s) = 0 then begin	{ claim this room }
+	    claim_room;
+	end else if lookup_type(g,what,false,false) then begin
+	    if (g <> t_room) and (ns = '') then
+		grab_line('Claim '+what+' what? ',ns,eof_handler := leave);
+	    if (g <> t_room) and (ns = '') then goto 0;
+	    case g of
+		t_room: if ns = '' then claim_room
+			else writeln('You can only claim that room (no room name).');
+		t_object: if lookup_obj(n,ns,true) then claim_object(n,ns)
+			else writeln('No object ''',ns,'''.');
+		t_monster: if lookup_pers(n,ns,true) then claim_monster(n,ns)
+			else writeln('No monster ''',ns,'''.');
+		t_spell: if lookup_spell(n,ns,true) then claim_spell(n,ns)
+			else writeln('No spell ''',ns,'''.');
+		t_player: writeln('You can''t do that.');
+	    end; { case }
+	end else if lookup_obj(n,s) then begin
+	    claim_object(n,s);
+	end else if lookup_pers(n,s) then begin
+	    claim_monster(n,s);
+	end else if lookup_spell(n,s) then begin
+	    claim_spell(n,s);
 	end else writeln('There is nothing here by that name to claim.');
+    0:
 end;
 
 procedure do_disown(s: string);
 var
 	n,mslot,code,oldowner: integer;
 	tmp: string;
-begin
 
-	if length(s) = 0 then begin	{ claim this room }
-		getroom;
-		if not exact_user(oldowner,here.owner) then oldowner := 0;
-		if (here.owner = userid) or 
-		    (owner_priv and (here.owner <> system_id)) or
-		    manager_priv then begin { minor change by leino@finuha }
-			getroom;
-			here.owner := disowned_id;
-			putroom;
-			change_owner(oldowner,0);
-			if here.hook > 0 then set_owner(here.hook,0,disowned_id);
-			getown;
-			own.idents[location] := disowned_id;
-			putown;
-			log_event(myslot,E_DISOWN,0,0);
-			writeln('You have disowned this room.');
-		end else begin
-			freeroom;
-			if here.owner = system_id then
-			    writeln('Owner of this room is system.')
-			else writeln('You are not the owner of this room.');
-		end;
-	end else begin	{ disown an object }
-		if lookup_obj(n,s) then begin
-			getobj(n);
-			freeobj;
-			tmp := obj.oname;
-
-			getobjown;
-			if (objown.idents[n] = userid) or 
-			    (owner_priv and ( objown.idents[n] <> system_id))
-			    or manager_priv then begin
-				objown.idents[n] := disowned_id;
-				putobjown;
-				if obj.actindx > 0 then
-					set_owner(obj.actindx,0,disowned_id);
-				log_event(myslot,E_OBJDISOWN,0,0,tmp);
-				writeln('You are no longer the owner of the ',tmp,'.');
-			end else begin
-				freeobjown;
-				if objown.idents[n] = system_id then
-				    writeln('System is owner of this.')
-				else writeln('You are not the owner of any such thing.');
-			end;
-		end else if lookup_pers(n,s) then begin
-			if parse_pers(mslot,s) then begin   { parse_pers make gethere }		  
-				if here.people[mslot].kind = P_MONSTER then begin
-				    code := here.people[mslot].parm;
-				    if (monster_owner(code) = system_id)
-					and not manager_priv then
-					    writeln('The owner of this monster is system.') 	
-				    else if  (monster_owner(code) <> userid) 
-					and not owner_priv then 
-					    writeln('You are not the owner of this monster')
-				    else begin
-					set_owner(code,0,disowned_id);
-					tmp := here.people[mslot].name;
-					log_event(myslot,E_OBJDISOWN,0,0,tmp);
-					writeln('You are no longer the owner of the ',tmp,'.');
-				    end;
-				end else writeln ('That isn''t monster.');
-                	end else writeln ('Here isn''t that monster.');
-		end else if lookup_spell(n,s) then begin
-		    if (spell_owner(n) = system_id) and not manager_priv then
-			writeln('The owner of this spell is system.') 	
-		    else if (spell_owner(n) <> userid) and not owner_priv then 
-			writeln('You are not the owner of this spell')
-		    else begin
-			getint(N_SPELL);
-			freeint;
-			code := anint.int[n];
-			set_owner(code,0,disowned_id);
-			tmp := spell_name.idents[n];
-			log_event(myslot,E_OBJDISOWN,0,0,tmp);
-			writeln('You are no longer the owner of the ',tmp,'.');
-		    end;
-		end else writeln('You are not the owner of any such thing.');
+    procedure disown_room;
+    begin
+	getroom;
+	if not exact_user(oldowner,here.owner) then oldowner := 0;
+	    if (here.owner = userid) or 
+	    (owner_priv and (here.owner <> system_id)) or
+	    manager_priv then begin { minor change by leino@finuha }
+	    getroom;
+	    here.owner := disowned_id;
+	    putroom;
+	    change_owner(oldowner,0);
+	    if here.hook > 0 then set_owner(here.hook,0,disowned_id);
+	    getown;
+	    own.idents[location] := disowned_id;
+	    putown;
+	    log_event(myslot,E_DISOWN,0,0);
+	    writeln('You have disowned this room.');
+	end else begin
+	    freeroom;
+	    if here.owner = system_id then
+		writeln('Owner of this room is system.')
+	    else writeln('You are not the owner of this room.');
 	end;
-end;
+    end; { disown_room }
+
+    procedure disown_object(n: integer; s: string);
+    begin
+	getobj(n);
+	freeobj;
+	tmp := obj.oname;
+
+	getobjown;
+	if (objown.idents[n] = userid) or 
+	    (owner_priv and ( objown.idents[n] <> system_id))
+	    or manager_priv then begin
+	    objown.idents[n] := disowned_id;
+	    putobjown;
+	    if obj.actindx > 0 then set_owner(obj.actindx,0,disowned_id);
+	    log_event(myslot,E_OBJDISOWN,0,0,tmp);
+	    writeln('You are no longer the owner of the ',tmp,'.');
+	end else begin
+	    freeobjown;
+	    if objown.idents[n] = system_id then 
+		writeln('System is owner of this.')
+	    else writeln('You are not the owner of any such thing.');
+	end;
+    end; { disown_objects }
+
+    procedure disown_monster(n: integer; s: string);
+    begin
+	if parse_pers(mslot,s) then begin   { parse_pers make gethere }
+	    if here.people[mslot].kind = P_MONSTER then begin
+		code := here.people[mslot].parm;
+		if (monster_owner(code) = system_id)
+		and not manager_priv then 
+		    writeln('The owner of this monster is system.') 	
+		else if  (monster_owner(code) <> userid) 
+		    and not owner_priv then 
+		    writeln('You are not the owner of this monster')
+		else begin
+		    set_owner(code,0,disowned_id);
+		    tmp := here.people[mslot].name;
+		    log_event(myslot,E_OBJDISOWN,0,0,tmp);
+		    writeln('You are no longer the owner of the ',tmp,'.');
+		end;
+	    end else writeln ('That isn''t monster.');
+	end else writeln ('Here isn''t that monster.');
+    end; { disown_monster }
+
+    procedure disown_spell(n: integer; s: string);
+    begin
+	if (spell_owner(n) = system_id) and not manager_priv then
+	    writeln('The owner of this spell is system.') 	
+	else if (spell_owner(n) <> userid) and not owner_priv then 
+	    writeln('You are not the owner of this spell')
+	else begin
+	    getint(N_SPELL);
+	    freeint;
+	    code := anint.int[n];
+	    set_owner(code,0,disowned_id);
+	    tmp := spell_name.idents[n];
+	    log_event(myslot,E_OBJDISOWN,0,0,tmp);
+	    writeln('You are no longer the owner of the ',tmp,'.');
+	end;
+    end; { disown_spell }
+
+label 0;
+    procedure leave;
+    begin
+	writeln('QUIT');
+	goto 0;
+    end;
+var what: shortstring;
+    ns: string;
+    g: o_type;
+begin
+	ns := s;
+	what := bite(ns);
+	if length(s) = 0 then begin	{ disown this room }
+	    disown_room;
+	end else if lookup_type(g,what,false,false) then begin
+	    if (g <> t_room) and (ns = '') then
+		grab_line('Disown '+what+' what? ',ns,eof_handler := leave);
+	    if (g <> t_room) and (ns = '') then goto 0;
+	    case g of
+		t_room: if ns = '' then disown_room
+			else writeln('You can only disown that room (no room name).');
+		t_object: if lookup_obj(n,ns,true) then disown_object(n,ns)
+			else writeln('No object ''',ns,'''.');
+		t_monster: if lookup_pers(n,ns,true) then disown_monster(n,ns)
+			else writeln('No monster ''',ns,'''.');
+		t_spell: if lookup_spell(n,ns,true) then disown_spell(n,ns)
+			else writeln('No spell ''',ns,'''.');
+		t_player: writeln('You can''t do that.');
+	    end; { case }
+	end else if lookup_obj(n,s) then begin
+	    disown_object(n,s);
+	end else if lookup_pers(n,s) then begin
+	    disown_monster(n,s);
+	end else if lookup_spell(n,s) then begin
+	    disown_spell(n,s);
+	end else writeln('You are not the owner of any such thing.');
+	0:
+end; { do_disown }
 
 
 procedure do_public(s: string);
@@ -6027,63 +6022,107 @@ var
 	n,mslot,code,oldowner: integer;
 	pub: shortstring;
 
+    procedure public_room;
+    begin
+	getroom;
+	if not exact_user(oldowner,here.owner) then oldowner := 0;
+	here.owner := public_id;
+	putroom;
+	change_owner(oldowner,0);
+	if here.hook > 0 then set_owner(here.hook,0,public_id);
+	getown;
+	own.idents[location] := public_id;
+	putown;
+	writeln('This room is now public.');
+    end; { public_room }
+
+    procedure public_object(n: integer; s: string);
+    begin
+	getobj(n);
+	freeobj;
+	if obj.numexist = 0 then ok := true
+	else begin
+	    if obj_hold(n) or obj_here(n) then ok := true
+	    else ok := false;
+	end;
+
+	if ok then begin
+	    getobjown;
+	    objown.idents[n] := public_id;
+	    putobjown;
+	    if obj.actindx > 0 then
+		set_owner(obj.actindx,0,public_id);
+
+	    tmp := obj.oname;
+	    log_event(myslot,E_OBJPUBLIC,0,0,tmp);
+	    writeln('The ',tmp,' is now public.');
+	end else writeln('You must have one to claim it.');
+    end; { public_object }
+
+    procedure public_monster(n: integer; s: string);
+    begin
+	if parse_pers(mslot,s) then begin   { parse_pers make gethere }		  
+	    if here.people[mslot].kind = P_MONSTER then begin
+		code := here.people[mslot].parm;
+		set_owner(code,0,public_id);
+		tmp := here.people[mslot].name;
+		log_event(myslot,E_OBJPUBLIC,0,0,tmp);
+		writeln('The ',tmp,' is now public.');
+	    end else writeln ('That isn''t monster.');
+	end else writeln ('Here isn''t that monster.');
+    end; { public_monster }
+
+    procedure public_spell(n: integer; s: string);
+    begin
+	getint(N_SPELL);
+	freeint;
+	code := anint.int[n];
+	set_owner(code,0,public_id);
+	tmp := spell_name.idents[n];
+	log_event(myslot,E_OBJPUBLIC,0,0,tmp);
+	writeln('The ',tmp,' is now public.');
+    end; { public_spell }
+
+label 0;
+    procedure leave;
+    begin
+	writeln('QUIT');
+	goto 0;
+    end;
+var what: shortstring;
+    ns: string;
+    g: o_type;
 begin
-
-	if manager_priv then begin { minor change by leino@finuha }
-		if length(s) = 0 then begin
-			getroom;
-			if not exact_user(oldowner,here.owner) then oldowner := 0;
-			here.owner := public_id;
-			putroom;
-			change_owner(oldowner,0);
-			if here.hook > 0 then set_owner(here.hook,0,public_id);
-			getown;
-			own.idents[location] := public_id;
-			putown;
-			writeln('This room is now public.');
-
-		end else if lookup_obj(n,s) then begin
-			getobj(n);
-			freeobj;
-			if obj.numexist = 0 then ok := true
-			else begin
-			    if obj_hold(n) or obj_here(n) then ok := true
-			    else ok := false;
-			end;
-
-			if ok then begin
-			    getobjown;
-			    objown.idents[n] := public_id;
-			    putobjown;
-			    if obj.actindx > 0 then
-				set_owner(obj.actindx,0,public_id);
-
-			    tmp := obj.oname;
-			    log_event(myslot,E_OBJPUBLIC,0,0,tmp);
-			    writeln('The ',tmp,' is now public.');
-			end else
-				    writeln('You must have one to claim it.');
-		end else if lookup_pers(n,s) then begin
-			if parse_pers(mslot,s) then begin   { parse_pers make gethere }		  
-				if here.people[mslot].kind = P_MONSTER then begin
-				    code := here.people[mslot].parm;
-				    set_owner(code,0,public_id);
-				    tmp := here.people[mslot].name;
-				    log_event(myslot,E_OBJPUBLIC,0,0,tmp);
-				    writeln('The ',tmp,' is now public.');
-				end else writeln ('That isn''t monster.');
-                	end else writeln ('Here isn''t that monster.');
-		end else if lookup_spell(n,s) then begin
-		    getint(N_SPELL);
-		    freeint;
-		    code := anint.int[n];
-		    set_owner(code,0,public_id);
-		    tmp := spell_name.idents[n];
-		    log_event(myslot,E_OBJPUBLIC,0,0,tmp);
-		    writeln('The ',tmp,' is now public.');
-		end else writeln('There is nothing here by that name to make public.');
-	end else
-		writeln('Only the Monster Manager may make things public.');
+    if manager_priv then begin { minor change by leino@finuha }
+	ns := s;
+	what := bite(ns);
+	if length(s) = 0 then begin
+	    public_room;
+	end else if lookup_type(g,what,false,false) then begin
+	    if (g <> t_room) and (ns = '') then
+		grab_line('Public '+what+' what? ',ns,eof_handler := leave);
+	    if (g <> t_room) and (ns = '') then goto 0;
+	    case g of
+		t_room: if ns = '' then public_room
+			else writeln('You can only public that room (no room name).');
+		t_object: if lookup_obj(n,ns,true) then public_object(n,ns)
+			else writeln('No object ''',ns,'''.');
+		t_monster: if lookup_pers(n,ns,true) then public_monster(n,ns)
+			else writeln('No monster ''',ns,'''.');
+		t_spell: if lookup_spell(n,ns,true) then public_spell(n,ns)
+			else writeln('No spell ''',ns,'''.');
+		t_player: writeln('You can''t do that.');
+	    end; { case }
+	end else if lookup_obj(n,s) then begin
+	    public_object(n,s);
+	end else if lookup_pers(n,s) then begin
+	    public_monster(n,s);
+	    end else if lookup_spell(n,s) then begin
+		public_spell(n,s);
+	end else writeln('There is nothing here by that name to make public.');
+    end else
+	writeln('Only the Monster Manager may make things public.');
+    0:
 end;
 
 
@@ -6410,7 +6449,7 @@ begin
 	if not read_global_flag(GF_WARTIME) then
 	    writeln('Don''t you dare disturb the Pax Monstruosa!')
 	else if s <> '' then begin
-		if parse_pers(n,s) then begin
+		if parse_pers(n,s,true) then begin
 	  		if n = myslot then
 				writeln('Self-abuse will not be tolerated in the Monster universe.')
 			else if protected(n) then begin
@@ -6664,8 +6703,9 @@ var
 begin
 	if s = '' then grab_line('Player? ',s,eof_handler := leave);
 
-	if s <> '' then begin
-		if parse_pers(n,s) then begin
+	if s = '?' then command_help('ping')
+	else if s <> '' then begin
+		if parse_pers(n,s,true) then begin
 			if n = myslot then
 				writeln('Don''t ping yourself.')
 			else dummy := ping_player(n);
@@ -7433,7 +7473,7 @@ begin
 	last := s;
 
 	if s = '' then done := true
-	else if not parse_pers(victim,s) then begin
+	else if not parse_pers(victim,s,true) then begin
 	    Writeln (s,' isn''t here.');
 	    victim := 0
 	end;
@@ -7511,7 +7551,8 @@ begin
 
 	if length(s) = 0 then
 		writeln('To use an object, type USE <object name>')
-	else if parse_obj(n,s) then begin
+	else if s = '?' then command_help('use')
+	else if parse_obj(n,s,true) then begin
 		getobj(n);
 		freeobj;
 
@@ -7572,7 +7613,7 @@ begin
 
 	if length(s) = 0 then begin
 		writeln('To whisper to someone, type WHISPER <personal name>.');
-	end else if parse_pers(n,s) then begin
+	end else if parse_pers(n,s,true) then begin
 		if n = myslot then
 		    writeln('You can''t whisper to yourself.')
 		else begin
@@ -7650,7 +7691,7 @@ begin
 		else begin
 		    x_unwield;
 		end;
-	end else if parse_obj(n,s) then begin
+	end else if parse_obj(n,s,true) then begin
 		if mywield <> 0 then begin
 			writeln('You are already wielding ',obj_part(mywield),'.');
 		end else begin
@@ -7708,7 +7749,7 @@ begin
 		else begin
 		    x_unwear;
 		end;
-	end else if parse_obj(n,s) then begin
+	end else if parse_obj(n,s,true) then begin
 		if mywear > 0 then begin
 		    getobj(mywear);
 		    freeobj;
@@ -8191,6 +8232,8 @@ begin
 		s_levels: do_s_levels;
 		s_quota:  do_s_quota;
 		s_spell:  do_s_spell (s);
+		s_charset: writeln('Database charset is ',
+			    chartable_charset,'.');
 	end;
 end;
 
@@ -8395,23 +8438,24 @@ end;
 procedure go_dcl (s: string);
 Var changed: boolean;
 begin  
-  log_action (c_dcl,0);
-  do_dcl (s);   { Spawn subprocess .. }
-  log_event (myslot,E_DCLDONE,0,0,'');
+    if alloc_dcl_access then begin
+	log_action (c_dcl,0);
+	do_dcl (s);   { Spawn subprocess .. }
+	log_event (myslot,E_DCLDONE,0,0,'');
   
-  { check database }
-  getindex (I_ASLEEP);         
-  freeindex;
-  if indx.free [mylog] then { Oops ! I am in asleep ... }
-    begin
-      WriteLn ('You are throw out from Monster-universe during your stay on DCL-level.');
-	finish_interpreter;
-	halt;
-    end;
+	{ check database }
+	getindex (I_ASLEEP);         
+	freeindex;
+	if indx.free [mylog] then { Oops ! I am in asleep ... }
+	begin
+	    WriteLn ('You are throw out from Monster-universe during your stay on DCL-level.');
+	    finish_interpreter;
+	    halt;
+	end;
           
-  { Because only my process update my situation, I can suppose that
-     datatabase and data in memory is valid - I hope so ...        }
-
+	{ Because only my process update my situation, I can suppose that
+	    datatabase and data in memory is valid - I hope so ...        }
+    end else writeln('DCL access disabled !');
 end;                                                                 
           
 { hurtta@finuh }       
@@ -8480,6 +8524,7 @@ var
             experience: integer;
             name: shortstring;
             username: veryshortstring;
+	    monster_count: integer;
 begin
    if debug then writeln('%x_puttoken');
 	if first_x_puttoken then begin
@@ -8513,15 +8558,21 @@ begin
 
 	end;
 
+	monster_count := 0;
 	getroom(room);
 	i := 1;
 	found := false;
-	while (i <= maxpeople) and (not found) do begin
-		if here.people[i].kind = 0 then	{ hurtta@finuh }
-			found := true
-		else
-			i := i + 1;
-	end;
+	for j := 1 to maxpeople do begin
+	    if here.people[j].kind = 0 then begin
+		i := j;
+		found := true
+	    end else if here.people[j].kind <> P_PLAYER then
+		monster_count := monster_count + 1;
+	end; { for }
+
+	{ reserve last position for (interactive) player }
+	if monster_count >= maxpeople-1 then found := false;
+
 	if found and (kind <> 0) then begin
 		here.people[i].kind := kind;   { probably monster }
 		here.people[i].name := name;
@@ -8580,7 +8631,7 @@ begin
             writeln('That monster or player already exits.')
          end else begin
             if debug then
-               writeln('%beggining to create monster');
+               writeln('%begining to create monster');
             if alloc_log(mid) then begin
                if alloc_general(I_HEADER,mcode) then begin
                   if x_puttoken (0,mid,0,location,aslot,true,2,s,mcode) then begin
@@ -8669,7 +8720,7 @@ begin
      writeln('To destroy a monster you own, type ERASE <monster name>.')
   else if not is_owner(location,TRUE) then { is_owner make gethere }
      writeln('You must be in one of your own rooms to destroy a monster.')
-  else if parse_pers(mslot,s) then begin
+  else if parse_pers(mslot,s,true) then begin
      mname := here.people[mslot].name;
      if exact_pers(mid,mname) then begin    
         if here.people[mslot].kind = P_MONSTER then begin
@@ -8967,7 +9018,8 @@ var what: shortstring;
 
 begin
     if s = '' then grab_line('List what? ',s,eof_handler := leave);
-    if s > '' then begin
+    if s = '?' then command_help('list')
+    else if s > '' then begin
 	what := bite(s);
 	if lookup_type(g,what,true,true) then case g of
 	    t_room:	do_rooms(s);
@@ -8992,7 +9044,8 @@ var what : shortstring;
     g: o_type;
 begin
     if s = '' then grab_line('Create what? ',s,eof_handler := leave);
-    if s > '' then begin
+    if s = '?' then command_help('create')
+    else if s > '' then begin
 	what := bite(s);
 	if lookup_type(g,what,false,true) then case g of
 	    t_room:	do_form(s);
@@ -9283,8 +9336,9 @@ begin
 	show[s_levels] := 'levels';
 	show[s_quota] := 'quota';
 	show[s_spell] := 'spells';
+	show[s_charset] := 'charset';
 	
-	numshow := 12;
+	numshow := 13;
 
 	setkey[y_quest] := '?';
 
@@ -10572,9 +10626,13 @@ begin
 	writeln;
 	writeln('You extend your arms, muster some energy, and ',name,' is');
 	writeln('engulfed in a cloud of orange smoke.');
-	writeln;
+
 	wait(1);	{ try fixing event problem - yes - that isn't good }
-	int_poof(name,nam.idents[loc],'',true,true);
+	if not int_poof(name,nam.idents[loc],'',true,true) then begin
+	    { FAILED !! }
+	    log_event(n,E_POOFIN,0,0,name,location); { false event }
+	end;
+	writeln;
 	checkevents;
     end else
 	writeln('There is no room named ',s,'.');

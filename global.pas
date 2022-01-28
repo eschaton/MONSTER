@@ -231,6 +231,7 @@ const
 	s_levels = 10;
 	s_quota  = 11;
 	s_spell  = 12;
+	s_charset = 13;
 
 { Set Mnemonics }
 
@@ -394,7 +395,13 @@ Var GF_Types : array [ 1 .. GF_MAX ] of global_T :=
       G_Code
     );
 
-Type
+Type	chartype = ( ct_none, ct_letter, ct_space, ct_special );
+
+	charrec = record
+	    kind: chartype;
+	    ucase: char;
+	    lcase: char;
+	end;
 
 	string = varying[string_len] of char;
 	veryshortstring = varying[veryshortlen] of char;
@@ -745,5 +752,269 @@ var
         VERSION : [external] string;  { defined in VERSION.PAS }
 	DISTRIBUTED : [external] string;
 					    { defined in VERSION.PAS }
+
+
+	chartable_charset : [global] string := 'MULTINATIONAL';
+	chartable : [global] array [ char ] of charrec :=
+	    { Dec Multinational charcter set for default: }
+	(   ( ct_none, ''(0), ''(0) ),	    { 0 : NUL }
+	    ( ct_none, ''(1), ''(1) ),	    { 1 : SOH }
+	    ( ct_none, ''(2), ''(2) ),	    { 2 : STX }
+	    ( ct_none, ''(3), ''(3) ),	    { 3 : ETX }
+	    ( ct_none, ''(4), ''(4) ),	    { 4 : EOT }
+	    ( ct_none, ''(5), ''(5) ),	    { 5 : ENQ }
+	    ( ct_none, ''(6), ''(6) ),	    { 6 : ACK }
+	    ( ct_none, ''(7), ''(7) ),	    { 7 : BEL }
+	    ( ct_none, ''(8), ''(8) ),	    { 8 : BS }
+	    ( ct_space, ''(9), ''(9) ),	    { 9 : HT }
+	    ( ct_space, ''(10), ''(10) ),	    { 10 : LF }
+	    ( ct_space, ''(11), ''(11) ),	    { 11 : VT }
+	    ( ct_space, ''(12), ''(12) ),	    { 12 : FF }
+	    ( ct_space, ''(13), ''(13) ),	    { 13 : CR }
+	    ( ct_none, ''(14), ''(14) ),	    { 14 : SO }
+	    ( ct_none, ''(15), ''(15) ),	    { 15 : SI }
+	    ( ct_none, ''(16), ''(16) ),	    { 16 : DLE }
+	    ( ct_none, ''(17), ''(17) ),	    { 17 : DC1 }
+	    ( ct_none, ''(18), ''(18) ),	    { 18 : DC2 }
+	    ( ct_none, ''(19), ''(19) ),	    { 19 : DC3 }
+	    ( ct_none, ''(20), ''(20) ),	    { 20 : DC4 }
+	    ( ct_none, ''(21), ''(21) ),	    { 21 : NAK }
+	    ( ct_none, ''(22), ''(22) ),	    { 22 : SYN }
+	    ( ct_none, ''(23), ''(23) ),	    { 23 : ETB }
+	    ( ct_none, ''(24), ''(24) ),	    { 24 : CAN }
+	    ( ct_none, ''(25), ''(25) ),	    { 25 : EM }
+	    ( ct_none, ''(26), ''(26) ),	    { 26 : SUB }
+	    ( ct_none, ''(27), ''(27) ),	    { 27 : ESC }
+	    ( ct_none, ''(28), ''(28) ),	    { 28 : FS }
+	    ( ct_none, ''(29), ''(29) ),	    { 29 : GS }
+	    ( ct_none, ''(30), ''(30) ),	    { 30 : RS }
+	    ( ct_none, ''(31), ''(31) ),	    { 31 : US }
+	    ( ct_space, ' ', ' ' ),		    { 32 : SP }
+	    ( ct_special, '!', '!' ),		    { 33 : ! }
+	    ( ct_special, '"', '"' ),		    { 34 : " }
+	    ( ct_special, '#', '#' ),		    { 35 : # }
+	    ( ct_special, '$', '$' ),		    { 36 : $ }
+	    ( ct_special, '%', '%' ),		    { 37 : % }
+	    ( ct_special, '&', '&' ),		    { 38 : & }
+	    ( ct_special, '''', '''' ),		    { 39 : ' }
+	    ( ct_special, '(', '(' ),		    { 40 : ( }
+	    ( ct_special, ')', ')' ),		    { 41 : ) }
+	    ( ct_special, '*', '*' ),		    { 42 : ! }
+	    ( ct_special, '+', '+' ),		    { 43 : ! }
+	    ( ct_special, ',', ',' ),		    { 44 : ' }
+	    ( ct_special, '-', '-' ),		    { 45 : - }
+	    ( ct_special, '.', '.' ),		    { 46 : . }
+	    ( ct_special, '/', '/' ),		    { 47 : / }
+	    ( ct_special, '0', '0' ),		    { 48 : 0 }
+	    ( ct_special, '1', '1' ),		    { 49 : 1 }
+	    ( ct_special, '2', '2' ),		    { 50 : 2 }
+	    ( ct_special, '3', '3' ),		    { 51 : 3 }
+	    ( ct_special, '4', '4' ),		    { 52 : 4 }
+	    ( ct_special, '5', '5' ),		    { 53 : 5 }
+	    ( ct_special, '6', '6' ),		    { 54 : 6 }
+	    ( ct_special, '7', '7' ),		    { 55 : 7 }
+	    ( ct_special, '8', '8' ),		    { 56 : 8 }
+	    ( ct_special, '9', '9' ),		    { 57 : 9 }
+	    ( ct_special, ':', ':' ),		    { 58 : : }
+	    ( ct_special, ';', ';' ),		    { 59 : ; }
+	    ( ct_special, '<', '<' ),		    { 60 : < }
+	    ( ct_special, '=', '=' ),		    { 61 : = }
+	    ( ct_special, '>', '>' ),		    { 62 : > }
+	    ( ct_special, '?', '?' ),		    { 63 : ? }
+	    ( ct_special, '@', '@' ),		    { 64 : @ }
+	    ( ct_letter,  'A', 'a' ),		    { 65 : A }
+	    ( ct_letter,  'B', 'b' ),		    { 66 : B }
+	    ( ct_letter,  'C', 'c' ),		    { 67 : C }
+	    ( ct_letter,  'D', 'd' ),		    { 68 : D }
+	    ( ct_letter,  'E', 'e' ),		    { 69 : E }
+	    ( ct_letter,  'F', 'f' ),		    { 70 : F }
+	    ( ct_letter,  'G', 'g' ),		    { 71 : G }
+	    ( ct_letter,  'H', 'h' ),		    { 72 : H }
+	    ( ct_letter,  'I', 'i' ),		    { 73 : I }
+	    ( ct_letter,  'J', 'j' ),		    { 74 : J }
+	    ( ct_letter,  'K', 'k' ),		    { 75 : K }
+	    ( ct_letter,  'L', 'l' ),		    { 76 : L }
+	    ( ct_letter,  'M', 'm' ),		    { 77 : M }
+	    ( ct_letter,  'N', 'n' ),		    { 78 : N }
+	    ( ct_letter,  'O', 'o' ),		    { 79 : O }
+	    ( ct_letter,  'P', 'p' ),		    { 80 : P }
+	    ( ct_letter,  'Q', 'q' ),		    { 81 : Q }
+	    ( ct_letter,  'R', 'r' ),		    { 82 : R }
+	    ( ct_letter,  'S', 's' ),		    { 83 : S }
+	    ( ct_letter,  'T', 't' ),		    { 84 : T }
+	    ( ct_letter,  'U', 'u' ),		    { 85 : U }
+	    ( ct_letter,  'V', 'v' ),		    { 86 : V }
+	    ( ct_letter,  'W', 'w' ),		    { 87 : W }
+	    ( ct_letter,  'X', 'X' ),		    { 88 : X }
+	    ( ct_letter,  'Y', 'y' ),		    { 89 : Y }
+	    ( ct_letter,  'Z', 'z' ),		    { 90 : Z }
+	    ( ct_special,  '[', '[' ),		    { 91 : [ }
+	    ( ct_special,  '\', '\' ),		    { 92 : \ }
+	    ( ct_special,  ']', ']' ),		    { 93 : ] }
+	    ( ct_special,  '^', '^' ),		    { 94 : ^ }
+	    ( ct_special,  '_', '_' ),		    { 95 : _ }
+	    ( ct_special,  '`', '`' ),		    { 96 : ` }
+	    ( ct_letter,  'A', 'a' ),		    { 97 : a }
+	    ( ct_letter,  'B', 'b' ),		    { 98 : b }
+	    ( ct_letter,  'C', 'c' ),		    { 99 : c }
+	    ( ct_letter,  'D', 'd' ),		    { 100 : d }
+	    ( ct_letter,  'E', 'e' ),		    { 101 : e }
+	    ( ct_letter,  'F', 'f' ),		    { 102 : f }
+	    ( ct_letter,  'G', 'g' ),		    { 103 : g }
+	    ( ct_letter,  'H', 'h' ),		    { 104 : h }
+	    ( ct_letter,  'I', 'i' ),		    { 105 : i }
+	    ( ct_letter,  'J', 'j' ),		    { 106 : j }
+	    ( ct_letter,  'K', 'k' ),		    { 107 : k }
+	    ( ct_letter,  'L', 'l' ),		    { 108 : l }
+	    ( ct_letter,  'M', 'm' ),		    { 109 : m }
+	    ( ct_letter,  'N', 'n' ),		    { 110 : n }
+	    ( ct_letter,  'O', 'o' ),		    { 111 : o }
+	    ( ct_letter,  'P', 'p' ),		    { 112 : p }
+	    ( ct_letter,  'Q', 'q' ),		    { 113 : q }
+	    ( ct_letter,  'R', 'r' ),		    { 114 : r }
+	    ( ct_letter,  'S', 's' ),		    { 115 : s }
+	    ( ct_letter,  'T', 't' ),		    { 116 : t }
+	    ( ct_letter,  'U', 'u' ),		    { 117 : u }
+	    ( ct_letter,  'V', 'v' ),		    { 118 : v }
+	    ( ct_letter,  'W', 'w' ),		    { 119 : w }
+	    ( ct_letter,  'X', 'x' ),		    { 120 : x }
+	    ( ct_letter,  'Y', 'y' ),		    { 121 : y }
+	    ( ct_letter,  'Z', 'Z' ),		    { 122 : z }
+	    ( ct_special,  '{', '{' ),		    { 123 }
+	    ( ct_special,  '|', '|' ),		    { 124 : | }
+	    ( ct_special,  '}', '}' ),		    { 125 }
+	    ( ct_special,  '~', '~' ),		    { 126 : ~ }
+	    ( ct_none, ''(127), ''(127) ),	    { 127 : DEL }
+	    ( ct_none, ''(128), ''(128) ),  { 128 }
+	    ( ct_none, ''(129), ''(129) ),  { 129 }
+	    ( ct_none, ''(130), ''(130) ),  { 130 }
+	    ( ct_none, ''(131), ''(131) ),  { 131 }
+	    ( ct_none, ''(132), ''(132) ),  { 132 : IND }
+	    ( ct_none, ''(133), ''(133) ),  { 133 : NEL }
+	    ( ct_none, ''(134), ''(134) ),  { 134 : SSA }
+	    ( ct_none, ''(135), ''(135) ),  { 135 : ESA }
+	    ( ct_none, ''(136), ''(136) ),  { 136 : HTS }
+	    ( ct_none, ''(137), ''(137) ),  { 137 : HTJ }
+	    ( ct_none, ''(138), ''(138) ),  { 138 : VTS }
+	    ( ct_none, ''(139), ''(139) ),  { 139 : PLD }
+	    ( ct_none, ''(140), ''(140) ),  { 140 : PLU }
+	    ( ct_none, ''(141), ''(141) ),  { 141 : RI }
+	    ( ct_none, ''(142), ''(142) ),  { 142 : SS2 }
+	    ( ct_none, ''(143), ''(143) ),  { 143 : SS3 }
+	    ( ct_none, ''(144), ''(144) ),  { 144 : DCS }
+	    ( ct_none, ''(145), ''(145) ),  { 145 : PU1 }
+	    ( ct_none, ''(146), ''(146) ),  { 146 : PU2 }
+	    ( ct_none, ''(147), ''(147) ),  { 147 : STS }
+	    ( ct_none, ''(148), ''(148) ),  { 148 : CCH }
+	    ( ct_none, ''(149), ''(149) ),  { 149 : MW }
+	    ( ct_none, ''(150), ''(150) ),  { 150 : SPA }
+	    ( ct_none, ''(151), ''(151) ),  { 151 : EPA }
+	    ( ct_none, ''(152), ''(152) ),  { 152 }
+	    ( ct_none, ''(153), ''(153) ),  { 153 }
+	    ( ct_none, ''(154), ''(154) ),  { 154 }
+	    ( ct_none, ''(155), ''(155) ),  { 155 : CSI }
+	    ( ct_none, ''(156), ''(156) ),  { 156 : ST }
+	    ( ct_none, ''(157), ''(157) ),  { 157 : OSC }
+	    ( ct_none, ''(158), ''(158) ),  { 158 : PM }
+	    ( ct_none, ''(159), ''(159) ),  { 159 : APC }
+	    ( ct_special, ''(160), ''(160) ),	{ 160 :   }
+	    ( ct_special, ''(161), ''(161) ),	{ 161 : ¡ }
+	    ( ct_special, ''(162), ''(162) ),	{ 162 }
+	    ( ct_special, ''(163), ''(163) ),	{ 163 }
+	    ( ct_none, ''(164), ''(164) ),	{ 164 }
+	    ( ct_special, ''(165), ''(165) ),	{ 165 : ¥ }
+	    ( ct_none, ''(166), ''(166) ),	{ 166 }
+	    ( ct_special, ''(167), ''(167) ),	{ 167 }
+	    ( ct_special, ''(168), ''(168) ),	{ 168 }
+	    ( ct_special, ''(169), ''(169) ),	{ 169 }
+	    ( ct_special, ''(170), ''(170) ),	{ 170 : ª }
+	    ( ct_special, ''(171), ''(171) ),	{ 171 : « }
+	    ( ct_none, ''(172), ''(172) ),	{ 172 }
+	    ( ct_none, ''(173), ''(173) ),	{ 173 }
+	    ( ct_none, ''(174), ''(174) ),	{ 174 }
+	    ( ct_none, ''(175), ''(175) ),	{ 175 }
+	    ( ct_special, ''(176), ''(176) ),	{ 176 : ° }
+	    ( ct_special, ''(177), ''(177) ),	{ 177 : ± }
+	    ( ct_special, ''(178), ''(178) ),	{ 178 : ² }
+	    ( ct_special, ''(179), ''(179) ),	{ 179 }
+	    ( ct_none, ''(180), ''(180) ),	{ 180 }
+	    ( ct_special, ''(181), ''(181) ),	{ 181 : µ }
+	    ( ct_special, ''(182), ''(182) ),	{ 182 }
+	    ( ct_special, ''(183), ''(183) ),	{ 183 }
+	    ( ct_none, ''(184), ''(184) ),	{ 184 }
+	    ( ct_special, ''(185), ''(185) ),	{ 185 }
+	    ( ct_special, ''(186), ''(186) ),	{ 186 : º }
+	    ( ct_special, ''(187), ''(187) ),	{ 187 : » }
+	    ( ct_special, ''(188), ''(188) ),	{ 188 : ¼ }
+	    ( ct_special, ''(189), ''(189) ),	{ 189 : ½ }
+	    ( ct_none, ''(190), ''(190) ),	{ 190 }
+	    ( ct_special, ''(191), ''(191) ),	{ 191 : ¿ }
+	    ( ct_letter, ''(192), ''(224) ),	{ 192 }
+	    ( ct_letter, ''(193), ''(225) ),	{ 193 }
+	    ( ct_letter, ''(194), ''(226) ),	{ 194 }
+	    ( ct_letter, ''(195), ''(227) ),	{ 195 }
+	    ( ct_letter, ''(196), ''(228) ),	{ 196 : Ä }
+	    ( ct_letter, ''(197), ''(229) ),	{ 197 : Å }
+	    ( ct_letter, ''(198), ''(230) ),	{ 198 : Æ }
+	    ( ct_letter, ''(199), ''(231) ),	{ 199 }
+	    ( ct_letter, ''(200), ''(232) ),	{ 200 }
+	    ( ct_letter, ''(201), ''(233) ),	{ 201 : É }
+	    ( ct_letter, ''(202), ''(234) ),	{ 202 }
+	    ( ct_letter, ''(203), ''(235) ),	{ 203 }
+	    ( ct_letter, ''(204), ''(236) ),	{ 204 }
+	    ( ct_letter, ''(205), ''(237) ),	{ 205 }
+	    ( ct_letter, ''(206), ''(238) ),	{ 206 }
+	    ( ct_letter, ''(207), ''(239) ),	{ 207 }
+	    ( ct_none, ''(208), ''(208) ),	{ 208 }
+	    ( ct_letter, ''(209), ''(241) ),	{ 209 : Ñ }
+	    ( ct_letter, ''(210), ''(242) ),	{ 210 }
+	    ( ct_letter, ''(211), ''(243) ),	{ 211 }
+	    ( ct_letter, ''(212), ''(244) ),	{ 212 }
+	    ( ct_letter, ''(213), ''(245) ),	{ 213 }
+	    ( ct_letter, ''(214), ''(246) ),	{ 214 : Ö }
+	    ( ct_letter, ''(215), ''(247) ),	{ 215 }
+	    ( ct_letter, ''(216), ''(248) ),	{ 216 }
+	    ( ct_letter, ''(217), ''(249) ),	{ 217 }
+	    ( ct_letter, ''(218), ''(250) ),	{ 218 }
+	    ( ct_letter, ''(219), ''(251) ),	{ 219 }
+	    ( ct_letter, ''(220), ''(252) ),	{ 220 }
+	    ( ct_letter, ''(221), ''(253) ),	{ 221 }
+	    ( ct_none, ''(222), ''(222) ),	{ 222 }
+	    ( ct_letter, ''(223), ''(223) ),	{ 223 }    
+	    ( ct_letter, ''(192), ''(224) ),	{ 224 }
+	    ( ct_letter, ''(193), ''(225) ),	{ 225 }
+	    ( ct_letter, ''(194), ''(226) ),	{ 226 }
+	    ( ct_letter, ''(195), ''(227) ),	{ 227 }
+	    ( ct_letter, ''(196), ''(228) ),	{ 228 : ä }
+	    ( ct_letter, ''(197), ''(229) ),	{ 229 : ä }
+	    ( ct_letter, ''(198), ''(230) ),	{ 230 : æ }
+	    ( ct_letter, ''(199), ''(231) ),	{ 231 }
+	    ( ct_letter, ''(200), ''(232) ),	{ 232 }
+	    ( ct_letter, ''(201), ''(233) ),	{ 233 }
+	    ( ct_letter, ''(202), ''(234) ),	{ 234 }
+	    ( ct_letter, ''(203), ''(235) ),	{ 235 }
+	    ( ct_letter, ''(204), ''(236) ),	{ 236 }
+	    ( ct_letter, ''(205), ''(237) ),	{ 237 }
+	    ( ct_letter, ''(206), ''(238) ),	{ 238 }
+	    ( ct_letter, ''(207), ''(239) ),	{ 239 }
+	    ( ct_none, ''(240), ''(240) ),	{ 240 }
+	    ( ct_letter, ''(209), ''(241) ),	{ 241 }
+	    ( ct_letter, ''(210), ''(242) ),	{ 242 }
+	    ( ct_letter, ''(211), ''(243) ),	{ 243 }
+	    ( ct_letter, ''(212), ''(244) ),	{ 244 }
+	    ( ct_letter, ''(213), ''(245) ),	{ 245 }
+	    ( ct_letter, ''(214), ''(246) ),	{ 246 : ö }
+	    ( ct_letter, ''(215), ''(247) ),	{ 247 }
+	    ( ct_letter, ''(216), ''(248) ),	{ 248 }
+	    ( ct_letter, ''(217), ''(249) ),	{ 249 }
+	    ( ct_letter, ''(218), ''(250) ),	{ 250 }
+	    ( ct_letter, ''(219), ''(251) ),	{ 251 }
+	    ( ct_letter, ''(220), ''(252) ),	{ 252 }
+	    ( ct_letter, ''(221), ''(253) ),	{ 253 }
+	    ( ct_none, ''(254), ''(254) ),	{ 254 }
+	    ( ct_special, ''(255), ''(255) ) );	{ 255 }
+
+	database_poltime: [global] string := '0 ::1';
+	max_mdl_buffer: [global] integer := 20;
 
 End.	{ end of module }

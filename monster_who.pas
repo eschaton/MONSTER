@@ -17,17 +17,13 @@ CREATION DATE:	30.4.1990
  
      Date     |   Name  | Description
 --------------+---------+-------------------------------------------------------
- 11.6.1990    |   K E H |  read_global_flag
+ 11.6.1990    | Hurtta  |  read_global_flag
+ 12.8.1992    |         |  Dummy player_here removed (now defined in module 
+              |         |      PARSER
 --------------+---------+-------------------------------------------------------
 %[change_entry]%
 }
  
-{ DUMMY for linker }
-[global]
-function player_here(id: integer; var slot: integer): boolean;
-begin
-    player_here := false;
-end;
 
 { DUMMY for linker }
 [global]

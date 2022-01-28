@@ -80,3 +80,40 @@ Playtime: +++++++++--------+++++++
 default_allow: 20    ! How many rooms players made at default
 min_room:      5     ! How many rooms players can made without exit request
 min_accept:    5     ! How many accepts must players made
+
+
+! default chartable is Multinational
+CHARTABLE:  ! This modifies default chartable - one character per line
+END OF CHARTABLE
+
+! Time of between database polling in VMS delta-time format
+database_poltime: 0 ::1          !  One second
+
+! Message what is written when playtime: -entry closes Monster
+CLOSED MESSAGE:
+Welcome to the game Monster!
+
+But what now?
+
+Goodgulf the Grey appears in a puff of orange smoke!
+He is very angry...
+
+"What are you doing here? The Dungeon is now closed!"
+
+He waves his Iron Staff and yells "Begone!"
+
+You disappear in a burst of multicolored light...
+
+On wall you see announcement:
+
+**********************************************************************
+*                                                                    *
+*                    Dungeon is closed on weekdays                   *
+*                         between 09.00-17.00                        *
+*                                                                    *
+**********************************************************************
+
+END OF MESSAGE
+
+mdl_buffers: 20
+allow_dcl_access: true

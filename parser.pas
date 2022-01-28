@@ -1,4 +1,4 @@
-[environment,inherit ('Global','Database') ]
+[environment,inherit ('Global','Database','Guts') ]
 Module Parser(Output); 
 
 [hidden] Const 
@@ -109,9 +109,8 @@ var
 
 	numset: [global] integer;
 
+	myslot: [global] integer := 1;	{ here.people[myslot]... is this player }
 
-[external] function player_here(id: integer; var slot: integer): boolean;
-		    external;
 [external] procedure gethere(n: integer := 0); external;
 
 { PRIVS }
@@ -215,8 +214,6 @@ end;
 
 { ---- }
 
-
-
 [global]
 function lowcase(s: string):string;
 var
@@ -227,10 +224,13 @@ begin
 	if length(s) = 0 then
 		lowcase := ''
 	else begin
-		sprime := s;
+		sprime := '';
 		for i := 1 to length(s) do
-			if sprime[i] in ['A'..'Z'] then
-			   sprime[i] := chr(ord('a')+(ord(sprime[i])-ord('A')));
+			case chartable[s[i]].kind of
+			    ct_none:    ;	{ DISCARD }
+			    otherwise   sprime := sprime + 
+				    chartable[s[i]].lcase;
+			end; { case }
 		lowcase := sprime;
 	end;
 end;
@@ -238,13 +238,15 @@ end;
 [global]
 function classify (a: char): class;
 begin
-   case a of
-	' ',''(9):	classify := space;
-	'"':		classify := string_c;
-	'(',')',',','-':classify := bracket;             
-	'!':		classify := comment;
-	otherwise	classify := letter;
-   end;
+   case chartable[a].kind of
+	ct_space, ct_none:	classify := space;
+	otherwise case a of
+	    '"':		classify := string_c;
+	    '(',')',',','-':	classify := bracket;             
+	    '!':		classify := comment;
+	    otherwise		classify := letter;
+	end; { case a }
+   end; { case chartable }
 end;
 
 [global]
@@ -255,12 +257,17 @@ begin
     bf := ''; 
     space_f := true;
     while inbuf > '' do begin
-	if classify(inbuf [1]) <> space then bf := bf + inbuf [1]
-	else if not space_f then bf := bf + ' ';
-	space_f := classify(inbuf [1]) = space;
+	if chartable[inbuf [1]].kind = ct_none then  { DISCARD }
+	else if chartable[inbuf [1]].kind <> ct_space then begin
+	    bf := bf + inbuf [1];
+	    space_f := false;
+	end else if not space_f then begin
+	    bf := bf + ' ';
+	    space_f := true;
+	end;
 	inbuf := substr(inbuf,2,length(inbuf)-1)
     end;      
-    if bf > '' then if classify(bf[length(bf)]) = space then
+    if bf > '' then if chartable[bf[length(bf)]].kind = ct_space then
 	bf := substr(bf,1,length(bf)-1);
     clean_spaces := bf
 end; { clean spaces }
@@ -271,10 +278,11 @@ end; { clean spaces }
 function cut_atom (var main: mega_string; var x: integer;
 		    delimeter: char): shortstring;
 var start,i,last: integer;
+    result,result2: shortstring;
 begin    
     write_debug('%cut_atom');
     start := x;               
-    if x > length (main) then cut_atom := ''
+    if x > length (main) then result := ''
     else begin                  
 	if start + shortlen <=  length(main) then 
 	    last := start + shortlen-1
@@ -282,18 +290,204 @@ begin
 	x := last+1;
 	for i := last downto start do
 	    if main[i] = delimeter then x := i;
-	cut_atom := substr(main,start,x-start);
+	result := substr(main,start,x-start);
 	x := x +1
-    end
+    end;
+    result2 := '';
+    for i := 1 to length(result) do
+	if chartable[result[i]].kind <> ct_none then 
+	    result2 := result2 + result[i];
+    cut_atom := result;
 end; { cut_atom }
 
+[global]
+function obj_here(n: integer; nohidden: boolean := false): boolean;
+var
+	i: integer;
+	found: boolean;
+
+begin
+    i := 1;
+    found := false;
+    while (i <= maxobjs) and (not found) do begin
+	if here.objs[i] = n then begin
+	    if not nohidden then found := true
+	    else if here.objhide[i] = 0 then found := true
+	    else i := i + 1;
+	end else i := i + 1;
+    end;
+    obj_here := found;
+end; { obj_here }
+
+[global]    
+function player_here(id: integer; var slot: integer): boolean;
+    { suppose that gethere and getpers have made }
+var i: integer;
+    name: shortstring;
+begin
+    slot := 0;
+    name := lowcase(pers.idents[id]);
+    for i := 1 to maxpeople do
+	if here.people[i].kind > 0 then
+		if lowcase(here.people[i].name) = name then slot := i;
+    player_here := slot > 0;
+end; { player_here }
+
+{ returns true if object N is being held by the player (id slot)}
+
+function obj_hold(n: integer; slot: integer := 0): boolean;
+var
+	i: integer;
+	found: boolean;
+
+begin
+	if slot = 0 then slot := myslot;
+	
+	if n = 0 then
+		obj_hold := false
+	else begin
+		i := 1;
+		found := false;
+		while (i <= maxhold) and (not found) do begin
+			if here.people[slot].holding[i] = n then
+				found := true
+			else
+				i := i + 1;
+		end;
+		obj_hold := found;
+	end;
+end; { obj_hold }
+
+type tabletype = array [ 1.. maxroom] of boolean;
+     { used in lookup_general and in meta_scan }
+
+function solve_ambiquous(rec: namrec; indx: indexrec;
+			 table: tabletype; s: string;
+			 var result: integer): boolean;
+label quit_label;
+
+    procedure leave;
+    begin
+	writeln('QUIT - no selection');
+	solve_ambiquous := false;
+	goto quit_label;
+    end;
+
+var mapping : array [ 1 .. maxroom ] of 1 .. maxroom;
+    count,i,current: integer;
+    line: string;
+    ok: boolean; 
+begin
+    writeln('"',s,'" is ambiquous - Refer you one of following?');
+    count := 0;
+    for i := 1 to indx.top do 
+	if table[i] then begin
+		count := count +1;
+		writeln(' ',count:3,' ',rec.idents[i]);
+		mapping[count] := i;
+	end;
+    current := 0;
+    ok := false;
+    writeln('Give number (0 for nothing) or use cursor keys (UP and DOWN) for selection.');
+    repeat
+	if current = 0 then line := '  0'
+	else writev(line,current:3,' ; ',rec.idents[mapping[current]]);
+	grab_line('selection: ',line,edit_mode := true,eof_handler := leave);
+	if grab_next < 0 then begin
+	    current := current -1;
+	    if current < 0 then current := count;
+	end else if grab_next > 0 then begin
+	    current := current +1;
+	    if current > count then current := 0;
+	end else begin
+	    readv(line,i,error:=continue);
+	    if statusv = 0 then 
+		if (i >= 0) or (i <= count) then begin
+		    current := i;
+		    ok := true;
+	    end;
+	end;
+    until ok;
+
+    if current = 0 then solve_ambiquous := false
+    else begin
+	result := mapping[current];
+	solve_ambiquous := true;
+    end;
+
+    quit_label:
+end; { solve_ambiquous }
+
+function solve_ambiquous_list (list : array [ lower .. upper : integer ]
+				    of shortstring;
+                               table: tabletype;
+			       s: string; var result: integer): boolean;
+label quit_label;
+
+    procedure leave;
+    begin
+	writeln('QUIT - no selection');
+	solve_ambiquous_list := false;
+	goto quit_label;
+    end;
+
+var mapping : array [ 1 .. maxroom ] of 1 .. maxroom;
+    count,i,current: integer;
+    line: string;
+    ok: boolean; 
+
+begin
+    writeln('"',s,'" is ambiquous - Refer you one of following?');
+    count := 0;
+
+    for i := lower to upper do if table[i] then begin
+	 count := count +1;
+	 writeln(' ',count:3,' ',list[i]);
+	 mapping[count] := i;
+    end;
+
+    current := 0;
+    ok := false;
+    writeln('Give number (0 for nothing) or use cursor keys (UP and DOWN) for selection.');
+    repeat
+	if current = 0 then line := '  0'
+	else writev(line,current:3,' ; ',list[mapping[current]]);
+	grab_line('selection: ',line,edit_mode := true,eof_handler := leave);
+	if grab_next < 0 then begin
+	    current := current -1;
+	    if current < 0 then current := count;
+	end else if grab_next > 0 then begin
+	    current := current +1;
+	    if current > count then current := 0;
+	end else begin
+	    readv(line,i,error:=continue);
+	    if statusv = 0 then 
+		if (i >= 0) or (i <= count) then begin
+		    current := i;
+		    ok := true;
+	    end;
+	end;
+    until ok;
+
+    if current = 0 then solve_ambiquous_list := false
+    else begin
+	result := mapping[current];
+	solve_ambiquous_list := true;
+    end;
+
+    quit_label:
+end; { solve_ambiquous_list }
+			       
 function lookup_general(rec: namrec; ind: integer; 
 			var id: integer; s: string;
 			help: boolean): boolean;
 var i,poss,maybe,num: integer;
     temp: string;
+    table: tabletype;
 begin
     if debug then writeln('lookup_general: ',s);    
+    for i := 1 to maxroom do table[i] := false;
+
     getindex(ind);
     freeindex;
     s := lowcase(s);
@@ -304,9 +498,10 @@ begin
 	if not(indx.free[i]) then begin
 	    temp := lowcase(rec.idents[i]);
 	    if s = temp then num := i
-	    else if index(temp,s) = 1 then begin
+	    else if (index(temp,s) = 1) or (index(temp,' '+s) > 1) then begin
 		maybe := maybe + 1;
 		poss := i;
+		table[i] := true;
 	    end;
 	end;
     end;
@@ -319,13 +514,8 @@ begin
 	lookup_general := true;
     end else if maybe > 1 then begin
 	if help then begin
-	    writeln('Ambiguous - Refer you one of following?');
-	    for i := 1 to indx.top do 
-		if not(indx.free[i]) then 
-		    if index(lowcase(rec.idents[i]),s) = 1 then 
-			writeln('          ',rec.idents[i]);
-	end;
-	lookup_general := false;
+	    lookup_general := solve_ambiquous(rec,indx,table,s,id);
+	end else lookup_general := false;
     end else begin
 	lookup_general := false;
     end;
@@ -378,6 +568,110 @@ begin
     lookup_spell := lookup_general(spell_name,I_SPELL,sp,s,help);
 end;
 
+
+[global] 
+function parse_pers(var pnum: integer;s: string; help: boolean := false): 
+    boolean;
+var
+	i,poss,maybe,num: integer;
+	pname: string;
+
+	names: array [ 1 .. maxpeople ] of shortstring;
+	table: tabletype;
+begin
+	gethere;
+	s := lowcase(s);
+	i := 1;
+	maybe := 0;
+	num := 0;
+	for i := 1 to maxpeople do begin
+		table[i] := false;
+
+		if (here.people[i].kind > 0) and 
+		    (here.people[i].hiding = 0) then begin
+			pname := lowcase(here.people[i].name);
+			names [ i ] := here.people[i].name;
+
+			if s = pname then
+				num := i
+			else if (index(pname,s) = 1) or 
+			        (index(pname,' '+s) > 1) then begin
+				table[i] := true;
+				maybe := maybe + 1;
+				poss := i;
+			end;
+		end;
+	end;
+	if num <> 0 then begin
+		pnum := num;
+		parse_pers := true;
+	end else if maybe = 1 then begin
+		pnum := poss;
+		parse_pers := true;
+	end else if maybe > 1 then begin
+		pnum := 0;
+		if help then parse_pers :=
+		    solve_ambiquous_list(names,table,s,pnum)
+		else parse_pers := false;
+	end else begin
+		pnum := 0;
+		parse_pers := false;
+	end;
+end; { parse_pers }
+
+{ similar to lookup_obj, but only returns true if the object is in
+  this room or is being held by the player }
+{ and s may be in the middle of the objact name -- Leino@finuh }
+
+function parse_obj (var pnum: integer;
+			s: string; help: boolean := false): boolean;
+var
+	i,poss,maybe: integer;
+
+	table: tabletype;
+	temp: shortstring;
+
+begin
+	getobjnam;
+	freeobjnam;
+	getindex(I_OBJECT);
+	freeindex;
+
+        for i := 1 to maxroom do table[i] := false;
+
+	s := lowcase(s);
+	pnum := 0;
+	maybe := 0;
+	for i := 1 to indx.top do begin
+		if not(indx.free[i]) then begin
+			temp := lowcase(objnam.idents[i]);
+			if s =  temp then begin
+				if obj_here(i) or obj_hold(i) then
+				    pnum := i
+			end else if ((index(temp,s) = 1) or
+				(index(temp,' '+s) > 0)) then begin
+			    if (obj_here(i) or obj_hold(i)) then begin
+				maybe := maybe + 1;
+				poss := i;
+				table[i] := true;
+			    end;
+			end;
+		end;
+	end;
+	if pnum <> 0 then begin
+		parse_obj := true;
+	end else if maybe = 1 then begin
+		pnum := poss;
+		parse_obj := true;
+	end else if maybe > 1 then begin
+	   if help then parse_obj := solve_ambiquous(objnam,indx,table,s,pnum)
+	   else parse_obj := false;
+	end else begin
+		parse_obj := false;
+	end;
+end; { parse_obj }
+
+
 function meta_scan( indx:  indexrec;
 		    name:    namrec;
 		    function action(	nameid:	shortstring;
@@ -387,7 +681,6 @@ function meta_scan( indx:  indexrec;
 		    silent: boolean;
 		    function restriction (id: integer): boolean
 		    ):	    boolean;
-type tabletype = array [ 1.. maxroom] of boolean;
 
 var table,temp:  tabletype;
     i,cur,count,exact: integer;
@@ -402,14 +695,16 @@ var table,temp:  tabletype;
 		    var	result: tabletype;
 		    var	exact:	integer): integer;
     var i,count: integer;
+	temp: shortstring;
     begin
 	write_debug('%sub_scan: ',atom);
 	for i := 1 to maxroom do result[i] := false;
 	count := 0;
 	exact := 0;
 	for i := 1 to indx.top do if not indx.free[i] then begin
-	    if ((index(clean_spaces(lowcase(name.idents[i])),atom) = 1) or 
-		((index(clean_spaces(lowcase(name.idents[i])),' '+atom) > 0) 
+	    temp := clean_spaces(lowcase(name.idents[i]));
+	    if ((index(temp,atom) = 1) or 
+		((index(temp,' '+atom) > 0) 
 		 and unambiqous) ) and restriction(i) then begin
 		result[i] := true;
 		count := count +1;
@@ -419,8 +714,6 @@ var table,temp:  tabletype;
 	end;
 	sub_scan := count;
     end;    { sub_scan }
-
-
 
 begin
     write_debug('%meta_scan: ',line);
@@ -440,8 +733,9 @@ begin
 	atom := clean_spaces(atom);
 	count := sub_scan(indx,name,atom,temp,exact);
 	if unambiqous and (exact = 0) and (count > 1) then begin
-	    error := true;
-	    if not silent then writeln('"',atom,'" is ambiguous.');
+	    if silent then error := true
+	    else if error then writeln('"',atom,'" is ambiquous.')
+	    else error := not solve_ambiquous(name,indx,temp,atom,exact);
 	end;
 	if (count = 0) and unambiqous then begin
 	    error := true;
@@ -553,18 +847,24 @@ function lookup_dir(var dir: integer;s:string;
 var
 	i,poss,maybe,num: integer;
 
+	table: tabletype;
+	temp: shortstring;
 begin
     if debug then writeln('lookup_dir: ',s);
 	s := lowcase(s);
 	i := 1;
 	maybe := 0;
 	num := 0;
+
+	for i := 1 to maxroom do table[i] := false;
+
 	for i := 1 to maxexit do begin
-		if s = direct[i] then
-			num := i
-		else if index(direct[i],s) = 1 then begin
+		temp := lowcase(direct[i]);
+		if s = temp then num := i
+		else if index(temp,s) = 1 then begin
 			maybe := maybe + 1;
 			poss := i;
+			table[i] := true;
 		end;
 	end;
 	if debug then writeln ('lookup_dir: (',num:1,',',maybe:1,')');
@@ -576,13 +876,8 @@ begin
 		dir := poss;
 		lookup_dir := true;
 	end else if maybe > 1 then begin
-	    if help then begin
-		writeln('Ambiguous - Refer you one of following?');
-		for i := 1 to maxexit do  
-			if index(lowcase(direct[i]),s) = 1 then 
-			    writeln('          ',direct[i]);
-	    end;
-	    lookup_dir := false;
+	    if help then lookup_dir := solve_ambiquous_list (direct,table,s,dir)
+	    else lookup_dir := false;
 	end else begin
 	    lookup_dir := false;
 	end;
@@ -593,19 +888,24 @@ function lookup_show(var n: integer;s:string;
     help: boolean := false): boolean;
 var
 	i,poss,maybe,num: integer;
-
+	table: tabletype;
+	temp: shortstring;
 begin
     if debug then writeln('lookup_show: ',s);
+
+	for i := 1 to maxroom do table[i] := false;
+
 	s := lowcase(s);
 	i := 1;
 	maybe := 0;
 	num := 0;
 	for i := 1 to numshow do begin
-		if s = show[i] then
-			num := i
-		else if index(show[i],s) = 1 then begin
+		temp := lowcase(show[i]);
+		if s = temp then num := i
+		else if index(temp,s) = 1 then begin
 			maybe := maybe + 1;
 			poss := i;
+			table[i] := true;
 		end;
 	end;
 	if debug then writeln ('lookup_show: (',num:1,',',maybe:1,')');
@@ -617,13 +917,8 @@ begin
 		n := poss;
 		lookup_show := true;
 	end else if maybe > 1 then begin
-	    if help then begin
-		writeln('Ambiguous - Refer you one of following?');
-		for i := 1 to numshow do 
-		    if index(lowcase(show[i]),s) = 1 then 
-			writeln('          ',show[i]);
-	    end;
-	    lookup_show := false;
+	    if help then lookup_show := solve_ambiquous_list(show,table,s,n)
+	    else lookup_show := false;
 	end else begin
 		lookup_show := false;
 	end;
@@ -634,19 +929,24 @@ function lookup_set(var n: integer;s:string;
     help: boolean := false): boolean;
 var
 	i,poss,maybe,num: integer;
-
+	table: tabletype;
+	temp: shortstring;
 begin
     if debug then writeln('lookup_set: ',s);
 	s := lowcase(s);
 	i := 1;
 	maybe := 0;
 	num := 0;
+
+	for i := 1 to maxroom do table[i] := false;
+
 	for i := 1 to numset do begin
-		if s = setkey[i] then
-			num := i
-		else if index(setkey[i],s) = 1 then begin
+		temp := lowcase(setkey[i]);
+		if s = temp then num := i
+		else if index(temp,s) = 1 then begin
 			maybe := maybe + 1;
 			poss := i;
+			table[i] := true;
 		end;
 	end;
 	if debug then writeln ('lookup_set: (',num:1,',',maybe:1,')');
@@ -657,13 +957,8 @@ begin
 		n := poss;
 		lookup_set := true;
 	end else if maybe > 1 then begin
-	    if help then begin
-		writeln('Ambiguous - Refer you one of following?');
-		for i := 1 to numset do 
-		if index(lowcase(setkey[i]),s) = 1 then 
-			writeln('          ',setkey[i]);
-	    end;
-	    lookup_set := false;
+	    if help then lookup_set := solve_ambiquous_list(setkey,table,s,n)
+	    else lookup_set := false;
 	end else begin
 		lookup_set := false;
 	end;
@@ -678,7 +973,7 @@ begin
 	if debug then
 		writeln('%exact room: s = ',s);
 	if lookup_room(n,s) then begin
-		if nam.idents[n] = lowcase(s) then
+		if lowcase(nam.idents[n]) = lowcase(s) then
 			exact_room := true
 		else
 			exact_room := false;
@@ -690,15 +985,45 @@ end;	{ exact_room }
 function exact_pers(var n: integer;s: string): boolean;
 var
 	match: boolean;
-
+	ident_cache: [static] integer := -1;
+	ident_last: [static] string := '';
+	cache_ok: boolean;
 begin
-	if lookup_pers(n,s) then begin
-		if lowcase(pers.idents[n]) = lowcase(s) then
-			exact_pers := true
-		else
-			exact_pers := false;
-	end else
-		exact_pers := false;
+	{ because INT_* routines calls so many time, we
+	  build one item deep cache for that routine.
+	  Cache supposes that new monster/player isn't 
+	  get same name as what was asked in last time or
+	  name isn't changed. 
+
+	  Chance detect only if player/monster is deleted.
+	  I think that, this is enough.
+	}
+
+	cache_ok := false;
+	if (ident_last = s) and (ident_cache > 0) then begin
+	    getindex(I_PLAYER);
+		if ident_cache < indx.top then
+		    if not indx.free[ident_cache] then cache_ok := true
+		    else ident_cache := -1;
+	    freeindex;
+	end;
+		
+	if cache_ok then begin
+	    n := ident_cache;
+	    exact_pers := true;
+	end else if lookup_pers(n,s) then begin
+		if lowcase(pers.idents[n]) = lowcase(s) then begin
+		    ident_cache := n;
+		    ident_last := s;
+		    exact_pers := true
+		end else begin
+		    ident_cache := -1;
+		    exact_pers := false;
+		end;
+	end else begin
+	    ident_cache := -1;
+	    exact_pers := false;
+	end;
 end;	{ exact_user }
 
 [global]
@@ -723,7 +1048,7 @@ var
 
 begin
 	if lookup_obj(n,s) then begin
-		if objnam.idents[n] = lowcase(s) then
+		if lowcase(objnam.idents[n]) = lowcase(s) then
 			exact_obj := true
 		else
 			exact_obj := false;
@@ -736,7 +1061,9 @@ function lookup_class(var id: shortstring; s:string;
     help: boolean := false): boolean;
 var
 	i,poss,maybe,num: integer;
-
+	names: array [ 1 .. maxclass ] of shortstring;
+	table: tabletype;
+	temp: shortstring;
 begin
     if debug then writeln('lookup_class: ',s);
 	s := lowcase(s);
@@ -744,11 +1071,14 @@ begin
 	maybe := 0;
 	num := 0;
 	for i := 1 to maxclass do begin
-		if s = lowcase(classtable[i].name) then
-			num := i
-		else if index(lowcase(classtable[i].name),s) = 1 then begin
+		table[i] := false;
+		names[i] := classtable[i].name;
+		temp := lowcase(classtable[i].name);
+		if s = temp then num := i
+		else if index(temp,s) = 1 then begin
 			maybe := maybe + 1;
 			poss := i;
+			table[i] := true;
 		end;
 	end;
 	if debug then writeln ('lookup_class: (',num:1,',',maybe:1,')');
@@ -760,14 +1090,14 @@ begin
 		id := classtable[poss].id;
 		lookup_class := true;
 	end else if maybe > 1 then begin
-	    if help then begin
-		writeln('Ambiguous - Refer you one of following?');
-		for i := 1 to maxclass do 
-		    if index(lowcase(classtable[i].name),s) = 1 then 
-			writeln('          ',classtable[i].name);
-	    end;
 	    id := '<error>';
 	    lookup_class := false;
+	    if help then begin
+		if solve_ambiquous_list(names,table,s,num) then begin
+		    id := classtable[num].id;
+		    lookup_class := true;
+		end;
+	    end;
 	end else begin
 		id := '<error>';
 		lookup_class := false;
@@ -780,6 +1110,9 @@ function lookup_priv(var id: unsigned; s:string;
 var
 	i,poss,maybe,num: integer;
 
+	names: array [ 1 .. maxpriv ] of shortstring;
+	table: tabletype;
+
 begin
     if debug then writeln('lookup_priv: ',s);
 	s := lowcase(s);
@@ -787,11 +1120,14 @@ begin
 	maybe := 0;
 	num := 0;
 	for i := 1 to maxpriv do begin
+		table[i] := false;
+		names[i] := privtable[i].name;
 		if s = lowcase(privtable[i].name) then
 			num := i
 		else if index(lowcase(privtable[i].name),s) = 1 then begin
 			maybe := maybe + 1;
 			poss := i;
+			table[i] := true;
 		end;
 	end;
 	if debug then writeln ('lookup_priv: (',num:1,',',maybe:1,')');
@@ -803,14 +1139,14 @@ begin
 		id := privtable[poss].value;
 		lookup_priv := true;
 	end else if maybe > 1 then begin
-	    if help then begin
-		writeln('Ambiguous - Refer you one of following?');
-		for i := 1 to maxpriv do 
-		    if index(lowcase(privtable[i].name),s) = 1 then 
-			writeln('          ',privtable[i].name);
-	    end;
 	    id := 0;
 	    lookup_priv := false;
+	    if help then begin
+		if solve_ambiquous_list(names,table,s,num) then begin
+		    id := privtable[num].value;
+		    lookup_priv := true;
+		end;
+	    end;
 	end else begin
 		id := 0;
 		lookup_priv := false;
@@ -824,6 +1160,8 @@ var
 	i,poss,maybe,num: integer;
 	name: shortstring;
 
+	names: array [ 1 .. maxtype] of shortstring;
+	table: tabletype;
 begin
     if debug then writeln('lookup_type: ',s);
 	s := lowcase(s);
@@ -833,11 +1171,14 @@ begin
 	for i := 1 to maxtype do begin
 		if pl then name :=  typetable[i].plname 
 		else name := typetable[i].name;
+		names[i] := name;
+		table[i] := false;
 
 		if s = name then num := i
 		else if index(lowcase(name),s) = 1 then begin
 			maybe := maybe + 1;
 			poss := i;
+			table[i] := true;
 		end;
 	end;
 	if debug then writeln ('lookup_type: (',num:1,',',maybe:1,')');
@@ -849,21 +1190,14 @@ begin
 		id := typetable[poss].value;
 		lookup_type := true;
 	end else if maybe > 1 then begin
-	    if help then begin
-		writeln('Ambiguous - Refer you one of following?');
-		if pl then begin
-		    for i := 1 to maxtype do 
-			if index(lowcase(typetable[i].plname),s) = 1 then 
-			    writeln('          ',typetable[i].plname);
-		end else begin
-		    for i := 1 to maxtype do 
-			if index(lowcase(typetable[i].name),s) = 1 then 
-			    writeln('          ',typetable[i].name);
-		end;
-	    end;
-
 		id := t_none;
 		lookup_type := false;
+	    if help then begin
+		if solve_ambiquous_list(names,table,s,num) then begin
+		    id := typetable[num].value;
+		    lookup_type := true;
+		end;
+	    end;
 	end else begin
 		id := t_none;
 		lookup_type := false;
@@ -876,6 +1210,8 @@ function lookup_flag(var id: integer; s:string;
 var
 	i,poss,maybe,num: integer;
 
+	names: array [ 1 .. maxflag] of shortstring;
+	table: tabletype;
 begin
     if debug then writeln('lookup_flag: ',s);
 	s := lowcase(s);
@@ -883,6 +1219,8 @@ begin
 	maybe := 0;
 	num := 0;
 	for i := 1 to maxflag do begin
+		table[i] := false;
+		names[i] := flagtable[i].name;
 		if s = lowcase(flagtable[i].name) then
 			num := i
 		else if index(lowcase(flagtable[i].name),s) = 1 then begin
@@ -899,14 +1237,14 @@ begin
 		id := flagtable[poss].value;
 		lookup_flag := true;
 	end else if maybe > 1 then begin
-	    if help then begin
-		writeln('Ambiguous - Refer you one of following?');
-		for i := 1 to maxflag do 
-		    if index(lowcase(flagtable[i].name),s) = 1 then 
-			writeln('          ',flagtable[i].name);
-	    end;
 	    id := 0;
 	    lookup_flag := false;
+	    if help then begin
+		if solve_ambiquous_list(names,table,s,num) then begin
+		    id := flagtable[num].value;
+		    lookup_flag := true;
+		end;
+	    end;
 	end else begin
 		id := 0;
 		lookup_flag := false;

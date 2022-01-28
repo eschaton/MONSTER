@@ -42,4 +42,4 @@ define verb MONSTER
       syntax = MONSTER_DUMP
    disallow any2 (REBUILD, FIX, REAL_USERID, USERID, BATCH, DUMP, BUILD)
    disallow ((OUTPUT or neg OUTPUT) and FIX) 
-   disallow (START and (BUILD or DUMP))
+   disallow (START and (BUILD or DUMP or REBUILD or FIX))

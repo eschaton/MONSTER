@@ -10,176 +10,177 @@
   
   Only with /DUMP or /BUILD -qualifiers.
 
-  This paramter specifies text form equivalant of database.  Default 
-  extension is .DMP.  This parameter required with /DUMP and  /BUILD 
-  -qualifiers.
+  This parameter specifies the text form equivalent of a database.  Default 
+  extension is .DMP.  This parameter is required with the qualifiers /DUMP 
+  and /BUILD. 
+  
 
 2 General_Qualifiers
 
 /VERSION
  /VERSION
-  Show version text of Monster.  Version -command  shows  same  text 
+  Shows the version text.  The /VERSION qualifier shows the same  text 
   when playing Monster.
 
-  Incombatible with /WHO.
+  Incompatible with /WHO.
 
 /START
  /START
  /NOSTART
-  Prevents or enables start  of  playing  after  handling  of  other 
-  qualifiers. Usefull with /VERSION or qualifiers for management.
+  Prevents or enables the start of playing after handling of other 
+  qualifiers. Useful with /VERSION.
 
-  Incombatible with /WHO, /DUMP and /BUILD.
+  Incompatible with /WHO, /DUMP and /BUILD.
 
 /OUTPUT
  /OUTPUT[=output-file-spec]
  /NOOUTPUT
-  Redirects Monster's output  to  file.  Usefull  with  /VERSION  or 
-  qualifiers  for management.
+  Redirects Monster's output to a file. Useful with /VERSION or 
+  management qualifiers.
 
-  Incombatible with /FIX, /WHO, /DUMP and /BUILD.
+  Incompatible with /FIX, /WHO, /DUMP and /BUILD.
 
 2 Management_Qualifiers
 
-  These qualifeirs is only for Monster Manager.
+  These qualifiers are only for Monster Manager.
 
 /REBUILD
  /REBUILD
-  Build new database for  monster.  Check  before  this  entries  of 
+  Builds a new database for Monster. Checks first the entries  of 
   MONSTER.INIT -file.
 
-  Incombatible with /FIX, /REAL_USERID, /USERID, /BATCH, /WHO, /DUMP
+  Incompatible with /FIX, /REAL_USERID, /USERID, /BATCH, /WHO, /DUMP
   and /BUILD.
 
 /FIX
  /FIX
-  Activate  /FIX -system  in  interactive  mode.  With  this  system 
-  Monster Manager can fixs errors of database.
+  Activates the fixing system in the interactive mode. With it 
+  Monster Manager can fix errors of database.
 
-  Incombatible with /OUTPUT, /REBUILD, /REAL_USERID, /USERID, /BATCH, 
+  Incompatible with /OUTPUT, /REBUILD, /REAL_USERID, /USERID, /BATCH, 
   /WHO, /DUMP and /BUILD.
 
-  Look Fixing_Database.
+  See also Fixing_Database.
 
 /DEBUG
  /DEBUG
  /NODEBUG (D)
-  Turn debug mode on or off. Same as  debug  -command  when  playing 
-  Monster.
+  Switches the debug mode on or off. Equivalent to the DEBUG command when
+  playing Monster.
 
-  Incombatible with /WHO.
+  Incompatible with /WHO.
 
 /REAL_USERID
  /REAL_USERID
-  Enable playing with someone other's name.
+  Enables playing with another player's name.
 
-  Incombatible with /REBUILD, /FIX, /USERID, /BATCH, /WHO, /DUMP and 
+  Incompatible with /REBUILD, /FIX, /USERID, /BATCH, /WHO, /DUMP and 
   /BUILD.
 
 /BATCH
  /BATCH=command-file-spec
-  Runs /FIX -system in batch mode. 
+  Runs the fixing system in the batch mode. 
 
-  Incombatible with /REBUILD, /FIX,  /REAL_USERID,  /USERID, /BATCH, 
+  Incompatible with /REBUILD, /FIX,  /REAL_USERID,  /USERID, /BATCH, 
   /WHO, /DUMP and /BUILD.
 
 /BUILD
  /BUILD
-  Same as /REBUILD, except that this read database from special text 
-  file. Parameter dump_file is required with this qualifier.
+  Nearly the same as /REBUILD: reads the database from a special text 
+  file. The dump_file parameter is required with this qualifier.
 
-  Look also /DUMP.
+  See also /DUMP.
 
-  Incombatible with /REBUILD, /FIX, /REAL_USERID,  /USERID,  /BATCH, 
+  Incompatible with /REBUILD, /FIX, /REAL_USERID,  /USERID,  /BATCH, 
   /BUILD, /OUTPUT and /START.
 
 /DUMP
   /DUMP
-   Make text form copy of database for /BUILDing. Parameter dump_file
-   is required with this qualifier.
+   Creates a text form copy of the database for /BUILDing. The dump_file
+   parameter is required with this qualifier.
 
-  Incombatible with /REBUILD, /FIX, /REAL_USERID,  /USERID,  /BATCH, 
-  /DUMP, /OUTPUT and /START.
+   Incompatible with /REBUILD, /FIX, /REAL_USERID,  /USERID,  /BATCH, 
+   /DUMP, /OUTPUT and /START.
 
 2 Playing_Qualifiers
 
 /USERID
  /USERID=virtual_userid
-  Enable playing with virtual userid. Virtual userids is indebendent 
-  of real userids. Virtual userids is protected with password. 
+  Enables playing with a virtual userid. Virtual userids are independent 
+  of real userids. They are protected with passwords. 
 
-  Incombatible with   /REBUILD,  /FIX,  /REAL_USERID,  /BATCH,  /WHO, 
+  Incompatible with   /REBUILD,  /FIX,  /REAL_USERID,  /BATCH,  /WHO, 
   /DUMP and /BUILD.
 
 /WHO
  /WHO
-  Shows players what is currently  playing Monster,  but  not  start 
-  Monster. Good for LOGIN.COM.
+  Shows players currently playing Monster, but not those starting it.
+  Ideal for LOGIN.COM.                                        
 
-  Incombatible with all other qualifiers.
+  Incompatible with other qualifiers.
 
 2 Initialization_file
 
-  Monster read file MONSTER.INIT from directory where is  executable 
-  monster program. Monster gets directory from  process'  image_name 
-  entry. There is follow entries:
+  Monster reads a file named MONSTER.INIT from the directory where the 
+  executable Monster program is. Monster finds out the directory from  
+  the process image_name entry. There are the following entries:
 
 3 MM_userid
 
-  This entry include userid  of  Monster  Manager.  Userid  must  be 
-  written by lowercase. The Monster Manager has the most power. This 
-  should be the game administrator. 
+  This entry includes the userid of Monster Manager. The userid must 
+  be written in lowercase. The MM, who should also be the game
+  administrator, has the most power. 
 
 4 Example
 MM_userid: leino
 
 3 gen_debug
-  This tells whether everyone may use the debug command.  It must be 
-  able to be disabled  because  it  tells  players  too  much  about 
-  monsters.  On the other hand, it must also be able to be  enabled, 
+  Tells whether everyone may use the debug command. You must be able
+  to disable it because it gives away players too much information on
+  monsters. On the other hand,you also must be able to enable it
   if we want to do test runs under an unprivileged userid.
 
 4 Example
 gen_debug:   false
 
 3 REBUILD_OK
-  If this is true,  the Monster Manager can blow away  and  reformat 
-  the entire universe.  It's a good idea to set this to false.  This 
-  must be true when Monster Manager want use /REBUILD option.
+  If true, the Monster Manager can blow away ( exterminate, demolish ) 
+  and reformat the entire universe. It is preferable to set this to false.
+  It must be true when the MM wants to use the /REBUILD option.
 
 4 Example
 REBUILD_OK: false
 
 3 root
-  This is where the Monster database goes. The root directory must be  
-  world:e and the datafiles Monster creates in it world:rw for people 
-  to be able to play.
+  The home of the Monster database. The root directory protection must 
+  be set to world:e and the datafiles Monster creates in it must be
+  set to world:rw for people to be able to play.
 
 4 Example
-root:    games_disk:monster.database.db>		 
+root:    games_disk:<monster.database.db>		 
 
 3 coderoot
-  The  coderoot  directory  is  where  the codefiles for monsters  go. 
-  The directory must additionally have  an  ACL  default world:rw  for  
-  files  and ACL rw for the managers.
+  The codefiles for monsters are situated in the coderoot directory. 
+  The directory must additionally have an ACL default world:rw  for  
+  files and ACL rw for the managers.
 
 4 Example
 coderoot:games_disk:<monster.database.c>   
 
 3 LEVELTABLE
-  Leveltable tells levels of  Monster.  There  is  certain  privileges 
-  associateden to levels.  Higger level there is Monster Manager  (not 
-  in leveltable).
+  The leveltable tells the levels of Monster. Certain privileges are
+  associated with levels. The highest level is Monster Manager ( not 
+  shown in the leveltable ).
 
 4 Privileges
-  Value    Name      Meaning 
-  32       Monster   Can create Mosters what can modify player's contex.
-  16       Special   Can make special items
-  256      Spell     Can create spells what can modify player's contex.
-  4        Global    Can modify global describtions and flags.
-  8        Owner     Can customize other's stuff as owner of stuff.
-  64       Experince Can make MDL code, what give score to players.
-  1        Manager   Can execute system -command.
+  Value    Name       Meaning 
+  32       Monster    Can create monsters that can modify players' context.
+  16       Special    Can make special items
+  256      Spell      Can create spells that can modify players' context.
+  4        Global     Can modify global descriptions and flags.
+  8        Owner      Can customize other players' item like the owner.
+  64       Experience Can write MDL code that changes player scores.
+  1        Manager    Can execute the SYSTEM command.
 
 4 Example
 LEVELTABLE:
@@ -207,83 +208,179 @@ Bug Hunter,         5000000,     0,      500,      100,     500,   hidden
 END OF LEVELTABLE
 
 3 Archpriv
-  Experience entry for Monster Manager. Level of Monster manager isn't 
-  in leveltable.
+  The experience entry for the Monster Manager. The level of the MM 
+  is not in the leveltable.
 
 4 Example
 Archpriv:   0
 
 3 Archhealth
-  Health entry for Monster Manager.
+  The health entry for the Monster Manager.
 
 4 Example
 Archhealth: 800
 
 3 Archfactor
-  Hit factor for Monster Manager.
+  The hit factor for the Monster Manager.
 
 4 Example
 Archfactor: 100
 
 3 Archpower
-  Power entry for Monster Manager.
+  The power entry for the Monster Manager.
 
 4 Example
 Archpower:  1000
 
 3 maxexperience
-  Maximun experience what player can reach.  Notice that experience of 
-  Monster manager is MAXINT.
+  The maximum experience that players can reach.  Notice that the 
+  experience of the Monster Manager is MAXINT.
 
 4 Example
 maxexperience: 1000000
 
 3 protect_exp
-  When player reach this experince, player is deadless.
+  When players reach this experience level they become immortal.
 
 4 Example
 protect_exp: 700000
 
 3 Playtime
-  Tells time when Monster is playable in workdays.  Mark +  mean  that
-  monster is playable and mark - mean that monster isn't. First mark is
-  time from 00 to 01 and last mark is time from 23 to 24.
+  Shows time when Monster is playable during workdays. The '+' mark 
+  means that Monster is playable and the '-' mark means that it is 
+  not. The marks denote time from 00-01 until 23-24 ( 11pm-12pm ).
 
 4 Example
 Playtime: +++++++++--------+++++++
 
 3 default_allow
-  How many rooms players made at default.
+  How many rooms players are allowed to make by default.
 
 4 Example
 default_allow: 20
 
 3 min_room
-  How many rooms players can made without exit request.
+  How many rooms players are allowed to make without an exit request.
 
 4 Example
 min_room:      5
 
 3 min_accept
-  How many accepts must players made.
+  How many accepts must players make.
 
 4 Example
 min_accept:    5
 
+3 CHARTABLE
+  Monster's default character set is (Dec) Multinational character set.
+  This modify that table.
+
+  Lines in this table have forms:
+     char <quoted character> <character type> <case modifier>
+     char <character number> <character type> <case modifier>
+
+  There can also be one line with form:
+     charset <charset name>
+4 quoted_character
+  Quoted character is enclosed to quote characters (").
+
+  This argument tells what character is modified.
+4 character_number
+  Number is decimal number of character (0-255).
+
+  This argument tells what character is modified.
+4 type
+  Character types have: none, letter, special and space.
+
+     none:     This is for non-printable characters (Monster usually
+                 skips these characters)
+     letter:   This is letter
+     special:  This is character what possible some special meaning
+                 in monster (for example numbers).
+     space:    This character is treated as space
+4 case_modifier
+  Case modifier have forms:
+     upper <character number>
+     upper <quoted character>
+     lower <character number>
+     lower <quoted character>
+
+  This modifier tells correspond upper or lower case letter for
+  that character what is modified.
+4 charset_name
+  This tells name of caharacter set, which is described in that chartable.
+
+  Charset name can be on word. If it have more than one word, it must
+  close to quotaion marks(").
+  
+4 Example
+
+  CHARTABLE:
+  charset ISO646-FI
+  char "{" letter upper "["
+  char "|" letter upper "\"
+  char "}" letter upeer "]"
+  char "]" letter lower "}"
+  char "\" letter lower "|"
+  char "[" letter lower "}"
+  END OF CHARTABLE
+3 database_poltime
+  How often database is polled for interprocess communication.
+
+  This value is VMS Delta-time format.
+
+4 Example
+  database_poltime: 0 ::1
+
+  This is 1 second (0 days, 0 hours, 0 minutes and 1 second).
+3 CLOSED_MESSAGE
+   This message is printed, when Playtime: -entry disallows playing.
+4 Example
+  CLOSED MESSAGE:
+  Welcome to the game Monster!
+
+  But what now?
+
+  Goodgulf the Grey appears in a puff of orange smoke!
+  He is very angry...
+
+  "What are you doing here? The Dungeon is now closed!"
+
+  He waves his Iron Staff and yells "Begone!"
+
+  You disappear in a burst of multicolored light...
+
+  On wall you see announcement:
+
+  **********************************************************************
+  *                                                                    *
+  *                    Dungeon is closed on weekdays                   *
+  *                         between 09.00-17.00                        *
+  *                                                                    *
+  **********************************************************************
+
+  END OF MESSAGE
+3 mdl_buffers
+  How many MDL code is kept in memory.
+4 Example
+  mdl_buffers: 20
+3 allow_dcl_access
+  If this is true, then command 'dcl' is available.
 2 Installation
-  For installing Monster your must make several  directories,  compile 
-  Monster, put files to right directories,  edit configurion files and 
-  build database for Monster. 
-
+  In order to install Monster your must create several directories, 
+  compile it, copy files to right directories,  edit configuration 
+  files and build a database for it.
 3 Directories
-  Make four directories:
-    Directory for sources, lets CALL it SOURCES directory.
+  Create four directories:
+    Directory for sources, from now on it is called the SOURCES directory.
     Directory for MONSTER.EXE, MONSTER_DUMP.EXE, MONSTER_REBUILD.EXE and 
-      MONSTER_WHO.EXE, lets call it  IMAGE directory.
-    Directory for *.MON files, lets call it DATABASE_MON directory.
-    Directory for CODE*.MON files, lets call it DATABASE_CODE directory.
+      MONSTER_WHO.EXE, from now on it is called the IMAGE directory.
+    Directory for *.MON files, from now on it is called the 
+      DATABASE_MON directory.
+    Directory for CODE*.MON files, from now on it is called the 
+      DATABASE_CODE directory.
 
-4 SOURCE
+4 SOURCES
   Files: CLI.PAS, CONVERT.BATCH, CUSTOM.PAS, DATABASE.PAS,  FIX.BATCH, 
   GLOBAL.PAS, GUTS.PAS, INTERPRETER.PAS, KEYS.PAS, MAKEFILE.  MON.PAS,
   MONSTER_WHO.PAS, PARSER.PAS, PRIVUSERS.PAS, QUEUE.PAS, MONSTER_E.HLP,
@@ -292,21 +389,22 @@ min_accept:    5
 4 IMAGE
   Files: MONSTER.CLD, MONSTER.INIT.
 
-  Compiled Files: MON.EXE, MONSTER_WHO.EXE, MONSTER_E.HLB, 
+  Compiled files: MON.EXE, MONSTER_WHO.EXE, MONSTER_E.HLB, 
   MONSTER_DUMP.EXE and MONSTER_REBUILD.EXE.
 
 4 DATABASE_MON
-  Files: COMMANDS.PAPER, ILMOITUS.TXT, MONSTER.HELP.
+  Files: COMMANDS.PAPER, MONSTER.HELP.
 
-  Files created by /REBUILD: DESC.MON, EVENTS.MON, HEADER.MON, INDEX.MON,
-  INTFILE.MON, LINE.MON, NAMS.MON, OBJECTS.MON, ROOMS.MON, SPELLS.MON.
+  Files created by /REBUILD: DESC.MON, EVENTS.MON, HEADER.MON, 
+  INDEX.MON, INTFILE.MON, LINE.MON, NAMS.MON, OBJECTS.MON, 
+  ROOMS.MON, SPELLS.MON.
 
 4 DATABASE_CODE
   Files created by /REBUILD: CODE1.MON, CODE2.MON, CODE3.MON, CODE4.MON,
   CODE5.MON.
 
-  Command H (Add header blocks) in System menu adds number of files in
-  this directory!
+  Command H (Add header blocks) in the System menu adds a number of 
+  files in this directory!
 
 3 Compilation
   First: Edit KEYS.PAS (change gryp-keys !!)
@@ -340,22 +438,23 @@ $ LINK MONSTER_WHO, DATABASE, GUTS, GLOBAL, PRIVUSERS, PARSER
 $ MMS ALL
   if you have MMS (and MAKEFILE in that directory)
 
-  Put MON.EXE, MONSTER_WHO.EXE, MONSTER_DUMP.EXE, MONSTER_REBUILD.EXE 
-  and MONSTER_E.HLB to IMAGE directory.
+  Copy MON.EXE, MONSTER_WHO.EXE, MONSTER_DUMP.EXE, MONSTER_REBUILD.EXE 
+  and MONSTER_E.HLB to the "IMAGE" directory.
 
 3 Editing
 
-  Edit follow files: KEYS.PAS, MONSTER.CLD, MONSTER.INIT and ILMOITUS.TXT.
-  Edit KEYS.PAS before compilating Monster !
+  Edit the following files: KEYS.PAS, MONSTER.CLD, MONSTER.INIT.
+  Edit KEYS.PAS before compiling Monster !
 
 4 KEYS.PAS
 
-  Edit keys array.  You can chage number of lines of keys -array,  but 
-  you can't change length of lines of keys -array. Put number of lines
-  to maxkeys -const.
+  Edit the keys array. You can change the number of lines of keys array 
+  but you cannot change the length of lines of keys -array. Assign the 
+  number of lines to the "maxkeys" constant.
 
 4 MONSTER.CLD
-   Put right full specification of IMAGE directory to follow places:
+   Insert the full specification of the IMAGE directory to the following 
+   places:
 
 define syntax MONSTER_WHO
    image <IMAGE -directory>monster_who
@@ -367,26 +466,26 @@ define syntax MONSTER_DUMP
         prompt = "Dump file"
         value(type=$file,required)
 define syntax MONSTER_REBUILD
-  image <IMAGE -directory>>monster_rebuild
+  image <IMAGE -directory>monster_rebuild
 define verb MONSTER
    image <IMAGE -directory>mon
    qualifier WHO
       nonnegatable
       syntax = MONSTER_WHO
 4 MONSTER.INIT
-  Edit places marked with <> -marks:
+  Edit places marked with the "<>" marks:
 
 MM_userid: <your userid in lowcase>
 
 gen_debug:   false
 
-REBUILD_OK: <put this true before /REBUILD and then false>
+REBUILD_OK: <set this to true before /REBUILD, afterwards to false>
 
-root:     <full specificaton of DATABASE_MON -directory>
-coderoot: <full specification of DATABASE_CODE -direcory>
+root:     <full specification of the DATABASE_MON directory>
+coderoot: <full specification of the DATABASE_CODE direcory>
        
 LEVELTABLE:
-* Leveltable removed: looke example from initialization_file -part of 
+* Leveltable removed: see examples from the "initialization_file" part of 
   this help *
 END OF LEVELTABLE
 Archpriv:   0
@@ -398,25 +497,40 @@ maxexperience: 1000000
 
 protect_exp: 700000
 
-Playtime: <put right time to this: look example from initilization_file 
-           -part of this help>
+Playtime: <insert the right time into this: look examples from the 
+           "initialization_file" part of this help>
 
 default_allow: 20    
 min_room:      5     
 min_accept:    5    
+
+CHARTABLE:
+END OF CHARTABLE
+
+database_poltime: 0 ::1
+
+CLOSED MESSAGE:
+Monster is now closed !!
+END OF MESSAGE
+
+mdl_buffers: 20
 4 ILMOITUS.TXT
-  Monster print this file,  when Monster isn't playable in work  hours.
-  Work hours are in Playtime -line in MONSTER.INIT.
+
+  This file is no longer needed.
+  Use instead 'CLOSED MESSAGE' -entry in MONSTER.INIT.
 
 3 Protection
-  Put follows ACls to DATABASE_MON and DATABASE_CODE directories 
+  Insert the following ACls into the DATABASE_MON and the 
+  DATABASE_CODE directories 
   (to *.DIR file).
-          (IDENTIFIER=<your name>,ACCESS=READ+WRITE+EXECUTE+DELETE+CONTROL)
-          (IDENTIFIER=<your name>,OPTIONS=DEFAULT,ACCESS=READ+WRITE+EXECUTE+DELETE+CONTROL)
+          (IDENTIFIER=<your name>,
+             ACCESS=READ+WRITE+EXECUTE+DELETE+CONTROL)
+          (IDENTIFIER=<your name>,OPTIONS=DEFAULT,
+             ACCESS=READ+WRITE+EXECUTE+DELETE+CONTROL)
           (DEFAULT_PROTECTION,SYSTEM:RWED,OWNER:RWED,GROUP,WORLD:RW)
 
-  Put same kind ACL for all other managers (of monster) to DATABASE_CODE 
-  directory.
+  Insert similar ACLs for all other managers (of monster) into the 
+  DATABASE_CODE directory.
 
   Put protection (world:execute) or (world:read+execute) to 
                 IMAGE, DATABASE_MON and DATABASE_CODE directory
@@ -428,34 +542,34 @@ min_accept:    5
   Put protection (world:execute) to 
         MON.EXE and MONSTER_WHO.EXE files 
 
-  MONSTER_DUMP.EXE and MONSTER_REBUILD.EXE don't need to be executable 
-  by world.
+  MONSTER_DUMP.EXE and MONSTER_REBUILD.EXE do not need to be 
+  executable by the world.
 
-  After building database put protection (world:read+write) to
+  After building the database put protection (world:read+write) to
         *.MON files
-  in DATABASE_MON and DATABASE_CODE direcories.
+  in DATABASE_MON and DATABASE_CODE directories.
 
 3 Database
-  Define monster command with command
+  Define the monster command by:
       SET COMMAND MONSTER (in IMAGE directory)
 
-  Make monster universe with command MONSTER/REBUILD
+  Build the monster universe with the MONSTER/REBUILD command.
 
   or
 
-  copy your old (Skrenta's) monster database to DATABASE_MON directory
-  and try MONSTER/BATCH=CONVERT (No warranty!)
+  copy your old ( Rich Skrenta's ) monster database to the 
+  DATABASE_MON directory and try: MONSTER/BATCH=CONVERT (No warranty!)
 
   or
 
   MONSTER/BUILD CASTLE.DMP
-  (where in file CASTLE.DMP have distributed starter's castle)
+  ( CASTLE.DMP contains the distributed starter's castle )
 
-  Put protection (world:read+write) to
+  Change protection (world:read+write) to
         *.MON files
-  in DATABASE_MON and DATABASE_CODE direcories.
+  in the DATABASE_MON and the DATABASE_CODE directories.
 3 Publishing
-  Tell anybody that he can play monster
+  Tells anybody that he can play Monster
      after command
      SET COMMAND Your_Disk:<Your IMAGE directory>MONSTER
   with MONSTER command
@@ -468,8 +582,7 @@ min_accept:    5
                Juha.Laiho@Helsinki.FI         jlaiho@cc.Helsinki.FI
                JLAIHO@FINUH.BITNET
 2 Original
-  This text is from release of original Skrenta's Monster. I only
-  put this to Help structure.
+  This text is from the release of the original Monster by Rich Skrenta. 
 
 3 Files 
   Monster was written in VMS Pascal under VMS 4.6.  It uses file 
@@ -1813,25 +1926,25 @@ Bugs:          Following non-existed commands is recognized:
 
 5 Hook-menu
 
-  B       Block hook code.
+  B       Block the hook code.
   C       Type COMMANDS.PAPER.
-  D       Delete hook.
-  E       Exit customizing hook.
-  F       Free hook code.
-  G       Get program file, default extension is .MDL.
+  D       Delete the hook.
+  E       Exit customizing the hook.
+  F       Free the hook code.
+  G       Get a program file, default extension is .MDL.
   H       This list.
-  L       List hook code.
-  M       Run manually hook code.
-  O       List hook code to file.
-  P       Change hook privilege.
-  Q       Exit customizing hook.
-  V       View hook.
+  L       List the hook code.
+  M       Run manually the hook code.
+  O       List the hook code to a file.
+  P       Change the hook privilege.
+  Q       Exit customizing the hook.
+  V       View the hook.
   ?       This list.
 
 5 Privilege-menu
 
-  - <privilege>   Remove privilege
-  + <privilege>   Add privilege
+  - <privilege>   Remove a privilege
+  + <privilege>   Add a privilege
   E               Exit
   L               List possible privileges.
   Q               Quit (do not save changes)
@@ -1843,27 +1956,27 @@ Bugs:          Following non-existed commands is recognized:
   A       Give monster's level and heal monster.
   B       Block monster
   C       Type COMMANDS.PAPER
-  D       Customize monster's privilege  set.
-  E       Exit customizing monster
-  F       Free monster
-  G       Get program file, default extension is .MDL
+  D       Customize the monster's privilege  set.
+  E       Exit customizing the monster
+  F       Free the monster
+  G       Get a program file, the default extension is .MDL
   H       This list
-  I       Give monster's health.
+  I       Give the monster's health.
   J       Disable/Enable control access.
-  L       List monster code.
-  M       Run manually monster code
-  N       Change monster's name
-  O       List monster code to file.
-  P       Change monster's privilege
-  Q       Exit customizing monster
-  S       Write monster's self description
-  V       View monster.
+  L       List the monster code.
+  M       Run manuallytthe monster code
+  N       Change the monster name
+  O       List the monster code to a file.
+  P       Change the monster's privilege
+  Q       Exit customizing the monster
+  S       Write the monster's self description
+  V       View the monster.
   ?       This list
 
 5 Privilege-menu
 
-  - <privilege>   Remove privilege
-  + <privilege>   Add privilege
+  - <privilege>   Remove a privilege
+  + <privilege>   Add a privilege
   E               Exit
   L               List possible privileges.
   Q               Quit (do not save changes)
@@ -1874,17 +1987,17 @@ Bugs:          Following non-existed commands is recognized:
 Syntax:        Dcl
                Dcl <command>
 
-Description:   Starts subprocess for shell and  leaves  Monster  running  
+Description:   Starts a subprocess for shell and  leaves  Monster  running  
                Executes <command>, if given 
 3 describe
 Syntax:        Describe 
                Describe <detail>
 
-Description:   Writes description of <detail> or this room
-Requirements:  You are owner of this room
+Description:   Writes a description of <detail> or this room
+Requirements:  You are the owner of this room
                or you have the Owner -privilege
                or you have the Manager -privilege, 
-                  if owner of this room is System
+                  if the owner of this room is System
 3 destroy
 Syntax:        Destroy <object>
                Destroy all
@@ -1894,32 +2007,32 @@ Description:   Destroys an instance of object(s)
 Requirements:  You are the owner of the object
                or you have the Owner -privilege
                or you have the Manager -privilege, 
-                  if owner of object is System
+                  if the owner of object is System
                And you are the owner of this room
                or this room is public
                or you have the Owner -privilege
                or you have the Manager -privilege, 
-                  if owner of this room is System
+                  if the owner of this room is System
 3 disown
 Syntax:        Disown
                Disown <object>
                Disown <monster>
                Disown <spell>
 
-Description:   Sets ownership of <object> or <monster> or <spell>
+Description:   Sets the ownership of <object> or <monster> or <spell>
                   this room to Disowned
-Requirements:  You happen to be the owner of the target
+Requirements:  You are the owner of the target
                or you have the Owner -privilege, if target is this room
                or you have the Owner -privilege, 
-                  if target is object or monster
+                  if the target is object or monster
                or you have the Manager -privilege, 
-                  if owner of target is System
+                  if the owner of the target is System
 3 drop
 Syntax:        Drop <object>
                Drop all
                Drop <object,...>
 
-Description:   Drops object
+Description:   Drops an object
 3 duplicate
 Syntax:        Duplicate <object>
                Duplicate all
@@ -1946,43 +2059,43 @@ Requirements:  You are the owner of the monster
 3 form
 Syntax:        Form <room>
 
-Description:   Creates new room with a name: <room>
+Description:   Creates a new room with the name: <room>
 Requirements:  You are the owner of this room
-               or this room have some kind of exit with Accept
+               or this room has some kind of exit with Accept
                or you have the Owner -privilege
                or you have the Manager -privilege, 
-                  if owner of this room is System
+                  if the owner of this room is System
 3 get
 Syntax:        Get <object>
                Get all
                Get <object,...>
 
-Description:   Gets object
+Description:   Gets an object
 3 go
 Syntax:        Go <direction>
 Shorcut:       <direction>
 3 health
 Syntax:        Health
 
-Description:   Gives your health
+Description:   Shows your health
 3 hide
 Syntax:        Hide
                Hide <object>
                Hide all
                Hide <object,...>
 
-Description:   Hides object or yourself
+Description:   Hides an object or you
 3 inventory
 Syntax:        Inventory
                Inventory <player>
                Inventory all
                Inventory <player,...>
 
-Description:   Gives inventory of <player> or your inventory
+Description:   Gives the inventory of <player> or your own inventory
 3 link
 Syntax:        Link <direction>
 
-Description:   Creates new exit from this room to <direction>
+Description:   Creates a new exit from this room to <direction>
 Requirements:  You are the owner of this room
                or <direction> is Accepted
                or you have the Owner -privilege
@@ -2003,21 +2116,21 @@ Description:   Looks something. (Gives its description)
 3 make
 Syntax:       Make <object>
 
-Description:  Creates a new object with a name: <object>
+Description:  Creates a new object with the name: <object>
 Requirements: You are the owner of this room
               or this room is public
               or you have the Owner -privilege
               or you have the Manager -privilege, 
-                 if owner of this room is System
+                 if the owner of this room is System
 3 bear
 Syntax:       Bear <monster>
 
-Description:  Creates a new monster with name <object>
-Requirements: You are owner of this room
-              or room is public
+Description:  Creates a new monster with the name <object>
+Requirements: You are the owner of this room
+              or the room is public
               or you have the Owner -privilege
               or you have the Manager -privilege, 
-                 if owner of this room is System
+                 if the owner of this room is System
 3 name
 Syntax:       Name <nicename>
 
@@ -2030,7 +2143,7 @@ Syntax:       Monsters
               Monsters disowned
               Monsters system
 
-Description:  Types objets of <player> or yourself
+Description:  Shows the objects of <player> or your objects
 Requirements: You, Public or Disowned have target
               or you have the Owner -privilege
 3 objects
@@ -2041,7 +2154,7 @@ Syntax:       Objects
               Objects disowned
               Objects system
 
-Description:  Types objets of <player> or yourself
+Description:  Types objects of <player> or your objects
 Requirements: You, Public or Disowned have target
               or you have the Owner -privilege
 3 spells
@@ -2052,7 +2165,7 @@ Syntax:       Spells
               Spells disowned
               Spells system
 
-Description:  Types spells of <player> or yourself
+Description:  Types the spells of <player> or your own spells
 Requirements: You, Public or Disowned have target
               or you have the Owner -privilege
 3 players
@@ -2084,7 +2197,7 @@ Description:  Ends playing
 3 relink
 Syntax:       Relink <direction>
 
-Description:  Reroutes exit to <direction>
+Description:  Reroutes an exit to <direction>
 Requirements: You are the owner of this room
               You have the Owner -privilege
               You have the Manager -privilege, 
@@ -2096,7 +2209,7 @@ Description:  Hinders other players to link to <direction>
 Requirements: You are the owner of this room
               You have the Owner -privilege
               You have the Manager -privilege, 
-                 if owner of this room is System
+                 if the owner of this room is System
 3 reveal
 Syntax:       Reveal
 
@@ -2109,8 +2222,8 @@ Syntax:       Rooms
               Rooms disowned
               Rooms system
 
-Description:  Types all the rooms of <player> or yourself
-Requirements: the target is owned by you, public or is disowned.
+Description:  Types all the rooms of <player> or your own rooms
+Requirements: the target is either owned by you or public, or is disowned.
               or you have the Owner -privilege
 3 say
 Syntax:       Say <message>
@@ -2122,7 +2235,7 @@ Syntax:       Scan <object>
               Scan all
               Scan <object,...>
 
-Description:  Lists all locations of object
+Description:  Lists all the locations of an object
 Requirements: You are the owner of this very object
               or you have the Owner -privilege
               or you have the Manager -privilege, 
@@ -2151,7 +2264,7 @@ Requirements: There is at least one instance of object in public or your room
               or this room is public
               or you have the Owner -privilege
               or you have the Manager -privilege, 
-                 if owner of this room is System
+                 if the owner of this room is System
 3 score
 Syntax:       Score
               Score <player>
@@ -2526,7 +2639,7 @@ Requirements: You have the Manager -privilege
   SUBMIT <label>	(<delta time>,<player's name>)
   FOR <variable>	(<list>,<action>)
 3 Labels
-  When player do somtehing, correspond labels of monsters and hooks
+  When player do something corresponding labels of monsters and hooks
   are executed.
 
   Default variables in all cases:
@@ -2541,9 +2654,9 @@ Requirements: You have the Manager -privilege
   leave		target			leaving room, quit game or
 					poof from room
   say		speech			say something
-  attack	-			attacking to Monster
+  attack	-			attacking the monster
   look		-			look something in room
-  look you	-			look monster
+  look you	-			look the monster
   command	command			for Command Extension System
 4 Room
   Labels and default variables for hook of rooms:
@@ -2574,19 +2687,18 @@ Requirements: You have the Manager -privilege
   leave		target			leaving room
 4 Spell
   Labels and default variables for spell's code:
-  summon        -                       wictim execute this when
-                                           summoner attack's wictim
-  learn         book name               when player reads book what
-                                           learn's spell (that code
-                                           must use set spell level for
-                                           this).
-  In spell there is defined variables spell name and summoner name.
+  summon        -                       the victim executes this when
+                                        summoner attacks him
+  learn         book name               when a player reads a spell
+                                        book (that code must use to set 
+					spell level for this).
+  Spell codes have the default variables "spell name" and "summoner name."
 4 Global_Code
   Labels and default variables for global code:
   start		-			start games
   quit		-			quit games
 3 Command_Extension_System
-  When the user types an invalid command, the following will happen:
+  When a user types an invalid command, the following will happen:
 
   1)	form of command is: <something> 
 	to hook of room, run label command
@@ -2600,10 +2712,9 @@ Requirements: You have the Manager -privilege
 	to monster's code run label command
 	the value of variable command is <something>
 3 Funktiot (suomenkielinen)
-  Tämä dokumentaatio ei ole ajan tasalla. Erityisesti
-  funktioiden parameterien määrä ei ole rajoittunut 
-  kolmeen, kuten tämä antää ymmärtää. Tiedostossa
-  COMMANDS.PAPER on ajan tasalla oleva dokumentaatio.
+  Tämä dokumentaatio ei ole ajan tasalla. Tiedostossa
+  COMMANDS.PAPER on (toivottavasti) ajan tasalla oleva 
+  dokumentaatio.
 4 +
   Funktio: + (p1,p2)
 
@@ -2641,7 +2752,7 @@ Requirements: You have the Manager -privilege
      tulos - merkkijono (totuusarvo?)
 
   Huomautus:
-   - Aiempi = -funktio on nyt nimell{ ==. Siis = toimii nyt eri-
+   - Aiempi = -funktio on nyt nimellä ==. Siis = toimii nyt eri-
      lailla kuin aiemmin. Tosin se nyt toimii niin kuin se oli 
      aiemmin dokumentoitu.
 4 inv
@@ -2724,9 +2835,9 @@ Requirements: You have the Manager -privilege
      p1    - lista
      tulos - lista
 4 and
-  Funktio: and (p1,p2,...)
+  Funktio: and (p1,p2,...,pn)
 
-  Laskee parametrien p1,p2 jne. arvon.
+  Laskee parametrien p1 arvon.
 
   Palauttaa listan, jossa on ne alkiot, jotka ovat sekä p1:ssä 
   että p2:ssa. Jokainen alkio esiintyy tuloksessa vain kerran.
@@ -2738,7 +2849,80 @@ Requirements: You have the Manager -privilege
      pn    - lista
      tulos - lista
   Huomautus:
-     Parameterja pitää vähintään olla kaksi.
+     Parametreja pitää vähintään olla kaksi.
+4 and_then
+  Funktio: and then (p1,p2,...,pn)
+  
+  Laskee parametrien arvoja kunnes jonkun parametrin arvo on tyhjä
+  merkkijono (tai kaikki parametrit tuli lasketuksi).
+
+  Palauttaa viimeisen lasketun paramatrin arvon.
+
+  Tulkinta:
+     pN    - totuusarvo / merkkijono
+     tulos - totuusarvo / merkkijono
+4 or_else
+  Funktio: or else (p1,p2,...,pn)
+
+  Laskee parametrien arvoja kunnes joku parametri palauttaa ei-tyhjän
+  merkkijonon (tai kunnes kaikki paramatrit tuli lasketuksi).
+
+  Palauttaa viimeisen lasketun paramaterin arvon.
+
+  Tulkinta:
+     pN    - totuusarvo / merkkijono
+     tulos - totuusarvo / merkkijono
+4 get_global_flag
+  Funktio: get global flag (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa argumentin p1 luettelemista globaaleista lipuista ne,
+  jotka ovat epätosia.
+  
+  Globaalit liput ovat: "Active", "Valid" ja "Wartime".
+
+  Virhetilanteet:
+    - p1:n listassa oleva alkio ei ole globaali lippu
+      => kyseinen alkio tulkitaan globaaliksi lipuksi, joka on epätosi
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+
+Huomautus: 
+    - Funktion toiminta on muuttunut. Aiemmein funktio palautti jokaista
+      globaalia lippua kohti, joka oli tosi, yhden "TRUE" -arvon listassa. 
+4 boolean_and 
+  Funktio: boolean and(p1,...,pn)
+
+  Laskee parametrien arvon.
+
+  Palautaa "TRUE", jos kaikkien pametrien arvo oli ei tyhjä, muutoin
+  palauttaa "".
+
+  Tulkinta:
+    p1    - totuusarvo
+       .
+       .
+       .
+    pn    - totuusarvo
+    tulos - totuusarvo
+4 boolean_or
+  Funktio: boolean or(p1,...,pn)
+
+  Laskee parametrien arvon.
+
+  Palautaa "TRUE", jos vähintään yhden parametrien arvo oli ei tyhjä, 
+  muutoin palauttaa "".
+
+  Tulkinta:
+    p1    - totuusarvo
+       .
+       .
+       .
+    pn    - totuusarvo
+    tulos - totuusarvo
 4 move
   Funktio: move (p1)
 
@@ -2851,8 +3035,6 @@ Requirements: You have the Manager -privilege
 
   Palauttaa viimeisen parameterin arvon.
 
-  Palautaa tyhjän merkkijonon.
-
   Tulkinta:
      p1   - merkkijono
      p2   - merkkijono
@@ -2891,8 +3073,11 @@ Requirements: You have the Manager -privilege
 
   Laskee parametrin p1 arvon.
 
-  Palauttaa p1:n muutettuna kirjaimet A-Z kirjaimiksi a-z ja 
-  muut merkit korvattuna välilyönnillä.
+  Palauttaa p1:n muutettuna isot kirjaimet muutettuina 
+  pieniksi kirjaimiksi, numerot sellaisinaan ja muut 
+  merkit korvattuna välilyönnillä.Monsterin merkkitau-
+  lukko määrää mitkä merkit ovat kirjaimia - katso kohta 
+  CHARTABLE alustustiedostossa MONSTER.INIT.
 
   Tulkinta:
      p1    - merkkijono
@@ -2902,8 +3087,9 @@ Requirements: You have the Manager -privilege
      - Useiden välilyöntien sarja (kuten kaikissa muissakin 
        funktiossa) korvaatuu yhdellä välilynillä.
      - Funktio on käyttökelpoinen poistettaessa välimerkke-
-       jä pelaajan puheesta  (valitettvasti  samalla  menee 
-       skanditkin...).
+       jä pelaajan puheesta.
+     - Merkit joiden tyyppi on "none" merkkitaulukossa pois-
+       tetaan kokonaan (ei korvata välilyönnillä).
 4 experience
   Funktio: experience (p1)
 
@@ -3893,17 +4079,1302 @@ Requirements: You have the Manager -privilege
 
          - Muuttujasta book name voi tarkistaa mikä kirja (magic book)  
            on  käynistänyt taian  learn  -labelin.  
+
+3 Functions 
+
+  This documentation is not up-to-date. Especially, the
+  number of function parameters is not restricted to three
+  even if this document says so. The file COMMANDS.PAPER
+  contains the up-to-date documentation.
+
+  N.B:
+
+  In this documentation, "result" means the return value.  
+
+4 +
+  Function: + (p1,p2)
+
+  Evaluates p1 and p2.
+
+  Returns p1 " " p2 ( p1, a space, and p2 concatenated ).
+
+  Errors:
+     - the result string is over 1000 characters long
+       => the result is p1
+
+  Interpretation:
+    p1, p2, result: strings
+4 = 
+  Function: =(p1, p2)
+  Function: ==(p1,p2)
+  Function: ===(p1,p2)
+
+  Evaluates parameters p1 and p2.
+
+  Functions =, == ja === return p1 when the evaluated parameters are 
+  equal; otherwise an empty string is returned. The functions range from
+  "=", which is the strictest, to "===", which is a general purpose 
+  predicate.
+
+  Name		Description
+  ----------------------------------------------------------------
+  =             Are two argument values exactly the same string ?
+
+  ==		Are two argument values -- excluding spaces -- the 
+                same string ?
+
+  ===		Are two argument values -- excluding spaces and 
+   	        the case -- the same string ?
+  ----------------------------------------------------------------
+
+  Interpretation:
+    p1, p2 : string
+    result : string ( boolean )
+
+  N.B:
+   - the previous function "=" is currently named "==". 
+4 inv
+  Function: inv ()
+
+  Returns the list of items the monster is carrying.
+
+  Errors:
+     - The code is not monster code ( e.g. the code is for a room )
+       => the result is an empty string
+
+  Interpretation:
+    result : list
+4 pinv
+  Function: pinv ()
+
+  Returns the list of items of the player who triggered the action.
+
+  Interpretation:
+   result : list
+4 players
+  Function: players ()
+
+  Returns the list of those players currently in the same room
+  with the monster.
+
+  Errors:
+   - The code is not monster code.
+     => the result is the list of those players currently in the
+     same room with the player who triggered the action
+
+  Interpretation:
+     result : list
+4 objects
+  Function: objects ()
+
+  Returns the list of the items currently in the same room with
+  the monster.
+
+  Errors:
+   - the code is not monster code
+      => the result is the list of those players currently in the
+      same room with the player who triggered the action
+
+  Interpretation:
+     result : list
+4 get
+  Function: get (p1)
+
+  Evaluates p1.
+
+  Tries to pick up the items found in the list p1.
+
+  Returns the list of the items successfully picked up.
+
+  Errors:
+     - The code is not monster code
+       => No actions, an empty string/list is returned
+
+  Interpretation:
+     p1     : list
+     result : list
+4 drop
+  Function: drop (p1)
+
+  Evaluates p1.
+  Forces the monster drop the items found in the list p1.
+
+  Returns the list of the items that were dropped.
+
+  Errors:
+     - The code is not monster code.
+       => No action, an empty string is returned
+
+  Interpretation:
+     p1     : list
+     result : list
+4 and
+  Function: and (p1,p2,...)
+
+  Evaluates p1, p2, ..., pn.
+
+  Returns a list of the items found in both p1 and p2.
+  Every item is included only once.
+
+  Interpretation:
+     pN, result : list
+  N.B.
+    There must be at least two parameters.
+4 move
+  Function: move (p1)
+
+  Evaluates p1.
+
+  The value of p1 is the room the monster is moved.
+  
+  Returns the name of the room the monster was transferred.
+
+  Requirements:
+      - If the target room is not public or owned by the monster 
+        owner, the monster must have the "poof" privilege.
+
+  Errors: 
+     - The target is not a room. 	
+       or 
+     - Moving is unsuccessful ( e.g. the "poof" privilege would 
+       have been needed ) 
+       or
+     - The code is not monster code. 
+       => result is an empty string/name
+
+  Interpretation:
+      p1, result : name
+4 pmove
+  Function: pmove (p1)
+
+  Evaluates p1.
+
+  The player that triggered the action is moved to the room 
+  found in p1.
+
+  Returns the name of the room the player was moved.
+
+  Requirements:
+      - If the target room is not public, or owned by the monster owner,
+        the monster must have the "poof" privilege.
+      - The code must be in the "privileged" mode.
+
+  Errors:
+      - The target is not a room.
+	or
+      - The moving is unsuccessful 
+	or
+      - The code is not monster code and the "poof" privilege
+        would have been needed.
+	or
+      - The code is not in the "privileged" mode.
+        => the result is an empty string/name
+
+  Interpretation:
+      p1, result : name
+4 if
+  Function: if (p1,p2,p3)
+
+  Evaluates p1.
+
+  Evaluates p2 if p1 was non-empty, otherwise evaluates p3.
+
+  Returns either p2 or p3, depending on which one was evaluated.
+
+  Interpretation:
+     p1, p2, p3, result : string 
+
+  Requirements:
+      - missing parameters are thought to be empty ( applicable
+        to all the other functions )
+      - The code does NOT have to be a monster code, if the
+        "poof" privilege is not needed.
+4 where
+  Function: where (p1)
+
+  Evaluates p1.
+  
+  Returns the name of the room the player p1 currently is.
+
+  Errors:
+     - p1 is not a player name.
+       => the result is an empty string/name
+     - Player p1 is currently not playing.
+       => the result is the room where the player quitted.
+  Interpretation:
+     p1, result : name    
+4 null
+  Function: null (p1,p2,p3,...)
+
+  Evaluates parameters p1, p2, p3, ...
+
+  Returns an empty string.
+
+  Interpretation:
+	p1, p2, p3, ... : string
+  N.B:
+     - Ideal for a sequential action
+4 prog
+  Function: prog (p1, p2, p3, ...)
+
+  Evaluates all parameters.
+  Return the value of the last parameter.
+
+  Interpretation:
+     p1, p2, ... : string
+  N.B:
+    - Good for a sequential action
+
+4 not
+  Function: not (p1)
+
+  Evaluates p1.
+ 
+  Returns "TRUE" if p1 is empty; otherwise an empty string
+  is returned.
+
+  Interpretation:
+     p1  : string
+     result : string ( ? ) / boolean 
+4 random
+  Function: random (p1)
+
+  Evaluates p1.
+
+  Returns one randomly chosen item from the list p1.
+
+  Errors:
+     - p1 is empty
+       => the result is an empty string/name
+
+  Interpretation:
+     p1     : list
+     result : name
+4 strip
+  Function: strip (p1)
+
+  Evaluates p1.
+  
+  Changes alphabets A-Z into lowercase and all other characters
+  into spaces. Returns the converted string.
+
+  Interpretation:
+     p1, result : string
+
+   N.B:
+     - Subsequent spaces are compressed into one 
+       ( applicable to all the other functions, too )
+     - This function is useful for removing punctuation
+       marks from a player speech ( unfortunately some
+       non-standard alphabets, e.g. a-umlaut, are lost )
+4 experience
+  Function: experience (p1)
+
+  Evaluates p1.
+
+  Returns the score of player p1.
+
+  Errors:
+     - p1 is not a player name
+       => the result is an empty string/name
+
+  Interpretation:
+     p1     : name
+     result : number
+4 set_experience
+  Function: set experience (p1)
+
+  Evaluates parameter p1.
+
+  Sets p1 to be the experience of the player who triggered the action.
+
+  Returns p1.
+
+  Requirements:
+     - The monster must have the "experience" privilege
+     - The player cannot be the monster owner or the person
+       who loaded the monster code
+
+  Errors:
+     - The code is not for a monster
+       => no action, an empty string is returned
+     - The monster does not have the "experience" privilege
+       => no action, an empty string is returned
+     - The player who triggered the action owns the monster or
+       loaded the code
+       => no action, an empty string is returned
+
+  Interpretation:
+     p1, result : number
+
+  N.B:
+     - The function cannot be used to change the monster's own experience
+4 plus
+  Function: plus (p1,p2)
+
+  Evaluates p1 and p2.
+  
+  Returns the sum of p1 and p2.
+
+  Errors:
+     - p1 or p2 is not a number
+	or
+     - Overflow
+       => the result is an empty string	
+  Interpretation:
+     p1, p2, result : number
+4 difference
+  Function: difference(p1,p2)
+
+  Evaluates p1 and p2.
+  
+  Returns p1 minus p2.
+
+  Errors:
+     - p1 or p2 is not a number
+	or
+     - Overflow
+       => the result is an empty string	
+  Interpretation:
+     p1, p2, result : number
+4 times
+  Function: times(p1,p2)
+
+  Evaluates p1 and p2.
+
+  Returns p1 multiplied with p2.
+
+  Errors:
+     - p1 or p2 is not a number
+	or
+     - Overflow
+       => the result is an empty string	
+  Interpretation:
+     p1, p2, result : number
+4 quotient
+  Function: quotient(p1,p2)
+
+  Evaluates p1 and p2.
+
+  Returns p1 divided by p2 ( integer division,
+  all fractions dropped )
+
+  Errors:
+     - p1 or p2 is not a number
+	or
+     - Overflow
+       => the result is an empty string	
+  Interpretation:
+     p1, p2, result : number
+4 set_state
+  Function: set state(p1)
+
+  Evaluates p1.
+
+  Assigns the value of p1 to the code dependent ( static )
+  variable ( one per a code ).
+
+  Returns the value of p1.
+
+  Interpretation:
+     p1, result : string
+
+  N.B:
+     - The variable is code dependent, that is, every monster,
+       and hook has its own variable ( state variable ).
+     - The function "control" does not affect the variable 
+       "set state" uses.
+5 Example
+  ! Example for using set state 
+  !               and get state
+  ! and control
+  !
+  ! MDL code for the object "demo object"
+  !
+  ! There is also a monster called "demo monster"
+  !    it has no MDL code
+  !    but has the "experience" privilege
+  !
+  ! When player picks up this object first time, he gets 100 points
+  !
+  !
+  ! This is called when failed to get the object.
+  - LABEL get fail()
+  !
+  ! This is called when getting succeeded.
+  - LABEL get succeed(
+        if(and(get state(),player name), ! Is player name in the state var ? 
+           "",			         ! Aye: Do not give points 
+           GOSUB give point()            ! Nay: Give points
+          )
+    )
+  !
+  ! This is called when dropping succeeded
+  - LABEL drop succeed()
+  !
+  ! This is called when the object is dropped unintentionally
+  - LABEL drop you()
+  !
+  ! This is called when the object is used successfully
+  - LABEL use succeed()
+  !
+  ! This is called when a player looks at the object
+  - LABEL look you()
+  !
+  ! This is called when a player commands 'something demo object'
+  - LABEL command(pprint("You can't ",command," demo object."))
+  !
+  ! This is called when a player starts a game session in the same
+  ! room with the object.
+  - LABEL start()
+  !
+  ! This is called when a player enters the room where the object is.
+  - LABEL enter()
+  !
+  ! This is called when a player leaves the room (or game) where object is.
+  - LABEL leave()
+  !
+  ! 
+  ! The following labels are the code's very own.
+  !
+  - LABEL give point(
+  	control("demo monster",		! For gaining the "experience" privilege
+  					! from "demo monster"
+  	  prog(set experience(		! Set player's new experience
+  		plus(			! +
+  		    experience(         ! get player experience
+                         player name),
+  		    "100"               ! Number 100, quotes are compulsory
+                  )
+                 ),
+  	      set state(		! Set code's new state
+  		or(player name,		! add player name to the state list
+                     get state()	! old state list
+  		)
+  	      )
+            )
+          )
+    )
+
+4 get_state
+  Function: get state(p1)
+
+  Reads the value of the code dependent variable.
+
+  Returns the value.
+
+  Interpretation:
+     result : string
+
+  N.B:
+     - see set_state for more information
+4 less
+  Function: less(p1,p2)
+
+  Evaluates p1 and p2.
+
+  If the value of p1 is less than the value of p1, "TRUE"
+  is returnes; otherwise an empty string is returned.
+
+  Errors:
+     - p1 or p2 is not a number
+       => the result is an empty string
+
+  Interpretation:
+     p1, p2 : number
+     result : string / boolean 
+4 number
+  Function: number(p1)
+
+  Evaluates p1.
+  
+  Returns the value of p1 if p1 is a number, otherwise an empty
+  string is returned.
+
+  Interpretation:
+    p1, result : number 
+4 health
+  Function: health(p1)
+
+  Evaluates p1.
+
+  Returns the health of p1 ( player or monster ).
+
+  Errors:
+     - p1 is not a player or monster name
+       => the result is an empty string
+
+  Interpretation:
+     p1     : name
+     result : number
+4 all_objects
+  Function: all objects()
+
+  Returns the list of all objects.
+
+  Errors:
+     - All the objects do not fit into a 1000-character list
+       => only those objects that fit into a 1000-character 
+       list are returned
+
+  Interpretation:
+     - result: list
+
+  Huomautus:
+     - Every ( defined ) object is included only once ( even
+       if there exists 0 or multiple copies of it )
+4 all_players
+  Function: all players()
+
+  Returns the list of all players and monsters.
+
+  Errors:
+     - All the players and monsters do not fit into a 1000-character
+       list
+       => only those players and monsters who fit into a 
+       1000-character list are returned
+
+  Interpretation:
+     result : list
+4 all_rooms
+  Function: all rooms()
+
+  Returns the room list.
+
+  Errors:
+   - The room list does not fit into a 1000-character list
+     => only those rooms that fit into a 1000-character list
+     ( in order of appearance ) are included
+
+  Interpretation:
+     result : list
+4 control
+  Function: control(p1,p2)
+
+  Evaluates p1.
+
+  While p2 is evaluated the function controls the monster called
+  p1. The code and the monster ( p1 ) must have the same owner.
+
+  Returns p2.
+
+  Errors:
+     - p1 is not a monster name
+       or
+     - The code and the monster ( p1 ) do not have the same owner
+       => p2 is not evaluated; the result is an empty string
+
+  Interpretation:
+     p1         : name
+     p2, result : string
+
+  N.B:
+     - Any required privilege is checked from the monster that
+       is controlled; the function may affect them.
+     - The function does not affect the privileged mode.
+     - While p2 is executed the "monster name" variable is 
+       temporarily assigned the monster to be controlled, that
+       is, p1.
+4 include
+  Function: include(p1,p2)
+
+  Evaluates p1 and p2.
+
+  Returns p2 if p1 includes p2; otherwise an empty string is
+  returned.
+
+  Errors:
+     - p1 or p2 ( or both ) is an empty string
+       => the result is an empty string
+  Interpretation:
+     p1, p2, result : string
+
+  N.B:
+    - The errors do actually fit into the normal behaviour,
+      they are not real errors, but those situations are 
+      that special that they are worth mentioning
+4 exclude
+  Function: exclude (p1,p2)
+
+  Evaluates p1 and p2.
+
+  Returns a list of those items in p1 not found in p2.
+
+  Interpretation:
+    p1, p2, result : list
+4 get_remote_state
+  Function: get remote state (p1)
+
+  Evaluates p1.
+
+  Returns the value of the static variable ( the "state" field )
+  of the monster named p1. The monster ( p1 ) must have the same
+  owner as the code, or the monster must be public and the ( other )
+  monster executing the code must have the object privilege.
+
+  Errors:
+      - p1 is not a monster name
+        or
+      - p1 and the code have a different owner
+        or
+      - p1 is public and the code is not monster code
+	or
+      - p1 is public and the code ( that is monster code ) does
+        not have the object privilege
+        => the result is an empty string
+
+  Interpretation:
+     p1     : name
+     result : string
+4 set_remote_state
+  Function: set remote state (p1,p2)
+
+  Evaluates p1 and p2.
+
+  Assign the value of p2 to the static variable of the monster p1.
+  The monster p1 must have the same owner as the code, or it must
+  be public and the code ( or, to be precise, the monster 
+  whose code it is ) must have the "object" privilege.
+
+  Return p2.
+
+  Errors:
+      - p1 is not a monster name
+        or
+      - p1 and the code have a different owner
+        or
+      - p1 is public and the code is not monster code
+	or
+      - p1 is public and the code ( that is monster code ) does
+        not have the object privilege
+        => the result is an empty string
+
+  Interpretation:
+     p1         : name
+     p2, result : string
+4 remote_objects
+  Function: remote objects (p1)
+
+  Evaluates p1.
+
+  Returns a list of objects lying on the ground in the room p1.
+
+  Errors:
+      - p1 is not a room
+        => an empty string is returned
+
+  Interpretation:
+     p1     : name
+     result : list
+4 remote_players
+  Function: remote players (p1)
+
+  Evaluates p1.
+
+  Returns a list of players in the room p1.
+
+  Errors:
+      - p1 is not a room
+        => an empty string is returned
+
+  Interpretation:
+     p1     : name
+     result : list
+
+  N.B:
+     - Monsters are excluded, making the behaviour a wee bit 
+       different from the functions players(),
+       lookup players(), and parse players().
+     - The behaviour is similar to players(), except that the room
+       is chosen with a parameter.
+4 heal
+  Function: heal (p1)
+
+  Evaluates p1.
+
+  Increases the health ( strength ) of the player who triggered 
+  the action by p1 points.
+
+  Returns p1.
+
+  Errors:
+      - p1 is not a number or p1 is negative
+        => the result is an empty string
+
+  Interpretation:
+ÿ    p1,  result : number
+
+  N.B:
+      - If the present strength of a player added with the 
+        increase is greater than his maximum strength only
+        the maximum health is set. However, the return value
+        is not affected.
+4 duplicate
+  Function: duplicate (p1)
+
+  Evaluates p1.
+
+  One extra copy is created from the objects included in the
+  list p1. The copies are automatically picked up by the monster.
+  The objects and the monster must have the same owner, or the 
+  monster must have the "object" privilege.
+
+  Return a list of items the were successfully duplicated.
+
+  Errors:
+	  - The code is not monster code
+            => no action; an empty string is returned
+          - An object does not have the same owner as the monster
+            and the monster does not have the "object" privilege,
+            or the object does not fit in ( the monster carries
+            too many objects )
+            => The object is neither copied nor ( naturally ) 
+            picked up by the monster.
+
+  Interpretation:
+     p1, result : lista
+4 pprint
+  Function: pprint (p1,p2,p3,...)
+  Function: pprint raw (p1,p2,p3,...)
+
+  Evaluates p1, p2, p3, ...
+
+  Parameter text is printed to the player who triggered the action.
+  One space is inserted after a parameter if the following parameter 
+  starts with an alphanumeric. A colon (".") is inserted in the very 
+  end if text ends with an alphanumeric. A sentence is capitalised.
+
+  Pprint raw does not format text.
+
+  Returns the printed text.
+
+  Errors:
+     - Text is longer than 1000 chars
+	=> it is truncated ( somehow )
+
+  Interpretation:
+     pN, result : string
+
+  N.B:
+     - The function decides by itself how to split the text
+       into lines.
+4 print
+  Function: print (p1,p2,p3,...)
+  Function: print raw (p1,p2,p3,...)
+
+  Evaluates parameters.
+
+  Parameter text is printed to all the players currently in the same 
+  room with the monster.
+  One space is inserted after a parameter if the following parameter 
+  starts with an alphanumeric. A colon (".") is inserted in the very 
+  end if text ends with an alphanumeric. A sentence is capitalised.
+
+  Print raw does not format text.
+
+  Returns the printed text.
+
+  Errors:
+     - Text is longer than 1000 chars
+	=> it is truncated ( somehow )
+     - The code is not monster code
+        => text is printed to all the players ( but not to the
+	player who triggered the action ) in the room
+	
+  Interpretation:
+     pN, result : string
+
+  N.B:
+     - The function decides by itself how to split the text
+     - If the player ( who triggered the action ) is in the
+       same room with the monster the text is also printed 
+       to him.
+     - Very long messages ( many lines ) may overload the 
+       Monster event transmission system the result of which 
+       may be the loss of some events.
+4 oprint
+  Function: oprint (p1,p2,p3,...)
+  Function: oprint raw (p1,p2,p3,...)
+
+  Evaluates parameters.
+
+  Parameter text is printed to all the players currently in the
+  same room with the monster ( but not to the player who triggered
+  the action ).
+  One space is inserted after a parameter if the following parameter 
+  starts with an alphanumeric. A colon (".") is inserted in the very 
+  end if text ends with an alphanumeric. A sentence is capitalised.
+
+  Oprint raw does not format text.
+
+  Return the printed text.
+
+  Errors:
+     - Text is longer than 1000 chars
+	=> it is truncated ( somehow )
+
+  Interpretation:
+     pN, result : string
+
+  N.B:
+     - The function decides by itself how to split the text
+     - If the player ( who triggered the action ) is in the
+       same room with the monster the text is also printed 
+       to him.
+     - Very long messages ( many lines ) may overload the 
+       Monster event transmission system the result of which 
+       may be the loss of some events.
+ 
+  Errors:
+     - The code is not monster code
+        => text is printed to all the players ( but not to the
+	player who triggered the action ) in the room
+     - The text is longer than 1000 chars
+        => it is truncated ( somehow )
+  Interpretation:
+      pN, result : string
+
+4 pget
+  Function: pget (p1)
+
+  Evaluates p1.
+
+  Picks up the objects found in the list p1 and gives them to
+  the player who triggered the action.
+
+  Returns a list of the objects which were successfully picked up.
+
+  Requirements:
+     - The code must be in the "privileged" mode.
+
+  Errors:
+     - The code is not in the "privileged" mode
+	=> no action; p1 is not evaluated (!); the result is an 
+        empty string
+
+  Interpretation:
+     p1, result : list
+4 pdrop
+  Function: pdrop (p1)
+
+  Evaluates p1.
+
+  The player who triggered the action is dropped all the objects
+  found in the list p1.
+
+  Returns a list of the objects which were successfully dropped.
+
+  Requirements:
+	- The code must be in the "privileged" mode.
+
+  Errors:
+     - The code is not in the "privileged" mode
+	=> no action; p1 is not evaluated (!); the result is an 
+        empty string
+
+  Interpretation:
+     p1, result : list
+
+  N.B:
+     - Informs everybody ( in the same room ) if the action
+       resulted in stripping off an object ( compare: wear
+       and wield )
+4 pduplicate
+  Function: pduplicate (p1)
+
+  Evaluates p1.
+
+  The objects found in the list p1 are duplicated and given
+  to the player ( who, again, triggered the action ). The 
+  objects and the code must have the same owner or the monster
+  must have the "object" privilege.
+
+  Returns a list of objects that were duplicated.
+
+  Requirements:
+	- the code must be in the "privileged" mode
+
+  Errors:
+	- the code is not in the "privileged" mode
+   	  => no action; p1 is not evaluated; the result is
+          an empty string
+	- an object does not have the same onowner as the code
+          and the code is not monster code
+          or
+        - an object does not have the same owner as the code and
+	  the code does not have the "object" privilege
+          or
+        - the player cannot take any more objects
+          => the object is not duplicated
+
+  Interpretation:
+     p1, result : list
+4 destroy
+  Function: destroy (p1)
+
+  Evaluates p1.
+
+  Destroys all the objects found in the list p1. The objects 
+  and the monster must have the same owner oror the monster
+  must have the "object" privilege.
+
+  Returns a list of the destroyed objects.
+                          
+  Errors:
+	- the code is not monster code
+	  => no action; an empty string is returned
+	- an object and the monster does not have the same
+	  owner and the monster does not have the "object"
+	  privilege
+          => the object is not destroyed 
+
+  Interpretation:
+     p1, result : list    
+4 pdestroy
+  Function: pdestroy (p1)
+
+  Evaluates p1.
+
+  Destroys all the objects found in the list p1 from the 
+  player. The objects and the monster must have the same
+  owner or the monster must have the "object" privilege.
+
+  Returns a list of destroyed objects.
+
+  Requirements:
+	- the code must be in the "privileged" mode
+
+  Errors:
+	- the code is not in the "privileged" mode
+	  => no action; an empty string is returned
+        - an object and the code does not have the same
+	  owner and te code is not mosnter code
+	  or
+	- an object and the monster does not have the same
+	  owner and the monster does not have the "object"
+	  privilege
+          => the object is not destroyed 
+
+  Interpretation:
+     p1, result : list    
+4 or
+  Function: or (p1,p2,p3,...)
+
+  Evaluates p1, p2, p3,...
+
+  Returns a list of items found in pN. Every item is included
+  only once.
+
+  Errors:
+   - the result list is longer than 1000 characters
+     => the result is a list containing only so many items
+     that fit into 1000 chars. 
+
+  Interpretation:
+     pN, result : list
+4 string_head
+  Function: string head (p1)
+
+  Evaluates p1.
+
+  Returns the first word of the string p1.
+
+  Errors:
+	- p1 is an empty string
+	  => Ran emprty string is returned
+
+  Interpretation:
+     p1, result : string
+4 string_tail
+  Function: string tail (p1)
+
+  Evaluates p1.
+
+  Returns the tail of string p1 ( all except the first word ).
+
+  Errors:
+	- p1 is an empty string
+	  or
+	- p1 contains only one word
+	  => an empty string is returned
+
+  Interpretation:
+     p1, result : string
+4 tail
+  Function: tail (p1)
+
+  Evaluates p1.
+
+  Returns the list p1 excluding the first item.
+
+  Errors:
+	- p1 is an epmty list
+	  or
+	- p1 has only one item
+	  => an empty list/string is returned
+
+  Interpretation:
+     p1, result : list
+4 head
+  Function: head (p1)
+
+  Evaluates p1.
+
+  Returns the first item of the list p1.
+
+  Errors:
+	- p1 is an empty list
+	  => an empty string is returned
+
+  Interpretation:
+     p1     : list
+     result : item
+4 lookup_room
+  Function: lookup room (p1)
+
+  Evaluates p1.
+
+  Parses the items found in the list p1 to room names. If 
+  a parsing is unsuccessfull that item is exculded from the
+  result list.
+
+  Interpretation:
+     p1, result : list
+4 lookup_player
+  Function: lookup player (p1)
+
+  Evaluates p1.
+
+  Parses ( completes ) the items in the p1 list to player
+  and monster names. If the completion of an item fails that
+  item is removed from the result list.
+
+  Interpretation:
+     p1, result : list
+4 lookup_object
+  Function: lookup object (p1)
+
+  Evaluates p1.
+
+  Parses ( completes ) the items in the list p1 to object names.
+  If the completion of an item fails that item is removed from 
+  the result list.
+
+  Interpretation:
+     p1, result : list
+4 parse_player
+  Function: parse player (p1)
+
+  Evaluates p1.
+
+  The function offers an equivalent parameter interpretation 
+  service as used in those monster functions where wild cards 
+  are allowed.
+
+  Return a list of players and monsters. The list is equivalent to
+  parameter p1. ( whatever that implies, then )
+
+  Errors:
+    - p1 is empty
+    or
+    - an error occurs while interpreting p1
+    => the result is an empty string
+
+  Interpretation:
+      p1     : string
+      result : list
+4 parse_object
+  Function: parse object (p1)
+                   
+  Evaluates p1.
+
+  Offers an equivalent parameter interpretation service as
+  is used in those monster functions where wild cards are
+  allowed.
+
+  Returns a list of objects equivalent to p1.
+
+  Errors:
+    - p1 is empty 
+    or
+    - there is an error while interpreting p1
+    => the result is an empty string/list
+
+  Interpretation:
+      p1     : string
+      result : list
+4 parse_room
+  Function: parse room (p1)
+
+  Evaluates p1.
+
+  The function offers an equivalent parameter interpretation service
+  as used in those monster functions where wild cards are allowed.
+
+  Returns a list of rooms equivalent to p1.
+
+  Errors:
+    - p1 is empty
+    or
+    - An error occurs while interpreting p1
+    => the result is an empty string
+
+  Interpretation:
+      p1     : string
+      result : list
+4 privilege
+  Function: privilege (p1,p2)
+
+  Evaluates p1 and p2.
+
+  All the player ( or monster ) p1 privileges found in the
+  list p2 are returned. Possible privileges are : wizard,
+  manager, experience, quota, object, poof, special and
+  monster. The "wizard" privilege means that the player is
+  the Monster Manager.
+
+  Errors:
+	- p1 is not a player or monster name
+          => the result is an empty string/list
+        - p2 has a non-existent privilege
+          => the privilege is excluded from the 
+             result list
+
+  Interpretation:
+     p1     : name
+     p2     : list
+     result :  list
+
+4 userid
+  Function: userid (p1)
+
+  Evaluates p1.
+
+  The function requires the "experience" privilege from the
+  monster.
+
+  Returns a list where the player names in p1 have been 
+  substituted for their respective userids.
+
+  Errors:
+        - the code is not monster code or the monster does not
+          have the "experience" privilege
+          => the function does not evaluate p1; an empty string
+          is returned
+	- an invalid player ( monster ) name is found
+	  => the respective userid is excluded from the result
+	- a monster name is found
+	  => is included, the userid uses internal format
+
+  Interpretation:
+      p1, result : list
+4 attack
+  Function: attack (p1)
+
+  Evaluates p1.
+
+  Substracts p1 units from the player ( who triggered the
+  action ) health. However, the monster experience dictates
+  the maximum damage allowed ( p1 can be greater than what
+  is allowed in which case p1 is decreased ). The total sum
+  of subsequent attacks may not exceed the maximum damage 
+  allowed.
+
+  Returns the attack strength.
+
+  Requirements:
+     - Monster cannot have attacked to its limit already.
+     - Player must not be protected
+     - Hooks must be in the "privileged" mode
+
+  Errors:
+     - The monster has already attacked to its limit
+       or
+     - The player is protected
+       or
+     - p1 is not a number
+       or
+     - the code is not monster code and the "privileged" 
+       mode is off
+       => no action; an empty string/number is returned
+     - p1 is greater than the maximum attack strength
+       allowed
+       => The attack strength is the maximum allowed
+       ( it is also returned )
+     - the code is not monster code and privileged mode
+       is on
+       => no limits in attack strength
+ 
+  Interpretation:
+     p1, result : number
+
+  N.B:
+     - The function does not tell how the attack succeeded
+     ( can be found out be the function "health" )
+     - The function does not require monsters to be
+     in the "privileged" mode anymore
+4 spell_level
+  Function: spell level()
+
+  Returns the user's experience level of a spell. Can only be used
+  while executing spell code ( labels summon and learn ).
+
+  Errors:
+         - As in other spell functions
+           => an empty string is returned
+
+  Interpretation:
+     result : number
+
+  N.B:
+ 	 - The spell user ( in the variable "summoner name" )
+           is different from the user executing the code
+	   ( exception: the label "learn" )
+4 set_spell_level
+  Function: set spell level(p1)
+ 
+  Evaluates p1.
+
+  Sets the spell user's experience level ( of a spell ). 
+  Can only be used when executing spell code ( the labels
+  "summon" and "learn" ). 
+    Level 0           - the player does not know the spell
+    a positive number - the player knows the spell
+
+  Returns the new experience level.
+
+  Errors:
+         - As in other spell functions
+         or
+	 - p1 is not a number
+         or
+	 - p1 < 0
+          =>an empty string/number is returned
+
+  Interpretation:
+     p1 , result : number
+
+  N.B:
+ 	 - The spell user ( in the variable "summoner name" )
+           is different from the user executing the code
+	   ( exception: the label "learn" )
+	 - This function is for teaching spells to players
+           ( in the label "learn" )
+	 - The variable "book name" has the name of the book
+           ( magic book ) that triggered the label "learn" of
+           the spell
 2 Fixing_Database  
-  Start  monster  with MONSTER/FIX -command.
+  Start monster with MONSTER/FIX -command.
 
-  Fix-subsystem uses file level locks to prevent  other  players  to 
-  playing monster, when you fixing database.
+  The fixing subsystem uses file level locks to prevent other 
+  players from playing Monster while you are fixing the database.
 
-  If someone is playing, when you want fix-database, it's better run
-  monster down with D -commands in subsystem -menu (in system-menu).
+  If someone is playing, and you want to fix the database, 
+  it's better to shut Monster down with the  command "D" in 
+  the subsystem menu (in system-menu).
   
 3 Menu
-  Follow menu you get with ? -command in /FIX -system:
+  By typing "?" you get the following menu in /FIX -system:
 
   A        Clear/create privileges database.
   B        Clear/create health database.
@@ -3936,8 +5407,8 @@ Requirements: You have the Manager -privilege
   ?        This list
 
 3 Partial_rebuild
-  Follow commands make  partial rebuild  of Monster database.  After 
-  these command use fix -commands to fix pointers in database.
+  The following commands make partial rebuild of the Monster database.  After 
+  these command use the fixing commands to fix pointers in the database.
 
   A        Clear/create privileges database.
   B        Clear/create health database.
@@ -3952,13 +5423,13 @@ Requirements: You have the Manager -privilege
   S        Clear/create password database.
   SP       Clear/create spell database.
 
-  Recommented order: GL R O P M C F N S SP
+  Recommended order: GL R O P M C F N S SP
 
-  You can do only one of R, O and P.  Use /REBUILD  istead,  if  you 
-  need more.
+  You can use only one of these: R, O and P.  Should you need more, use 
+  /REBUILD  instead.
 
 3 Fix_commands
-  Follow commands can fix small errors in database without disaster:
+  The following commands can fix small errors in the database without disaster:
 
   C        Create event file.
   D        Reallocate descriptions
@@ -3970,4 +5441,4 @@ Requirements: You have the Manager -privilege
   N        Clear/create and recount quota database.
   OW       Check owners of objects, rooms and monsters.
 
-  Recommented order: C I N G J K L D OW
+  Recommended order: C I N G J K L D OW

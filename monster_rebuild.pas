@@ -21,6 +21,11 @@ CREATION DATE:	25.6.1992 (moved to MONSTER_REBUILD)
    25.06.1992 | Hurtta  | /REBUILD
    26.06.1992 |         | /FIX and /BATCH
    27.06.1992 |         | Module VERSION
+    9.07.1992 |         | Fixed some help text
+   12.08.1992 |         | Dummy player_here removed (now defined in module
+              |         |   PARSER)
+   24.10.1992 |		| fix_repair_location uudelleenkirjoitettu
+	      |		| fixed dummy gethere !!!!!!!!!!!!!!!!!!!!!!!!!!
 }
 
 { in module KEYS }
@@ -30,24 +35,18 @@ external;
 
 { DUMMY for linker }
 [global]
-function player_here(id: integer; var slot: integer): boolean;
-begin
-    player_here := false;
-end;
-
-{ DUMMY for linker }
-[global]
-procedure gethere(n: integer := 0);
-begin
-end;
-
-{ DUMMY for linker }
-[global]
 procedure checkevents(silent: boolean := false);
 begin
 end;
 
 { ---------- }
+
+[global]
+procedure gethere(n: integer);
+begin
+    getroom(n);
+    freeroom;
+end;
 
 const
 	cli$_present	= 261401;
@@ -318,8 +317,7 @@ begin
 	indx.top := maxspells;
 	putindex;
 
-
-	writeln('Use the SYSTEM command to view and add capacity to the database');
+	writeln('Use the SYSTEM command in MONSTER to view and add capacity to the database');
 	writeln;
 end; { rebuild }
 
@@ -331,7 +329,7 @@ begin
    writeln ('B        Clear/create health database.');
    writeln ('C        Create event file.');
    writeln ('D        Reallocate describtins');
-   writeln ('E        (Exit subsystem) Start monster playing.');
+   writeln ('E        Leave /fix.');
    writeln ('F        Clear/create experience database.');
    writeln ('G        Calculate objects'' number in existence.');
    writeln ('GL       Clear/create global database.');
@@ -350,14 +348,14 @@ begin
    writeln ('O        Clear/create object database.');
    writeln ('OW       Check owners of objects, rooms and monsters.');
    writeln ('P        Clear/create player database.');
-   writeln ('Q        (Quit) Leave monster.');
+   writeln ('Q        Leave /fix');
    writeln ('R        Clear/create room database.');
    writeln ('S        Clear/create password database.');
    writeln ('SP       Clear/create spell database.');
    writeln ('V        View database capacity.');
    writeln ('?        This list'); 
    writeln;
-   writeln ('Use SYSTEM command to add database capacity.');
+   writeln ('Use SYSTEM command in MONSTER to add database capacity.');
 end; { fix_help }
           
 function fix_sure (s: string; batch: boolean): boolean;
@@ -701,7 +699,7 @@ begin
 
      writeln('Creating the Great Hall');
      if not nc_createroom('Great Hall') then begin
-	writeln ('Creatin of Great Hall FAILED');
+	writeln ('Creating of Great Hall FAILED');
 	goto 0;
      end;
      getroom(1);
@@ -713,7 +711,7 @@ begin
 
      writeln('Creating the Void');
      if not nc_createroom('Void') then begin			{ loc 2 }
-	writeln ('Creatin of Void FAILED');
+	writeln ('Creating of Void FAILED');
 	goto 0;
      end;
      getroom(2);
@@ -726,7 +724,7 @@ begin
 
      writeln('Creating the Pit of Fire');
      if not nc_createroom('Pit of Fire') then begin	{ loc 3 }
-	writeln ('Creatin of Pit of Fire FAILED');
+	writeln ('Creating of Pit of Fire FAILED');
 	goto 0;
      end;
      getroom(3);
@@ -1146,9 +1144,11 @@ end;
 
 procedure fix_repair_location(batch: boolean);
 var id,loc,slot,code,room,true_loc,found_counter: integer;
-var ex_indx,sleep_indx,room_indx,header_indx: indexrec;
+    ex_indx,sleep_indx,room_indx,header_indx: indexrec;
     locs: intrec;
     temp: namrec;
+    c: char;
+    del_it: boolean;
 begin
     writeln('Scanning monsters...');
     getpers;
@@ -1170,67 +1170,86 @@ begin
     getint(N_LOCATION);
     freeint;
     locs := anint;
-    for id := 1 to ex_indx.top do if not ex_indx.free[id] then 
+    for id := 1 to ex_indx.top do if not ex_indx.free[id] then begin
 	if user.idents[id] = '' then begin
 	    writeln('Bad player username record #',id:1);
 	    writeln('    player name: ',pers.idents[id]);
 	end else if user.idents[id][1] = ':' then begin 
-	    found_counter := 0;
-	    true_loc := 0;
-	    loc := locs.int[id];
-	    for room := 1 to room_indx.top do if not room_indx.free[room] then begin
-		gethere(room);
-		for slot := 1 to maxpeople do begin
-		    if (here.people[slot].username = user.idents[id]) and 
-			(here.people[slot].kind = P_MONSTER) then begin
-			found_counter := found_counter +1;
-			true_loc := room;
-		    end;
-		end;
-	    end;
-	    if (found_counter = 1) and (true_loc = loc) then
-		writeln(pers.idents[id],': ok')
-	    else if found_counter = 0 then begin
-		writeln(pers.idents[id],': not found from any room - deleted ',
-		    '- can''t update code database.');
-		ex_indx.free[id] := true;
-		ex_indx.inuse := ex_indx.inuse - 1;
-		if not sleep_indx.free[id] then begin
-		    sleep_indx.free[id] := true;
-		    sleep_indx.inuse := sleep_indx.inuse - 1; 
-			{ onkohan tarpeelista ? }
-		end;
-		pers.idents[id] := '';
-		user.idents[id] := '';
-		getint(N_SELF);		{ destroy self description }
-		delete_block(anint.int[id]);
-		putint;
-	    end else if (found_counter = 1) and ( loc <> true_loc) then begin
-		writeln(pers.idents[id],': found from wrong location - updated.');
-		locs.int[id] := true_loc;
-	    end else if (found_counter > 1) then begin
-		writeln(pers.idents[id],': duplicated monster - deleted.');
-		for room := 1 to room_indx.top do if not room_indx.free[room] then begin
-		    code := 0;
+	    del_it := false;
+
+	    readv(user.idents[id],c,code,error := continue); 
+	    if statusv <> 0 then begin
+		writeln('Bad monster username record #',id:1);
+		writeln('    player name: ',pers.idents[id]);
+		writeln('    user name:   ',user.idents[id]);
+		del_it := true;
+		code := 0;
+	    end else begin
+		found_counter := 0;
+		true_loc := 0;
+		loc := locs.int[id];
+
+		for room := 1 to room_indx.top do if not room_indx.free[room] 
+		    then begin
 		    getroom(room); { locking }
 		    for slot := 1 to maxpeople do begin
-			if (here.people[slot].username = user.idents[id]) and 
+			if (here.people[slot].parm = code) and 
+			    (here.people[slot].kind = P_MONSTER) then begin
+			    found_counter := found_counter +1;
+			    true_loc := room;
+			    if here.people[slot].username <> 
+				user.idents[id] then begin 
+				writeln(pers.idents[id],
+				    ': Bad username field in room ',
+				    here.nicename,
+				    ' (slot #',slot:1,') - fixed.');
+				here.people[slot].username := user.idents[id];
+			    end; { if }
+			end; { if }
+		    end; { slot }
+		    putroom;       { storing }
+		end; { room -loop }
+		if (found_counter = 1) and (true_loc = loc) then
+		    writeln(pers.idents[id],': ok')
+		else if found_counter = 0 then begin
+		    writeln(pers.idents[id],': not found from any room.');
+		    del_it := true;
+		end else if (found_counter = 1) and ( loc <> true_loc) then begin
+		    writeln(pers.idents[id],': found from wrong location - updated.');
+		    locs.int[id] := true_loc;
+		end else if (found_counter > 1) then begin
+		    writeln(pers.idents[id],': duplicated monster - deleted.');
+		end else writeln('%',pers.idents[id],': bad software error !!');
+	    end; { if statusv <> 0 (parsing monster username) }
+	    if del_it and (code = 0) then 
+		writeln(pers.idents[id],'% can''t delete it !')
+	    else if del_it then begin 
+		writeln(pers.idents[id],'% deleting.');
+		for room := 1 to room_indx.top do 
+		    if not room_indx.free[room] then begin
+		    getroom(room); { locking }
+		    for slot := 1 to maxpeople do begin
+			if (here.people[slot].parm = code) and 
 			(here.people[slot].kind = P_MONSTER) then begin
-			    code := here.people[slot].parm;
 			    here.people[slot].username := '';
 			    here.people[slot].kind     := 0;
 			    here.people[slot].parm     := 0;
-			end;
-		    end;
+			    writeln(pers.idents[id],
+				'% deleted from room ',here.nicename,
+				' (slot #',slot:1,')');
+			end; { if }
+		    end; { for slot }
 		    putroom;	    { unlocking }
-		    if code > 0 then begin
-			if not header_indx.free[code] then begin
-			    header_indx.free[code] := true;
-			    header_indx.inuse := sleep_indx.inuse - 1; 
-			    delete_program(code);			
-			end;
-		    end;
 		end; { end of room loop }
+		if not header_indx.free[code] then begin
+		    header_indx.free[code] := true;
+		    header_indx.inuse := sleep_indx.inuse - 1; 
+		    delete_program(code);
+		    writeln(pers.idents[id],'% MDL code #',code:1,' deleted.');
+		end else
+		    writeln(pers.idents[id],
+			'% MDL code #',code:1,' was already deleted !');
+
 		ex_indx.free[id] := true;
 		ex_indx.inuse := ex_indx.inuse - 1;
 		if not sleep_indx.free[id] then begin
@@ -1243,8 +1262,9 @@ begin
 		getint(N_SELF);		{ destroy self description }
 		delete_block(anint.int[id]);
 		putint;
-    	    end else writeln('%',pers.idents[id],': bad software error.');
-	end;
+	    end; { del_it }
+	end; { if user.idents[id] }
+    end; { for id }
     writeln('Updating database...');
 
     temp := pers;
@@ -1319,7 +1339,9 @@ begin
 	    old_value := obj.numexist;
 	    obj.numexist := table[object];
 	    putobj;
-	    if old_value <> table[object] then writeln(obj.oname,' fixed.');
+	    if old_value <> table[object] then 
+		writeln(obj.oname,' fixed: ',old_value:1,' -> ',
+		table[object]:1);
 	end;
     end;
     writeln ('Ready.');
