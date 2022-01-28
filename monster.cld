@@ -1,0 +1,37 @@
+!*************************************MONSTER**************************************
+define syntax MONSTER_WHO
+   image MONSTER_IMAGE_:monster_who
+   noqualifiers
+define syntax MONSTER_DUMP
+   image MONSTER_IMAGE_:monster_dump
+   parameter P1
+	label = DUMP_FILE
+	prompt = "Dump file"
+	value(type=$file,required)
+define verb MONSTER
+   image MONSTER_IMAGE_:mon
+   qualifier WHO
+      nonnegatable
+      syntax = MONSTER_WHO
+   qualifier REBUILD
+   qualifier FIX
+   qualifier VERSION
+   qualifier DEBUG
+   qualifier REAL_USERID
+      value(required)
+   qualifier USERID
+      value(required)
+   qualifier BATCH
+      value(required,type=$infile)
+   qualifier START
+   qualifier OUTPUT
+      value(default="SYS$OUTPUT",type=$outfile)
+   qualifier DUMP
+      nonnegatable
+      syntax = MONSTER_DUMP
+   qualifier BUILD
+      nonnegatable
+      syntax = MONSTER_DUMP
+   disallow any2 (REBUILD, FIX, REAL_USERID, USERID, BATCH, DUMP, BUILD)
+   disallow ((OUTPUT or neg OUTPUT) and FIX) 
+   disallow (START and (BUILD or DUMP))

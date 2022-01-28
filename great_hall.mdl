@@ -1,0 +1,16 @@
+- LABEL start ()
+
+- LABEL enter()
+
+- LABEL leave()
+
+- LABEL say()
+
+- LABEL look around()
+
+- LABEL command(
+		null(
+			pprint(+("Unknow command: ",command)),
+			pprint("Please type ? or HELP for help.")
+		)
+	)

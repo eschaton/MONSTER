@@ -1,0 +1,82 @@
+! Monster initialization file    (c) Kari Hurtta
+! 
+! Name of this file must be MONSTER.INIT
+! The file must be located in the same direction as the monster's image.
+
+MM_userid: %manager%
+	
+! The Monster Manager has the most power; this should be
+! the game administrator. 
+
+! protected_MM: true
+
+gen_debug:   false
+!		   this tells whether everyone may use the debug command.
+!                  it must be able to be disabled because it tells players
+!                  too much about monsters. On the other hand, it must also 
+!                  be able to be enabled, if we want to do test runs under
+!                  an unprivileged userid		
+
+REBUILD_OK: true
+
+!		  if this is true, the MM can blow away and reformat the
+!		  entire universe. It's a good idea to set this to false
+
+root:    %db1% ! world database
+coderoot:%db2% ! mdl database
+        
+!		  This is where the Monster database goes.
+!		  The root directory must be  world:e  and
+!		  the  datafiles  Monster  creates  in  it
+!		  world:rw for people to be able to  play.
+!		  The  coderoot  directory  is  where  the
+!		  codefiles for monsters go. The directory
+!		  must additionally have  an  ACL  default
+!		  world:rw  for  files  and ACL rw for the
+!		  managers. This sucks, but we don't  have
+!		  setgid to games on VMS. 
+
+LEVELTABLE:
+!  name		    exp	         priv	 health	   h.fac    pow    hidden 
+Beginner,           0,           0,      10,       40,      0,     nohidden
+Novice,             1,           0,      10,       40,      2,     nohidden
+Ranger,             500,         0,      15,       50,      3,     nohidden
+Adventurer,         1000,        0,      20,       60,      5,     nohidden
+Hero,               2000,        32,     30,       60,      10,    nohidden
+Champion,           6000,        0,      40,       70,      10,    nohidden
+Conjurer,           12000,       16,     50,       70,      12,    nohidden
+Magician,           20000,       0,      60,       70,      15,    nohidden
+Enchanter,          40000,       2,      80,       75,      20,    nohidden
+Sorcerer,           70000,       256,      100,      80,      20,    nohidden
+Warlock,            120000,      4,      120,      85,      35,    nohidden
+Apprentice wizard,  300000,      8,      150,      85,      50,    nohidden
+Wizard,             700000,      64,     300,      90,      80,    nohidden
+Almost Dead,        1000100,     0,      10,       40,      2,     hidden
+Manager,            2000000,     1,      500,      100,     500,   hidden
+Druid,              2001000,     0,      500,      100,     500,   hidden
+Charlatan,          2008000,     0,      500,      100,     500,   hidden
+Wanderer,           2009000,     0,      500,      100,     500,   hidden
+Chief Architect,    3000000,     0,      500,      100,     500,   hidden
+Bug Hunter,         5000000,     0,      500,      100,     500,   hidden
+END OF LEVELTABLE
+Archpriv:   0
+Archhealth: 800
+Archfactor: 100
+Archpower:  1000
+
+maxexperience: 1000000
+!  Monster Manager's experience is MaxInt
+
+protect_exp: 700000
+!  gives protection agaist violence
+
+Playtime: +++++++++--------+++++++
+! Eli suomeksi:
+! Monster on suljettu arkisin 09-17.
+
+!Playtime: ++++++++++++++++++++++++   ! Miten niin suljettu ?
+!                                       onpa taas suljettu.
+
+default_allow: 20    ! How many rooms players made at default
+min_room:      5     ! How many rooms players can made without exit request
+min_accept:    5     ! How many accepts must players made

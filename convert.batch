@@ -1,0 +1,22 @@
+! That file convert database to new format
+! Usage: MONSTER/BATCH=CONVERT.BATCH
+M                                     ! Create MDL database
+A                                     ! Create privilege database
+B                                     ! Create health database
+S                                     ! Create password database
+GL                                    ! Create global flag database
+SP                                    ! Clear/create spell database.
+! Make some fix's to database !
+D                                     ! Reallocate descriptions
+I                                     ! Repair index file
+G                                     ! Calculate objects' number in existence
+J                                     ! Repair paths
+N                                     ! Clear/create and recount quota database.
+OW                                    ! Check owners of rooms, objects and MDLs
+GU                                    ! Mark monster active to global database.
+G+                                    ! Mark monster database as valid.
+! Let's hope that's all !
+V                                     ! View database capacity
+GV                                    ! View global flags
+!
+!                       - Kari Hurtta (hurtta@finuh)

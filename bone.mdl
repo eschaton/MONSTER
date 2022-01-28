@@ -1,0 +1,37 @@
+! For Bone
+!
+!- LABEL look you(if(or(=(player name,"Merlin"),
+!                       =(random("1, 2, 3, 4"),"1")
+!                      ),
+!                    control("Dog",if(move(where(player name)),
+!                                     null(print("Dog: Vuf"),
+!                                          set remote state("Dog","")
+!                                         )
+!                                    )
+!                           )
+!                   )
+!                )
+
+- LABEL look you(if(or(privilege(player name,"manager"),
+                       =(random("1, 2, 3, 4"),"1")
+                      ),
+                    control("Dog",if(move(where(player name)),
+                                     null(print("Dog: Vuf"),
+                                          set remote state("Dog","")
+                                         )
+                                    )
+                           )
+                   )
+                )
+
+- LABEL command(pprint(+(+("You can't",command),"the bone.")))
+
+- LABEL start()
+
+- LABEL drop succeed()
+
+- LABEL get succeed()
+
+- LABEL enter()
+
+- LABEL leave()

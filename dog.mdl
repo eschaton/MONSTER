@@ -1,0 +1,196 @@
+! DOG.MDL by Kari Hurtta
+
+- LABEL state tail(string tail(get state()))
+
+- LABEL state head(string head(get state()))
+
+- LABEL leave(if(=(player name,GOSUB state tail()),
+		 if (=("follow",GOSUB state head()),
+		     GOSUB follow(GOSUB state tail()),
+		     if (=("keep",GOSUB state head()),
+		         GOSUB keep it(GOSUB state tail())
+                        )
+                    )
+                )
+	     )
+
+- LABEL say(if(privilege(player name,"wizard, manager"),
+               GOSUB check(strip(speech))))
+
+- LABEL check(if(=(string head(p1),"dog"),
+                 GOSUB check2(string tail(p1))
+                )
+             )
+
+
+- LABEL check2(GOSUB case(string head(p1),string tail(p1)))
+
+- LABEL case(if(=(p1,"bite"),
+                GOSUB bite(p2),
+		if(=(p1,"follow"),
+                    GOSUB set(p2),
+                    GOSUB case2(p1,p2)
+                  )
+               )
+            )
+
+- LABEL case2(if(=(p1,"go"),
+                 GOSUB go to(p2),
+		 if(=(p1,"home"),
+                    GOSUB home(),
+		    GOSUB case3(p1,p2)
+                   )
+                )
+             )
+
+- LABEL case3(if(=(p1,"stay"),
+                 GOSUB stay(p2),
+                 if(=(p1,"keep"),
+                    GOSUB keep(p2)
+                   )
+                )
+             )
+
+
+- LABEL bite(if(lookup player(p1),
+                SUBMIT attack("0",lookup player(p1))
+               )
+            )
+
+- LABEL attack(GOSUB bite it("7"))
+
+
+- LABEL bite it(if(=(where(player name),where(monster name)),
+                   if(attack(p1),
+                      null(pprint("Dog bites you."),
+	                   oprint(+("Dog bites ",player name)),
+			   if(=(where(player name),"void"),
+                              null(oprint(+("Dog eats ",player name)),
+                                   GOSUB jump(where(GOSUB state tail()))
+                                  )
+                             )
+	                  ),
+                      GOSUB jump(where(GOSUB state tail()))
+                     ),
+                   null(GOSUB jump(where(player name)),
+                        SUBMIT attack("5",player name)
+                       )
+                  )
+               )
+
+- LABEL	follow(if(target,
+		  null(pprint("Dog follows you."),
+		       oprint(+("Dog follows ",p1)),
+		       if(move(target),print("Dog comes to here.")
+                         )
+		      ),
+		  if(=(random("a, b"),"a"),
+                     GOSUB home2()
+		    )
+	         )
+              )
+
+- LABEL keep it(if(target,
+                   null(set state(+("back ",where(player name))),
+                        GOSUB jump(target)
+                       )
+                  )
+               )
+
+- LABEL enter(if(=(GOSUB state head(),"back"),
+                 null(GOSUB get back2(GOSUB state tail()),
+                      set state(+("keep ",player name))
+                     )
+                )
+             )
+
+- LABEL get back2(if(=(p1,where(player name)),
+                     "",
+                     null(pprint("Dog forces you back to ",p1),
+                          oprint(+("Dog forces ",player name),
+                                   " back to ",p2
+                                  ),
+                          null(GOSUB jump(p1),
+                               if(pmove(p1),
+                                   oprint("Dog forces ",player name,
+                                          " back to here."
+                                         )
+                                 )
+                              )
+                         )
+                    )
+                 )
+
+- LABEL home2(null(GOSUB jump("kitchen"),
+                   set state("")
+                  )
+             )
+
+- LABEL home(GOSUB home2(set state("")))
+
+- LABEL set(if(lookup player(p1),
+               null(set state(+("follow",lookup player(p1))),
+                    print("Dog: vuf !"),
+                    GOSUB jump(where(lookup player(p1)))
+                   ),
+               if(not(p1),
+                  null(set state(+("follow",player name)),
+                       print("Dog: vuf !")
+                      )
+                 )
+              )
+           )
+
+- LABEL keep(if(lookup player(p1),
+               null(set state(+("keep",lookup player(p1))),
+                    print("Dog: vuf !"),
+                    GOSUB jump(where(lookup player(p1)))
+                   )
+              )
+           )
+
+- LABEL command(if(=(command,"state"),
+                   pprint("State: ",get state()),
+                   pprint("You can't",command,"Dog.")
+                  )
+               )
+
+- LABEL go to(GOSUB go2(lookup room(p1)))
+
+- LABEL go2(if(p1,
+               null(GOSUB jump(p1),
+                    set state("")
+                   )
+              )
+           )
+
+- LABEL jump2(if(=(where(monster name),p1),
+                "",
+                null(print(+("Dog goes ",p1)),
+                     if(move(p1),
+                        print("Dog comes here.")
+                       )
+                    )
+               )
+             )
+
+- LABEL jump(if(p1,
+                GOSUB jump2(p1),
+                GOSUB jump2("kitchen")
+               )
+            )
+
+- LABEL stay(null(set state(""),
+                  print("Dog: Vuf !")
+                 )
+            )
+
+- LABEL look you(if(=(GOSUB state head(),"keep"),
+                    "",
+                    if(=(random("a, b, c, d"),"a"),
+                       GOSUB set()
+                      )
+                   )
+                )
+
+- LABEL look()

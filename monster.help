@@ -1,0 +1,789 @@
+:*privilege help*
+
+- <privilege>   Remove privilege
++ <privilege>   Add privilege
+E               Exit
+L               List possible privileges.
+Q               Quit (do not save changes)
+V               View current privileges
+
+? - This list
+:*system 2 help*
+
+A         Block monster''s code.
+B         Block object''s code.
+C         Block room''s code.
+D         Shutdown Monster.
+E         Leave subsystem.
+F         Open Monster for playing.
+G         Block spell's code.
+H         This text.
+M         Claim monster to System.
+O         Claim object to System.
+W         Announce over Monster Universe.
+Q         Leave subsystem.
+R         Claim room to System.
+S         Claim spell to System
+V	  View global flags.
+?         This text.   
+
+:*hook help*
+
+B       Block hook code.
+C       Type COMMANDS.PAPER.
+D       Delete hook.
+E       Exit customizing hook.
+F       Free hook code.
+G       Get program file, default extension is .MDL.
+H       This list.
+L       List hook code.
+M       Run manually hook code.
+O       List hook code to file.
+P       Change hook privilege.
+Q       Exit customizing hook.
+V       View hook.
+?       This list.
+
+:*global c help*
+
+B       Block hook code.
+C       Type COMMANDS.PAPER.
+D       Delete code.
+E       Exit customizing code.
+F       Free code.
+G       Get program file, default extension is .MDL.
+H       This list.
+L       List code.
+M       Run manually code.
+O       List hook code to file.
+Q       Exit customizing code.
+V       View hook.
+?       This list.
+
+:*spell help*
+
+A       Toggle spell mode
+B       Block spell code.
+C       Type COMMANDS.PAPER.
+D       Delete spell.
+E       Exit customizing spell.
+F       Free hook code.
+G       Get program file, default extension is .MDL.
+H       This list.
+I       Change your own level of this hook
+L       List spell code.
+M       Run manually spell code.
+O       List spell code to file.
+P       Change spell privilege.
+Q       Exit customizing spell.
+V       View hook.
+?       This list.
+
+:*monster help*
+
+A       Give monster's level and heal monster.
+B       Block monster
+C       Type COMMANDS.PAPER
+D       Customize monster's privilege  set.
+E       Exit customizing monster
+F       Free monster
+G       Get program file, default extension is .MDL
+H       This list
+I       Give monster's health.
+J       Disable/Enable control access.
+L       List monster code.
+M       Run manually monster code
+N       Change monster's name
+O       List monster code to file.
+P       Change monster's privilege
+Q       Exit customizing monster
+S       Write monster's self description
+V       View monster.
+?       This list
+
+
+:*do y help*
+
+Password          Change your password.
+War               Allow violance in Monster
+Peace             Forbid any violance in Monster
+Spell             Make new spell or customizing spell
+NewPlayer         Set new player's welcome text
+Welcome           Set welcome text
+
+
+:*do s help*
+
+Exits             Lists exits you can inspect here
+Object            Show internals of an object
+Details           Show details you can look at in this room
+Monster           Show owner of a monster
+Privileges        Show your privileges
+Time              Show time and date
+Room              Show owner of a room
+Commands.paper    List COMMANDS.PAPER
+Levels            Show experience levels
+Quotas            Show your quotas
+Spells            Show your spell level or what spells you know
+
+:*program help*
+
+A	"a", "an", "some", etc.
+C	Customizing hook
+D	Edit a Description of the object
+F	Edit the GET failure message
+G	Set the object required to pick up this object
+1	Set the get success message
+K	Set the Kind of object this is
+L	Edit the label description ("There is a ... here.")
+P	Program the object based on the kind it is
+R	Rename the object
+S	Toggle the sticky bit
+
+U	Set the object required for use
+2	Set the place required for use
+3	Edit the use failure description
+4	Edit the use success description
+V	View attributes of this object
+
+X	Edit the extra description
+5	Edit extra desc #2
+E	Exit (same as Quit)
+Q	Quit (same as Exit)
+?	This list
+
+6	Set home description
+7	Set home of object
+
+:*custom help*
+
+A	Set an Alias for the exit
+C	Conceal an exit
+D	Edit the exit's main Description
+E	EXIT custom (saves changes)
+F	Edit the exit''s failure line
+I	Edit the line that others see when a player goes Into an exit
+K	Set the object that is the Key to this exit
+L	Automatically look [default] / don't look on exit
+O	Edit the line that people see when a player comes Out of an exit
+Q	QUIT Custom (saves changes)
+R	Require/don't require alias for exit; ignore direction
+S	Edit the success line
+T	Alter Type of exit (passage, door, etc)
+V	View exit information
+X	Require/don't require exit name to be a verb
+?	This list
+
+:*room help*
+
+A	Define an alternate mystery message block
+B	Edit the target room (G) "bounced in" description   
+C	Define action code (hook) for room   
+D	Alter the way the room description prints   
+E	Exit (same as quit)   
+F	Set the chance of the trapdoor functioning   
+G	Set the location that a dropped object really goes to   
+H	This list   
+I	Edit the default exit failure message   
+M	Define the magic object for this room
+N	Change how the room Name prints
+O	Edit the object drop description (for drop effects)
+P	Edit the Primary room description <the default one> (same as desc)
+Q	Quit (same as exit)
+R	Rename the room
+S	Edit the Secondary room description
+T	Set the direction that the Trapdoor goes to
+V	View settings on this room
+X	Define a mystery message
+1	Set the primary visual link for this room
+2	Set the secondary visual link for this room
+
+?	This list
+
+
+:*fix p help*
+
+A      Change player''s health.
+E,Q    for quit.
+L      Change player's level/experience.
+N      Change player's personal name.
+P      Change player's password.
+R      Change player's room quota.
+V      View player''s data.
+H,?    for help.
+
+:*system help*
+
+1      Customize player database.
+A      Alter player privileges
+B      Add description blocks
+C      Subsystem
+D      Disown <user>
+E      Exit (same as quit)
+H      Add header blocks
+K      Kill <user>
+L      Add one liner records
+M      Move a player who is asleep (not playing now)
+O      Add object records
+P      Write a distribution list of players
+Q      Quit (same as exit)
+R      Add rooms
+T      Throw player out from Monster
+V      View current sizes/usage
+W      List of players
+?      This list
+
+:*show help*
+List of commands:
+
+Type <command> ? for more info.
+
+Accept #         Allow others to Link an exit here at direction #
+Atmosphere       Atmosphere command
+Bear #           Create monster #
+Brief            Toggle printing of room descriptions
+Claim #          Get ownership of room/object/monster/spell
+Create #         Create room/object/monster
+Customize #      Customize this room / Customize exit # / Customize object #
+Dcl #            Spawn subprocess/Run command #
+Delete #         Delete room/object/monster
+Describe #       Describe this room / Describe a feature (#) in detail
+Destroy  *       Destroy an instance of object #
+Disown #         Disown room/object/monster/spell
+Drop *           Drop object #
+Duplicate *      Make a duplicate of an already-created object.
+Erase #          Erase monster #
+Form #           Form a new room with name #
+Get *            Get object #
+#,Go #           Go towards # (Some: N/North S/South E/East W/West U/Up D/Down)
+Health           Show how healthy you are
+Hide *           Hide yoursef / Hide object (#)
+I,Inventory *    See what you or someone else is carrying
+Link #           Link this room to/from another via exit at direction #
+List #           List rooms/objects/monsters/spells
+Look,L *         Look here / Look at something or someone (#) closely
+Make #           Make a new object named #
+Monsters #       Show information about monsters  : monsters ? for help
+Name #           Set your game name to #
+Objects #        Show information about objects  : objects ? for help
+Players          List people who have played Monster
+Poof #           Jump other room or move other player
+Punch #          Punch person #
+Quit             Leave the game
+Relink           Move an exit
+Refuse #         Disallow others to Link an exit here at direction #
+Reset *          Move object to its home.
+Reveal           Reveal yourself
+Rooms            Show information about rooms you have made
+Say, ' (quote)   Say line of text following command to others in the room
+Scan #           Scan location of object # in universe
+Score #          Show score of you/other player/all in some level.
+Search           Look around the room for anything hidden
+Self *           Edit a description of yourself / View #'s self-description
+Set #            Set something : SET ? for a list
+Show #           Show something : SHOW ? for a list
+Spells #         Show information about spells  : spells ? for help
+Summon #         Summon spell #
+Unlink #         Unlink this room to/from another via exit at direction #
+Unmake #         Remove the form definition of object #
+Use #            Use object #
+Wear #           Wear the object # / unwear
+Wield #          Wield the weapon # / wield the ring # / unwield
+Whisper #        Whisper something (prompted for) to person #
+Who              List of people playing Monster now
+Whois *          What is a player's username   
+Zap #            Destroy room named #   
+?,Help           This list   
+. (period)       Repeat last command         
+
+Commands for manager:   
+
+System           Go to system maintenance mode   
+Public #         Make room/object/monster/spell public     
+Debug            Debug system   
+
+
+Parameter is optional in all commands
+# = normal parameter (= one item)
+* = parameter list with or without joker(*) or 'all'
+
+:*edit help*
+
+A	Append text to end
+C	Check text for correct length with parameter substitution (#)
+D #	Delete line #
+E	Exit & save changes
+I #	Insert lines before line #
+P	Print out description
+Q	Quit: THROWS AWAY CHANGES
+R #	Replace text of line #
+Z	Zap all text
+@	Throw away text & exit with the default description
+?	This list
+
+:accept
+Syntax:        Accept <direction>
+
+Description:   Allows others to link exits here at <direction>
+Requirements:  You are the owner of this room
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of this room is System
+:atmosphere
+Syntax:        Atmosphere <your action>
+Shortcut:      :<your action>
+
+Description:   Prints other players and you 
+               a text <your player name> <your action>
+:brief
+Syntax:        Brief
+
+Description:   Toggles brief printing of room description off or on
+:claim
+Syntax:        Claim
+               Claim <object>
+               Claim <monster>
+               Claim <spell>
+
+Description:   Sets the ownership of <object> or <monster> or <spell> or
+                  this room to you
+Requirements:  Current ownership of target is Disowned
+                  or you have the Manager -privilege
+:create
+Syntax:        Create room <room>
+               Create object <object>
+               Create monster <monster>
+:customize
+Syntax:        Customize
+               Customize <direction>
+               Customize <object>
+               Customize <monster>
+               Customize room
+               Customize object <object>
+               Customize monster <monster>
+
+Description:   Customizes <object> or <monster> or <direction> or this room
+Requirements:  You are the owner of the target
+               or you have the Owner -privilege, 
+               or you have the Manager -privilege, 
+                  if owner of target is System
+
+Bugs:          Following non-existed commands is recognized:
+               Customize player <...>
+               Customize spell <...>
+:dcl
+Syntax:        Dcl
+               Dcl <command>
+
+Description:   Starts subprocess for shell and  leaves  Monster  running  
+               Executes <command>, if given 
+:describe
+Syntax:        Describe 
+               Describe <detail>
+
+Description:   Writes description of <detail> or this room
+Requirements:  You are owner of this room
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if owner of this room is System
+:delete
+Syntax:        Delete room <room>
+               Delete object <object>
+               Delete monster <monster>
+:destroy
+Syntax:        Destroy <object>
+               Destroy all
+               Destroy <object,...>
+Alias:         Delete object <object>
+
+Description:   Destroys an instance of object(s) 
+Requirements:  You are the owner of the object
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if owner of object is System
+               And you are the owner of this room
+               or this room is public
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if owner of this room is System
+:disown
+Syntax:        Disown
+               Disown <object>
+               Disown <monster>
+               Disown <spell>
+
+Description:   Sets ownership of <object> or <monster> or <spell>
+                  this room to Disowned
+Requirements:  You happen to be the owner of the target
+               or you have the Owner -privilege, if target is this room
+               or you have the Owner -privilege, 
+                  if target is object or monster
+               or you have the Manager -privilege, 
+                  if owner of target is System
+:drop
+Syntax:        Drop <object>
+               Drop all
+               Drop <object,...>
+
+Description:   Drops object
+:duplicate
+Syntax:        Duplicate <object>
+               Duplicate all
+               Duplicate <object,...>
+
+Description:   Creates an instance of object(s)
+Requirements:  You are the owner of the particular object
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of object is System
+               And you are the owner of this room
+               or this room is public
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of this room is System
+:erase
+Syntax:        Erase <monster>
+Alias:         Delete monster <monster>
+
+Description:   Destroys <monster>
+Requirements:  You are the owner of the monster
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of monster is System
+:form
+Syntax:        Form <room>
+Alias:         Create room <room>
+
+Description:   Creates new room with a name: <room>
+Requirements:  You are the owner of this room
+               or this room have some kind of exit with Accept
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if owner of this room is System
+:get
+Syntax:        Get <object>
+               Get all
+               Get <object,...>
+
+Description:   Gets object
+:go
+Syntax:        Go <direction>
+Shorcut:       <direction>
+:health
+Syntax:        Health
+
+Description:   Gives your health
+:hide
+Syntax:        Hide
+               Hide <object>
+               Hide all
+               Hide <object,...>
+
+Description:   Hides object or yourself
+:inventory
+Syntax:        Inventory
+               Inventory <player>
+               Inventory all
+               Inventory <player,...>
+
+Description:   Gives inventory of <player> or your inventory
+:link
+Syntax:        Link <direction>
+
+Description:   Creates new exit from this room to <direction>
+Requirements:  You are the owner of this room
+               or <direction> is Accepted
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of this room is System
+:list
+Syntax:        List rooms 
+               List monsters
+               List objects
+               List spells
+               List players
+:look
+Syntax:        Look
+               Look <object>
+               Look <monster>
+               Look <player>
+               Look <detail>
+               Look all
+               Look <object,...>
+               Look <monster,...>
+               Look <player,...>
+
+Description:   Looks something. (Gives its description)
+:make
+Syntax:       Make <object>
+Alias:        Create object <object>
+
+Description:  Creates a new object with a name: <object>
+Requirements: You are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if owner of this room is System
+:bear
+Syntax:       Bear <monster>
+Alias:        Create monster <monster>
+
+Description:  Creates a new monster with name <object>
+Requirements: You are owner of this room
+              or room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if owner of this room is System
+:name
+Syntax:       Name <nicename>
+
+Description:  Changes yoy player name to <nicename>
+:objects
+Syntax:       Objects 
+              Objects <player>
+              Objects all
+              Objects public
+              Objects disowned
+              Objects system
+
+Description:  Types objets of <player> or yourself
+Requirements: You, Public or Disowned have target
+              or you have the Owner -privilege
+:monsters
+Syntax:       Monsters
+              Monsters <player>
+              Monsters all
+              Monsters public
+              Monsters disowned
+              Monsters system
+Alias:        List monsters
+
+Description:  Types monsters of <player> or yourself
+Requirements: You, Public or Disowned have target
+              or you have the Owner -privilege
+:players
+Syntax:       Players
+              Players all
+              Players monster
+              Players player
+Alias:        List players
+
+Description:  Lists players or monsters
+:poof
+Syntax:       Poof <room>
+              Poof <player>
+              Poof <monster>
+
+Description:  Moves you to <room> or moves <player> or <monster>
+Requirements: You are the owner of this room and <room>
+              or You have the Poof -privilege
+:punch
+Syntax:       Punch <player>
+
+Description:  Punches <player>
+Requirements: Experience of <player> is lower than 700000
+:quit
+Syntax:       Quit
+Shortcut:     <F10>
+
+Description:  Ends playing
+:relink
+Syntax:       Relink <direction>
+
+Description:  Reroutes exit to <direction>
+Requirements: You are the owner of this room
+              You have the Owner -privilege
+              You have the Manager -privilege, 
+                 if the owner of this room is System
+:refuse
+Syntax:       Refuse <direction>
+
+Description:  Hinders other players to link to <direction>
+Requirements: You are the owner of this room
+              You have the Owner -privilege
+              You have the Manager -privilege, 
+                 if owner of this room is System
+:reveal
+Syntax:       Reveal
+
+Description:  Reveals yourself
+:rooms
+Syntax:       Rooms
+              Rooms <player>
+              Rooms all
+              Rooms public
+              Rooms disowned
+              Rooms system
+Alias:        List rooms
+
+Description:  Types all the rooms of <player> or yourself
+Requirements: the target is owned by you, public or is disowned.
+              or you have the Owner -privilege
+:say
+Syntax:       Say <message>
+Shortcut:     "<message>
+
+Description:  Says a message to other players in this room
+:scan
+Syntax:       Scan <object>
+              Scan all
+              Scan <object,...>
+
+Description:  Lists all locations of object
+Requirements: You are the owner of this very object
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of the object is System
+              And you are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of this room is System
+:reset
+Syntax:       Reset <object>
+              Reset all
+              Reset <object,...>
+
+Description:  Erases all instances of an object from public and your 
+                rooms - and from public and your monsters
+              Creates one instance of the object to its home location
+              Doesn't affect objects that players are carrying
+Requirements: There is at least one instance of object in public or your room
+                  or carrying by public or your monster
+              You are the owner of object
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of this object is System
+              And you are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if owner of this room is System
+:score
+Syntax:       Score
+              Score <player>
+              Score <level>
+              Score all
+
+Description:  Prints your score and level
+              or prints score and level of <player>
+              or prints players, whose level is <level>
+:search
+Syntax:       Search
+
+Description:  Searches hidden objects and players
+:self
+Syntax:       Self 
+              Self <player>
+              Self <monster>
+              Self all
+              Self <player,...>
+              Self <monster,..>
+
+Description:  Creates your own self-description
+              or types the self-description of <player>
+:set
+Syntax:       Set <option>
+
+Options:      Password		Change your password
+              War               Allow violance in Monster
+              Peace             Forbid any violance in Monster
+              Spell             Make new spell or customizing spell
+              NewPlayer         Set new player's welcome text
+              Welcome           Set welcome text
+              Privilege         Change your privileges
+
+:show
+Syntax:       Show <option>
+
+Options:      Exits               Lists exits you can inspect here
+              Object              Shows internals of an object
+              Details             Shows all the details you can look at this room
+              Monster             Shows the owner of a monster
+              Privileges          Shows your privileges
+              Time                Shows time and date
+              Room                Shows the owner of a room
+              Commands.paper      Lists COMMANDS.PAPER
+              Levels              Shows all the experience levels
+              Quotas              Show your quotas
+              Spells              Show your spell level or what spells you know
+:summon
+Syntax:       Summon <spell name>
+              <victim name> (type to prompt)
+:unlink
+Syntax:       Unlink <direction>
+
+Description:  Removes exit to <direction>
+Requirements: You are the owner of this room
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of this room is System
+:unmake
+Syntax:       Unmake <object>
+
+Description:  Removes description of <object>
+Requirements: You are the owner of object
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of object is System
+              And you are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of this room is System
+:use
+Syntax:       Use <object>
+:wear
+Syntax:       Wear
+              Wear <armour>
+:wield
+Syntax:       Wield
+              Wield <weapon>
+:whisper
+Syntax:       Whisper <player>
+:who
+Syntax:       Who
+              Who all
+              Who player
+              Who monster
+
+Description:  Lists active players or monsters
+:whois
+Syntax:       Whois <player>
+              Whois all
+              Whois <player,...>
+
+Description:  Types the username of <player>
+:zap
+Syntax:       Zap <room>
+Alias:        Delete room <room>
+
+Description:  Removes <room>
+Requirements: You are the owner of <room>
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of <room> is System
+              And you are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if owner of this room is System
+:help
+Syntax:       Help
+
+:system
+Syntax:       System
+
+Description:  Manages Monster
+Requirements: You have the Manager -privilege (which is rare)
+
+:public
+Syntax:       Public
+              Public <room>
+              Public <object>
+              Public <monster>
+              Public <spell>
+
+Description:  Sets the ownership of room or object or monster or spell
+                  or this room to Public
+Requirements: You have the Manager -privilege

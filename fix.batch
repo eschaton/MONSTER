@@ -1,0 +1,21 @@
+! That file fix database errors
+! Usage: MONSTER/BATCH=FIX.BATCH
+GS                                    ! Mark monster shutdown
+G-                                    ! Mark database as invalid
+C                                     ! Create event file
+D                                     ! Reallocate descriptions
+K                                     ! Reallocate MDL codes
+I                                     ! Repair index file
+G                                     ! Calculate objects' number in existence
+N                                     ! Clear/create and recount quota database.
+J                                     ! Repair paths
+L                                     ! repair monsters' location
+OW                                    ! Check owners of rooms, objects and MDLs
+G+                                    ! Mark database as valid
+GU                                    ! Mark monster active
+! Let's hope that's all !
+V                                     ! View database capacity
+GV                                    ! View global flags
+!
+!                       - Kari Hurtta (hurtta@finuh)
+

@@ -1,5 +1,47 @@
-{
+[inherit ('Global','Guts','Database','Cli','Privusers','Parser',
+          'Custom','Queue','Interpreter')]
+program monster(input,output);
 
+{+
+COMPONENT: Main program
+ 
+PROGRAM DESCRIPTION:
+ 
+	This is Monster, a multiuser adventure game system
+	where the players create the universe.
+ 
+AUTHORS:
+ 
+    Rich Skrenta 
+    Juha Laiho
+    Antti Leino
+    Kari Hurtta
+
+ 
+CREATION DATE: (unknown) ?.??.1988
+ 
+DESIGN ISSUES:
+ 
+    
+ 
+VERSION:
+ 
+    Monster Helsinki 1.04
+    
+ 
+MODIFICATION HISTORY:
+ 
+     Date     |   Name  | Description
+--------------+---------+-------------------------------------------------------
+    ??.3.1989 |  Hurtta |  Starting of Helsinki version of Monster
+    12.2.1991 |         |  This comment header                    
+    12.2.1991 |         |  Some help text replace with call command_help
+    25.5.1992 |		|  fix_owner: owner check for /FIX -subsystem
+    13.6.1992 |  Hurtta |  Distributed as version 1.04
+-}
+
+
+{
 	This is Monster, a multiuser adventure game system
 	where the players create the universe.
 
@@ -9,519 +51,59 @@
 		skrenta@nuacc.bitnet
 
 }
+{
 
-program monster(input,output);
+	This version modified by
+		jlaiho@finuha.bitnet  (jlaiho@cc.Helsinki.FI)
+		leino@finuha.bitnet   (leino@cc.Helsinki.FI)
+		hurtta@finuha.bitnet  (hurtta@cc.Helsinki.FI)
+	Thanks for ready-to-run modifications to
+		dahlp@finabo.bitnet
+		leino@finuha.bitnet   (leino@cc.Helsinki.FI)
+		hurtta@finuha.bitnet  (hurtta@cc.Helsinki.FI)
+	Thanks for useful ideas to those who play Monster at finuh.
 
-const
+}
 
-%include 'privusers.pas'
+{ all functions in FINUHTIME.PAS moved to PRIVUSERS.PAS }
 
-	veryshortlen = 12;	{ very short string length for userid's etc }
-	shortlen = 20;		{ ordinary short string }
+{ all consts is moved to global.pas }
 
-	maxobjs = 15;		{ max objects allow on floor in a room }
-	maxpeople = 10;		{ max people allowed in a room }
-	maxplayers = 300;	{ max log entries to make for players }
-	maxcmds = 75;		{ top value for cmd keyword slots }
-	maxshow = 50;		{ top value for set/show keywords }
-	maxexit = 6;		{ 6 exits from each loc: NSEWUD }
-	maxroom = 1000;		{ Total maximum ever possible	}
-	maxdetail = 5;		{ max num of detail keys/descriptions per room }
-	maxevent = 15;		{ event slots per event block }
-	maxindex = 10000;	{ top value for bitmap allocation }
-	maxhold = 6;		{ max # of things a player can be holding }
-	maxerr = 15;		{ # of consecutive record collisions before the
-				  the deadlock error message is printed }
-	numevnts = 10;		{ # of different event records to be maintained }
-	numpunches = 12;	{ # of different kinds of punches there are }
-	maxparm = 20;		{ parms for object USEs }
-	maxspells = 50;		{ total number of spells available }
-
-	descmax = 10;		{ lines per description block }
-
-
-	DEFAULT_LINE = 32000;	{ A virtual one liner record number that
-				  really means "use the default one liner
-				  description instead of reading one from
-				  the file" }
-
-{ Mnemonics for directions }
-
-	north = 1;
-	south = 2;
-	east = 3;
-	west = 4;
-	up = 5;
-	down = 6;
-
-
-{ Index record mnemonics }
-
-	I_BLOCK = 1;	{ True if description block is not used		}
-	I_LINE = 2;	{ True if line slot is not used			}
-	I_ROOM = 3;	{ True if room slot is not in use		}
-	I_PLAYER = 4;	{ True if slot is not occupied by a player	}
-	I_ASLEEP = 5;	{ True if player is not playing			}
-	I_OBJECT = 6;	{ True if object record is not being used	}
-	I_INT = 7;	{ True if int record is not being used		}
-
-{ Integer record mnemonics }
-
-	N_LOCATION = 1;		{ Player's location }
-	N_NUMROOMS = 2;		{ How many rooms they've made }
-	N_ALLOW = 3;		{ How many rooms they're allowed to make }
-	N_ACCEPT = 4;		{ Number of open accept exits they have }
-	N_EXPERIENCE = 5;	{ How "good" they are }
-	N_SELF = 6;		{ player's self descriptions }
-
-{ object kind mnemonics }
-
-	O_BLAND = 0;		{ bland object, good for keys }
-	O_WEAPON = 1;
-	O_ARMOR = 2;
-	O_THRUSTER = 3;		{ use puts player through an exit }
-	O_CLOAK = 4;
-
-	O_BAG = 100;
-	O_CRYSTAL = 101;
-	O_WAND = 102;
-	O_HAND = 103;
-
-
-{ Command Mnemonics }
-	error = 0;
-	setnam = 1;
-	help = 2;
-	quest = 3;
-	quit = 4;
-	look = 5;
-	go = 6;
-	form = 7;
-	link = 8;
-	unlink = 9;
-	c_whisper = 10;
-	poof = 11;
-	desc = 12;
-	dbg = 14;
-	say = 15;
-
-	c_rooms = 17;
-	c_system = 18;
-	c_disown = 19;
-	c_claim = 20;
-	c_create = 21;
-	c_public = 22;
-	c_accept = 23;
-	c_refuse = 24;
-	c_zap = 25;
-	c_hide = 26;
-	c_l = 27;
-	c_north = 28;
-	c_south = 29;
-	c_east = 30;
-	c_west = 31;
-	c_up = 32;
-	c_down = 33;
-	c_n = 34;
-	c_s = 35;
-	c_e = 36;
-	c_w = 37;
-	c_u = 38;
-	c_d = 39;
-	c_custom = 40;
-	c_who = 41;
-	c_players = 42;
-	c_search = 43;
-	c_unhide = 44;
-	c_punch = 45;
-	c_ping = 46;
-	c_health = 47;
-	c_get = 48;
-	c_drop = 49;
-	c_inv = 50;
-	c_i = 51;
-	c_self = 52;
-	c_whois = 53;
-	c_duplicate = 54;
-
-	c_version = 56;
-	c_objects = 57;
-	c_use = 58;
-	c_wield = 59;
-	c_brief = 60;
-	c_wear = 61;
-	c_relink = 62;
-	c_unmake = 63;
-	c_destroy = 64;
-	c_show = 65;
-	c_set = 66;
-
-	e_detail = 100;		{ pseudo command for log_action of desc exit }
-	e_custroom = 101;	{ customizing this room }
-	e_program = 102;	{ customizing (programming) an object }
-	e_usecrystal = 103;	{ using a crystal ball }
-
-
-{ Show Mnemonics }
-
-	s_exits = 1;
-	s_object = 2;
-	s_quest = 3;
-	s_details = 4;
-
-
-{ Set Mnemonics }
-
-	y_quest = 1;
-	y_altmsg = 2;
-	y_group1 = 3;
-	y_group2 = 4;
-
-
-{ Event Mnemonics }
-
-	E_EXIT = 1;		{ player left room			}
-	E_ENTER = 2;		{ player entered room			}
-	E_BEGIN = 3;		{ player joined game here		}
-	E_QUIT = 4;		{ player here quit game			}
-	
-	E_SAY = 5;		{ someone said something		}
-	E_SETNAM = 6;		{ player set his personal name		}
-	E_POOFIN = 8;		{ someone poofed into this room		}
-	E_POOFOUT = 9;		{ someone poofed out of this room	}
-	E_DETACH = 10;		{ a link has been destroyed		}
-	E_EDITDONE = 11;	{ someone is finished editing a desc	}
-	E_NEWEXIT = 12;		{ someone made an exit here		}
-	E_BOUNCEDIN = 13;	{ an object "bounced" into the room	}
-	E_EXAMINE = 14;		{ someone is examining something	}
-	E_CUSTDONE = 15;	{ someone is done customizing an exit	}
-	E_FOUND = 16;		{ player found something		}
-	E_SEARCH = 17;		{ player is searching room		}
-	E_DONEDET = 18;		{ done adding details to a room		}
-	E_HIDOBJ = 19;		{ someone hid an object here		}
-	E_UNHIDE = 20;		{ voluntarily revealed themself		}
-	E_FOUNDYOU = 21;	{ someone found someone else hiding	}
-	E_PUNCH = 22;		{ someone has punched someone else	}
-	E_MADEOBJ = 23;		{ someone made an object here		}
-	E_GET = 24;		{ someone picked up an object		}
-	E_DROP = 25;		{ someone dropped an object		}
-	E_DROPALL = 26;		{ quit & dropped stuff on way out	}
-	E_IHID = 27;		{ tell others that I have hidden (!)	}
-	E_NOISES = 28;		{ strange noises from hidden people	}
-	E_PING = 29;		{ send a ping to a potential zombie	}
-	E_PONG = 30;		{ ping answered				}
-	E_HIDEPUNCH = 31;	{ someone hidden is attacking		}
-	E_SLIPPED = 32;		{ attack caused obj to drop unwillingly }
-	E_ROOMDONE = 33;	{ done customizing this room		}
-	E_OBJDONE = 34;		{ done programming an object		}
-	E_HPOOFOUT = 35;	{ someone hiding poofed	out		}
-	E_FAILGO = 36;		{ a player failed to go through an exit }
-	E_HPOOFIN = 37;		{ someone poofed into a room hidden	}
-	E_TRYPUNCH = 38;	{ someone failed to punch someone else	}
-	E_PINGONE = 39;		{ someone was pinged away . . .		}
-	E_CLAIM = 40;		{ someone claimed this room		}
-	E_DISOWN = 41;		{ owner of this room has disowned it	}
-	E_WEAKER = 42;		{ person is weaker from battle		}
-	E_OBJCLAIM = 43;	{ someone claimed an object		}
-	E_OBJDISOWN = 44;	{ someone disowned an object		}
-	E_SELFDONE = 45;	{ done editing self description		}
-	E_WHISPER = 46;		{ someone whispers to someone else	}
-	E_WIELD = 47;		{ player wields a weapon		}
-	E_UNWIELD = 48;		{ player puts a weapon away		}
-	E_DONECRYSTALUSE = 49;	{ done using the crystal ball		}
-	E_WEAR = 50;		{ someone has put on something		}
-	E_UNWEAR = 51;		{ someone has taken off something	}
-	E_DESTROY = 52;		{ someone has destroyed an object	}
-	E_HIDESAY = 53;		{ anonymous say				}
-	E_OBJPUBLIC = 54;	{ someone made an object public		}
-	E_SYSDONE = 55;		{ done with system maint. mode		}
-	E_UNMAKE = 56;		{ remove typedef for object		}
-	E_LOOKDETAIL = 57;	{ looking at a detail of this room	}
-	E_ACCEPT = 58;		{ made an "accept" exit here		}
-	E_REFUSE = 59;		{ got rid of an "accept" exit here	}
-	E_DIED = 60;		{ someone died and evaporated		}
-	E_LOOKYOU = 61;		{ someone is looking at you		}
-	E_FAILGET = 62;		{ someone can't get something		}
-	E_FAILUSE = 63;		{ someone can't use something		}
-	E_CHILL = 64;		{ someone scrys you			}
-	E_NOISE2 = 65;		{ say while in crystal ball		}
-	E_LOOKSELF = 66;	{ someone looks at themself		}
-	E_INVENT = 67;		{ someone takes inventory		}
-	E_POOFYOU = 68;		{ MM poofs someone away . . . .		}
-	E_WHO = 69;		{ someone does a who			}
-	E_PLAYERS = 70;		{ someone does a players		}
-	E_VIEWSELF = 71;	{ someone views a self description	}
-	E_REALNOISE = 72;	{ make the real noises message print	}
-	E_ALTNOISE = 73;	{ alternate mystery message		}
-	E_MIDNIGHT = 74;	{ it's midnight now, tell everyone	}
-
-	E_ACTION = 100;		{ base command action event }
-
-
-{ Misc. }
-
-	GOODHEALTH = 7;
-
-
-type
-	string = varying[80] of char;
-	veryshortstring = varying[veryshortlen] of char;
-	shortstring = varying[shortlen] of char;
-
-	{ This is a list of description block numbers;
-	  If a number is zero, there is no text for that block }
-	
-
-	{ exit kinds:
-		0: no way - blocked exit
-		1: open passageway
-		2: object required
-
-		6: exit only exists if player is holding the key
-	}
-
-	exit = record
-		toloc: integer;		{ location exit goes to }
-		kind: integer;		{ type of the exit }
-		slot: integer;		{ exit slot of toloc target }
-
-		exitdesc,  { one liner description of exit  }
-		closed,    { desc of a closed door }
-		fail,	   { description if can't go thru   }
-		success,   { desc while going thru exit     }
-		goin,      { what others see when you go into the exit }
-{		ofail,	}
-		comeout:   { what others see when you come out of the exit }
-			  integer; { all refer to the liner file }
-				   { if zero defaults will be printed }
-
-		hidden: integer;	{ **** about to change this **** }
-		objreq: integer;	{ object required to pass this exit }
-
-		alias: veryshortstring; { alias for the exit dir, a keyword }
-
-		reqverb: boolean;	{ require alias as a verb to work }
-		reqalias: boolean;	{ require alias only (no direction) to
-					  pass through the exit }
-		autolook: boolean;	{ do a look when user comes out of exit }
-	end;
-
-
-	{ index record # 1 is block index }
-	{ index record # 2 is line index }
-	{ index record # 3 is room index }
-	{ index record # 4 is player alloc index }
-	{ index record # 5 is player awake (in game) index }
-	indexrec = record
-		indexnum: integer;	{ validation number }
-		free: packed array[1..maxindex] of boolean;
-		top: integer;   { max records available }
-		inuse: integer; { record #s in use }
-	end;
-
-
-	{ names are record #1   }
-	{ owners are record # 2 }
-	{ player pers_names are record # 3 }
-	{ userids are record # 4 }
-	{ object names are record # 5 }
-	{ object creators are record # 6 }
-	{ date of last play is # 7 }
-	{ time of last play is # 8 }
-	namrec = record
-		validate: integer;
-		loctop: integer;
-		idents: array[1..maxroom] of shortstring;
-	end;
-
-	objectrec = record
-		objnum: integer;	{ allocation number for the object }
-		onum: integer;		{ number index to objnam/objown }
-		oname: shortstring;	{ duplicate of name of object }
-		kind: integer;		{ what kind of object this is }
-		linedesc: integer;	{ liner desc of object Here }
-
-		home: integer;		{ if object at home, then print the }
-		homedesc: integer;	{ home description }
-
-		actindx: integer;	{ action index -- programs for the future }
-		examine: integer;	{ desc block for close inspection }
-		worth: integer;		{ how much it cost to make (in gold) }
-		numexist: integer;	{ number in existence }
-
-		sticky: boolean;	{ can they ever get it? }
-		getobjreq: integer;	{ object required to get this object }
-		getfail: integer;	{ fail-to-get description }
-		getsuccess: integer;	{ successful picked up description }
-
-		useobjreq: integer;	{ object require to use this object }
-		uselocreq: integer;	{ place have to be to use this object }
-		usefail: integer;	{ fail-to-use description }
-		usesuccess: integer;	{ successful use of object description }
-
-		usealias: veryshortstring;
-		reqalias: boolean;
-		reqverb: boolean;
-
-		particle: integer;	{ a,an,some, etc... "particle" is not
-					  be right, but hey, it's in the code }
-
-		parms: array[1..maxparm] of integer;
-
-		d1: integer;		{ extra description # 1 }
-		d2: integer;		{ extra description # 2 }
-		exp3,exp4,exp5,exp6: integer;
-	end;
-
-	anevent = record
-		sender,			{ slot of sender }
-		action,			{ what event this is, E_something }
-		target,			{ opt target of action }
-		parm: integer;		{ expansion parm }
-		msg: string;		{ string for SAY and other cmds }
-		loc: integer;		{ room that event is targeted for }
-	end;
-
-	eventrec = record
-		validat: integer;	{ validation number for record locking }
-		evnt: array[1..maxevent] of anevent;
-		point: integer;		{ circular buffer pointer }
-	end;
-
-	peoplerec = record
-		kind: integer;		   { 0=none,1=player,2=npc }
-		parm: integer;		   { index to npc controller (object?) }
-
-		username: veryshortstring; { actual userid of person }
-		name: shortstring;	   { chosen name of person }
-		hiding: integer;	   { degree to which they're hiding }
-		act,targ: integer;	   { last thing that this person did }
-
-		holding: array[1..maxhold] of integer;	{ objects being held }
-		experience: integer;
-
-		wearing: integer;	{ object that they're wearing }
-		wielding: integer;	{ weapon they're wielding }
-		health: integer;	{ how healthy they are }
-
-		self: integer;		{ self description }
-
-		ex1,ex2,ex3,ex4,ex5: integer;
-	end;
-
-	spellrec = record
-		recnum: integer;
-		level: array[1..maxspells] of integer;
-	end;
-
-	descrec = record
-		descrinum: integer;
-		lines: array[1..descmax] of string;
-		desclen: integer;  { number used in this block }
-	end;
-
-	linerec = record
-		linenum: integer;
-		theline: string;
-	end;
-
-	room = record
-		valid: integer;		{ validation number for record locking }
-		locnum: integer;
-		owner: veryshortstring; { who owns the room: userid if private
-							     '' if public
-							     '*' if disowned }
-		nicename: string;	{ pretty name for location }
-		nameprint: integer;	{ code for printing name:
-						0: don't print it
-						1: You're in
-						2: You're at
-					}
-
-		primary: integer;	{ room descriptions }
-		secondary: integer;
-		which: integer;		{ 0 = only print primary room desc.
-					  1 = only print secondary room desc.
-					  2 = print both
-					  3 = print primary then secondary
-						if has magic object }
-
-		magicobj: integer;	{ special object for this room }
-		effects: integer;
-		parm: integer;
-
-		exits: array[1..maxexit] of exit;
-
-		pile: integer;		{ if more than maxobjs objects here }
-		objs: array[1..maxobjs] of integer;	{ refs to object file }
-		objhide: array[1..maxobjs] of integer;	{ how much each object
-							  is hidden }
-							{ see hidden on exitrec
-							  above }
-
-		objdrop: integer;	{ where objects go when they're dropped }
-		objdesc: integer;	{ what it says when they're dropped }
-		objdest: integer;	{ what it says in target room when
-					  "bounced" object comes in }
-
-		people: array[1..maxpeople] of peoplerec;
-
-		grploc1,grploc2: integer;
-		grpnam1,grpnam2: shortstring;
-
-		detail: array[1..maxdetail] of veryshortstring;
-		detaildesc: array[1..maxdetail] of integer;
-
-		trapto: integer;	{ where the "trapdoor" goes }
-		trapchance: integer;	{ how often the trapdoor works }
-
-		rndmsg: integer;	{ message that randomly prints }
-
-		xmsg2: integer;		{ another random block }
-		exp2,exp3,exp4: integer;
-		exitfail: integer;	{ default fail description for exits }
-		ofail: integer;		{ what other's see when you fail, default }
-	end;
-
-
-	intrec = record
-		intnum: integer;
-		int: array[1..maxplayers] of integer;
-	end;
-
+{ all types is moved to global.pas }
 
 var
-	old_prompt: [external] string;
-	line:	    [external] string;
-	oldcmd:	string;		{ string for '.' command to do last command }
 
-	inmem: boolean;	 { Is this rooms roomrec (here....) in memory?
-			   We call gethere many times to make sure
-			   here is current.  However, we only want to
-			   actually do a getroom if the roomrec has been
-			   modified	}
+        { variables in privusers module are available with PRIVUSERS.PEN }
+
+	oldcmd:	string := '';		{ string for '.' command to do last command }
+
+	in_main_prompt : boolean := false;
+		    { if in main promp player can throw out monster immediatly }
+
+
+	{ GUTS.PAS exports old_promp,line and grab_next }
+
+        { system_id, disowned_id and public_id moved to module CUSTOM }
+
+
+	{ inmem moved to DATABASE.PAS }
+
+  {	starting : boolean := FALSE;	}  { Not yet entered the universe --
+ 					  hopefully a temporary hack
+                                          by leino@finuh }
+
 	brief: boolean := FALSE;	{ brief/verbose descriptions }
 
 	rndcycle: integer;		{ integer for rnd_event }
-	debug: boolean;
+
+	{ debug moved to GLOBAL.PAS }
+
 	ping_answered: boolean;		  { flag for ping answers }
-	hiding : boolean := FALSE;	  { is player hiding? }
+	{ hiding moved to module CUSTOM }
 	midnight_notyet: boolean := TRUE; { hasn't been midnight yet }
 	first_puttoken: boolean := TRUE;  { flag for first place into world }
-	logged_act : boolean := FALSE;	  { flag to indicate that a log_action
-					  has been called, and the next call
-					  to clear_command needs to clear the
-					  action parms in the here roomrec }
-
-	roomfile : file of room;
-	eventfile: file of eventrec;
-	namfile: file of namrec;
-	descfile: file of descrec;
-	linefile: file of linerec;
-	indexfile: file of indexrec;
-	intfile: file of intrec;
-	objfile: file of objectrec;
-	spellfile: file of spellrec;
+	{ logged_act moved to module CUSTOM }
+    
 
 	cmds: array[1..maxcmds] of shortstring := (
 
@@ -537,10 +119,10 @@ var
 		'whisper',	{ c_whisper = 10}
 		'poof',		{ poof = 11	}
 		'describe',	{ desc = 12	}
-		'',
+		'dcl',          { c_dcl = 13   }
 		'debug',	{ dbg = 14	}
 		'say',		{ say = 15	}
-		'',		{		}
+		'scan',		{ c_scan = 16	}
 		'rooms',	{ c_rooms = 17	}
 		'system',	{ c_system = 18	}
 		'disown',	{ c_disown = 19	}
@@ -579,7 +161,7 @@ var
 		'self',		{ c_self = 52	}
 		'whois',	{ c_whois = 53	}
 		'duplicate',	{ c_duplicate = 54 }
-		'',
+		'score',	{ c_score = 55	}
 		'version',	{ c_version = 56}
 		'objects',	{ c_objects = 57}
 		'use',		{ c_use = 58	}
@@ -591,1251 +173,211 @@ var
 		'destroy',	{ c_destroy = 64}
 		'show',		{ c_show = 65	}
 		'set',		{ c_set = 66	}
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		''
+		'bear',		{ c_monster = 67    }
+		'erase',        { c_erase = 68	    }
+		'atmosphere',	{ c_atmospehere = 69 }
+		'reset',	{ c_reset = 70 }
+		'summon',       { c_summon = 71 }
+		'spells',	{ c_spells = 72 }
+		'monsters',	{ c_monsters = 73 }
+		'list',		{ A_list = 74 }
+		'create',	{ A_create = 75 }
+		'delete',	{ A_delete = 76 }
+		'',		{ 77 }
+		'',		{ 78 }
+		'',		{ 79 }
+		'',		{ 80 }
+		'',		{ 81 }
+		'',		{ 82 }
+		'',		{ 83 }
+		'',		{ 84 }
+		'',		{ 85 }
+		'',		{ 86 }
+		'',		{ 87 }
+		'',		{ 88 }
+		'',		{ 89 }
+		'',		{ 90 }
+		'',		{ 91 }
+		'',		{ 92 }
+		'',		{ 93 }
+		'',		{ 94 }
+		'',		{ 95 }
+		'',		{ 96 }
+		'',		{ 97 }
+		'',		{ 98 }
+		''		{ 99 }
+
 	);
 
+	{ show moved to parser.pas }
 
-	numcmds: integer;	{ number of main level commands there are }
-	show: array[1..maxshow] of shortstring;
-	numshow: integer;
-	setkey: array[1..maxshow] of shortstring;
-	numset: integer;
+	numcmds: integer;	{ number of got main level commands there are }
 
-	direct: array[1..maxexit] of shortstring :=
-		('north','south','east','west','up','down');
+	{ numshow moved to parser.pas }
+
+	{ setkey moved to parser.pas }
+
+	{ numset moved to parser.pas }
+
+	{ direct moved to parser.pas }
 
 	spells: array[1..maxspells] of string;	  { names of spells }
 	numspells: integer;		{ number of spells there actually are }
 
-	done: boolean;		{ flag for QUIT }
-	userid: veryshortstring;	{ userid of this player }
-	location: integer;	{ current place number }
+	done: [global] boolean;		{ flag for QUIT }
+	{ userid moved to module CUSTOM }
+	real_userid: veryshortstring;	{ real VMS userid }
+
+	{ location moved to DATABASE.PAS }
 
 	hold_kind: array[1..maxhold] of integer; { kinds of the objects i'm
 						   holding }
 
-	myslot: integer := 1;	{ here.people[myslot]... is this player }
-	myname: shortstring;	{ personal name this player chose (setname) }
+	{ myslot moved to module CUSTOM }
 	myevent: integer;	{ which point in event buffer we are at }
+	{ myname moved to module CUSTOM }
 
 	found_exit: array[1..maxexit] of boolean;
 				{ has exit i been found by the player? }
 
-	mylog: integer;		{ which log entry this player is }
+	{ mylog moved to DATABASE.PAS }
+
 	mywear: integer;	{ what I'm wearing }
+	{ mydisguise moved to module CUSTOM }
 	mywield: integer;	{ weapon I'm wielding }
 	myhealth: integer;	{ how well I'm feeling }
-	myexperience: integer;	{ how experienced I am }
 	myself: integer;	{ self description block }
-
+	{ myexperience moved to module CUSTOM }
 	healthcycle: integer;	{ used in rnd_event to control how quickly a
 				  player heals }
 
-	here: room;		{ current room record }
-	event: eventrec;
-	privd: boolean;
+	{ privs moved to module PARSER }
+	{ module GLOBAL exports leveltable }
 
-	objnam,			{ object names }
-	objown,			{ object owners }
-	nam,			{ record 1 is room names }
-	own,			{ rec 2 is room owners }
-	pers,			{ 3 is player personal names }
-	user,			{ 4 is player userid	}
-	adate,			{ 5 is date of last play }
-	atime			{ 6 is time of last play }
- 		: namrec;
+{ procedures in module CLI is available now with CLI.PEN }
 
-	anint: intrec;		{ info about game players }
-	obj: objectrec;
-	spell: spellrec;
-
-	block: descrec;		{ a text block of descmax lines }
-	indx: indexrec;		{ an record allocation record }
-	oneliner: linerec;	{ a line record }
-
-	heredsc: descrec;
-
+{ in module KEYS }
 
 [external]
-procedure wait(seconds: real);	{ system SLEEP call }
+procedure encrypt(key: shortstring; n : integer := 0);
 external;
 
-[external]
-function random:real;	{ system random number generator }
-external;
+{ Routines in module QUEUE are declared in environment file QUEUE.PEN }
+		
+{ Routines in module GUTS are declared in environment file GUTS.PEN }
 
-[external]
-function rnd100: integer;	{ returns a random # between 0-100 }
-external;
+{ Routines in module INTERPRETER are declared in environment file 
+  INTERPRETER.PEN }
 
-[external]
-procedure setup_guts;	{ disables ctrl-Y/ctrl-C }
-			{ necessary to prevent ZOMBIES in the world }
-extern;
 
-[external]
-procedure finish_guts;	{ re-enables ctrl-Y/ctrl-C }
-extern;
+{ ----- }
+procedure xpoof(loc: integer); forward;
 
-[external] function get_userid:string;
-external;
+procedure newlevel(oldlev,newlev: integer); forward;
 
-[external] function trim(s: string): string;
-external;
+procedure prevlevel(oldlev,newlev: integer); forward;
 
-[external]
-procedure grab_line(prompt: string; var s:string; echo:boolean := true);
-{ Input routine.   Gets a line of text from user which checking
-  for async events }
-external;
+procedure do_exit(exit_slot: integer); forward;
 
-[external]
-procedure putchars(s: string);
-extern;
+{ function put_token declared as external in module CUSTOM }
 
-procedure xpoof(loc: integer);
-forward;
+procedure take_token(aslot, roomno: integer); forward;
 
-procedure do_exit(exit_slot: integer);
-forward;
+procedure maybe_drop; forward;                   
 
-function put_token(room: integer;var aslot:integer;hidelev:integer := 0):boolean;
-forward;
-
-procedure take_token(aslot, roomno: integer);
-forward;
-
-procedure maybe_drop;
-forward;
-
-procedure do_program(objnam: string);
-forward;
+{ procedure do_program moved to module CUSTOM }
 
 function drop_everything(pslot: integer := 0): boolean;
 forward;
 
+{ procedures do_y_altmsg, do_group1, do_group2 moved to module CUSTOM }
+        
+procedure meta_run (label_name,variable: shortstring;
+                    value: mega_string); forward;
 
-procedure collision_wait;
-var
-	wait_time: real;
+procedure meta_run_2 (label_name,variable: shortstring;
+                    value: mega_string); forward;
 
-begin
-	wait_time := random;
-	if wait_time < 0.001 then
-		wait_time := 0.001;
-	wait(wait_time);
-end;
-
-
-{ increment err; if err is too high, suspect deadlock }
-{ this is called by all getX procedures to ease deadlock checking }
-procedure deadcheck(var err: integer; s:string);
-
-begin
-	err := err + 1;
-	if err > maxerr then begin
-		writeln('%warning- ',s,' seems to be deadlocked; notify the Monster Manager');
-		finish_guts;
-		halt;
-		err := 0;
-	end;
-end;
-
-
-
-{ first procedure of form getX
-  attempts to get given room record
-  resolves record access conflicts, checks for deadlocks
-  Locks record; use freeroom immediately after getroom if data is
-  for read-only
-}
-procedure getroom(n: integer:= 0);
-var
-	err: integer;
-
-begin
-	if n = 0 then
-		n := location;
-	roomfile^.valid := 0;
-	err := 0;
-	if debug then
-		writeln('%getroom(',n:1,')');
-	find(roomfile,n,error := continue);
-	while roomfile^.valid <> n do begin
-		deadcheck(err,'getroom');
-		collision_wait;
-		find(roomfile,n,error := continue);
-	end;
-	here := roomfile^;
-
-	inmem := false;
-		{ since this getroom could be doing anything, we will
-		  assume that it is bozoing the correct here record for
-		  this room.  If this getroom called by gethere, then
-		  gethere will correct inmem immediately.  Otherwise
-		  the next gethere will restore the correct here record. }
-end;
-
-procedure putroom;
-
-begin
-	locate(roomfile,here.valid);
-	roomfile^ := here;
-	put(roomfile);
-end;
-
-procedure freeroom;	{ unlock the record if you're not going to write it }
-
-begin
-	unlock(roomfile);
-end;
-
-procedure gethere(n: integer := 0);
-
-begin
-	if (n = 0) or (n = location) then begin
-		if not(inmem) then begin
-			getroom;	{ getroom(n) okay here also }
-			freeroom;
-			inmem := true;
-		end else if debug then
-			writeln('%gethere - here already in memory');
-	end else begin
-		getroom(n);
-		freeroom;
-	end;
-end;
-
-
-procedure getown;
-var
-	err: integer;
-
-begin
-	namfile^.validate := 0;
-	err := 0;
-	find(namfile,2,error := continue);
-	while namfile^.validate <> 2 do begin
-		deadcheck(err,'getown');
-		collision_wait;
-		find(namfile,2,error := continue);
-	end;
-	own := namfile^;
-end;
-
-
-
-procedure getnam;
-var
-	err: integer;
-
-begin
-	namfile^.validate := 0;
-	err := 0;
-	find(namfile,1,error := continue);
-	while namfile^.validate <> 1 do begin
-		deadcheck(err,'getnam');
-		collision_wait;
-		find(namfile,1,error := continue);
-	end;
-	nam := namfile^;
-end;
-
-procedure freenam;
-
-begin
-	unlock(namfile);
-end;
-
-procedure freeown;
-
-begin
-	unlock(namfile);
-end;
-
-procedure putnam;
-
-begin
-	locate(namfile,1);
-	namfile^:= nam;
-	put(namfile);
-end;
-
-procedure putown;
-
-begin
-	locate(namfile,2);
-	namfile^:= own;
-	put(namfile);
-end;
-
-
-procedure getobj(n: integer);
-var
-	err: integer;
-
-begin
-	if n = 0 then
-		n := location;
-	objfile^.objnum := 0;
-	err := 0;
-	find(objfile,n,error := continue);
-	while objfile^.objnum <> n do begin
-		deadcheck(err,'getobj');
-		collision_wait;
-		find(objfile,n,error := continue);
-	end;
-	obj := objfile^;
-end;
-
-procedure putobj;
-
-begin
-	locate(objfile,obj.objnum);
-	objfile^ := obj;
-	put(objfile);
-end;
-
-procedure freeobj;	{ unlock the record if you're not going to write it }
-
-begin
-	unlock(objfile);
-end;
-
-
-
-procedure getint(n: integer);
-var
-	err: integer;
-
-begin
-	intfile^.intnum := 0;
-	err := 0;
-	find(intfile,n,error := continue);
-	while intfile^.intnum <> n do begin
-		deadcheck(err,'getint');
-		collision_wait;
-		find(intfile,n,error := continue);
-	end;
-	anint := intfile^;
-end;
-
-
-procedure freeint;
-
-begin
-	unlock(intfile);
-end;
-
-procedure putint;
-var
-	n: integer;
-
-begin
-	n := anint.intnum;
-	locate(intfile,n);
-	intfile^:= anint;
-	put(intfile);
-end;
-
-
-
-procedure getspell(n: integer := 0);
-var
-	err: integer;
-
-begin
-	if n = 0 then
-		n := mylog;
-
-	spellfile^.recnum := 0;
-	err := 0;
-	find(spellfile,n,error := continue);
-	while spellfile^.recnum <> n do begin
-		deadcheck(err,'getspell');
-		collision_wait;
-		find(spellfile,n,error := continue);
-	end;
-	spell := spellfile^;
-end;
-
-
-procedure freespell;
-
-begin
-	unlock(spellfile);
-end;
-
-procedure putspell;
-var
-	n: integer;
-
-begin
-	n := spell.recnum;
-	locate(spellfile,n);
-	spellfile^:= spell;
-	put(spellfile);
-end;
-
-
-
-procedure getuser;	{ get log rec with everyone's userids in it }
-var
-	err: integer;
-
-begin
-	namfile^.validate := 0;
-	err := 0;
-	find(namfile,4,error := continue);
-	while namfile^.validate <> 4 do begin
-		deadcheck(err,'getuser');
-		collision_wait;
-		find(namfile,4,error := continue);
-	end;
-	user := namfile^;
-end;
-
-procedure freeuser;
-
-begin
-	unlock(namfile);
-end;
-
-procedure putuser;
-
-begin
-	locate(namfile,4);
-	namfile^:= user;
-	put(namfile);
-end;
-
-
-
-procedure getdate;	{ get log rec with date of last play in it }
-var
-	err: integer;
-
-begin
-	namfile^.validate := 0;
-	err := 0;
-	find(namfile,7,error := continue);
-	while namfile^.validate <> 7 do begin
-		deadcheck(err,'getdate');
-		collision_wait;
-		find(namfile,7,error := continue);
-	end;
-	adate := namfile^;
-end;
-
-procedure freedate;
-
-begin
-	unlock(namfile);
-end;
-
-procedure putdate;
-
-begin
-	locate(namfile,7);
-	namfile^:= adate;
-	put(namfile);
-end;
-
-
-procedure gettime;	{ get log rec with time of last play in it }
-var
-	err: integer;
-
-begin
-	namfile^.validate := 0;
-	err := 0;
-	find(namfile,8,error := continue);
-	while namfile^.validate <> 8 do begin
-		deadcheck(err,'gettime');
-		collision_wait;
-		find(namfile,8,error := continue);
-	end;
-	atime := namfile^;
-end;
-
-procedure freetime;
-
-begin
-	unlock(namfile);
-end;
-
-procedure puttime;
-
-begin
-	locate(namfile,8);
-	namfile^:= atime;
-	put(namfile);
-end;
-
-
-
-procedure getobjnam;
-var
-	err: integer;
-
-begin
-	namfile^.validate := 0;
-	err := 0;
-	find(namfile,5,error := continue);
-	while namfile^.validate <> 5 do begin
-		deadcheck(err,'getobjnam');
-		collision_wait;
-		find(namfile,5,error := continue);
-	end;
-	objnam := namfile^;
-end;
-
-procedure freeobjnam;
-
-begin
-	unlock(namfile);
-end;
-
-procedure putobjnam;
-
-begin
-	locate(namfile,5);
-	namfile^:= objnam;
-	put(namfile);
-end;
-
-
-
-procedure getobjown;
-var
-	err: integer;
-
-begin
-	namfile^.validate := 0;
-	err := 0;
-	find(namfile,6,error := continue);
-	while namfile^.validate <> 6 do begin
-		deadcheck(err,'getobjown');
-		collision_wait;
-		find(namfile,6,error := continue);
-	end;
-	objown := namfile^;
-end;
-
-procedure freeobjown;
-
-begin
-	unlock(namfile);
-end;
-
-procedure putobjown;
+{ procedure custom_hook moved to module CUSTOM }
 
-begin
-	locate(namfile,6);
-	namfile^:= objown;
-	put(namfile);
-end;
-
-
-
-procedure getpers;	{ get log rec with everyone's pers names in it }
-var
-	err: integer;
-
-begin
-	namfile^.validate := 0;
-	err := 0;
-	find(namfile,3,error := continue);
-	while namfile^.validate <> 3 do begin
-		deadcheck(err,'getpers');
-		collision_wait;
-		find(namfile,3,error := continue);
-	end;
-	pers := namfile^;
-end;
-
-procedure freepers;
-
-begin
-	unlock(namfile);
-end;
-
-procedure putpers;
-
-begin
-	locate(namfile,3);
-	namfile^:= pers;
-	put(namfile);
-end;
-
-
-
-
-procedure getevent(n: integer := 0);
-var
-	err: integer;
-
-begin
-	if n = 0 then
-		n := location;
-
-	n := (n mod numevnts) + 1;
-
-	eventfile^.validat := 0;
-	err := 0;
-	find(eventfile,n,error := continue);
-	while eventfile^.validat <> n do begin
-		deadcheck(err,'getevent');
-		collision_wait;
-		find(eventfile,n,error := continue);
-	end;
-	event := eventfile^;
-end;
-
-procedure freeevent;
-
-begin
-	unlock(eventfile);
-end;
-
-procedure putevent;
-
-begin
-	locate(eventfile,event.validat);
-	eventfile^:= event;
-	put(eventfile);
-end;
-
-
-procedure getblock(n: integer);
-var
-	err: integer;
-
-begin
-	if debug then
-		writeln('%getblock: ',n:1);
-	descfile^.descrinum := 0;
-	err := 0;
-	find(descfile,n,error := continue);
-	while descfile^.descrinum <> n do begin
-		deadcheck(err,'getblock');
-		collision_wait;
-		find(descfile,n,error := continue);
-	end;
-	block := descfile^;
-end;
-
-procedure putblock;
-var
-	n: integer;
-
-begin
-	n := block.descrinum;
-	if debug then
-		writeln('%putblock: ',n:1);
-	if n <> 0 then begin
-		locate(descfile,n);
-		descfile^ := block;
-		put(descfile);
-	end;
-end;
-
-procedure freeblock;	{ unlock the record if you're not going to write it }
-
-begin
-	unlock(descfile);
-end;
-
-
-
-
-
-{ *** new code begins here *** }
-
-
-procedure getline(n: integer);
-var
-	err: integer;
-
-begin
-	if n = -1 then begin
-		oneliner.theline := '';
-	end else begin
-		err := 0;
-		linefile^.linenum := 0;
-		find(linefile,n,error := continue);
-		while linefile^.linenum <> n do begin
-			deadcheck(err,'getline');
-			collision_wait;
-			find(linefile,n,error := continue);
-		end;
-		oneliner := linefile^;
-	end;
-end;
-
-procedure putline;
-
-begin
-	if oneliner.linenum > 0 then begin
-		locate(linefile,oneliner.linenum);
-		linefile^ := oneliner;
-		put(linefile);
-	end;
-end;
-
-procedure freeline;	{ unlock the record if you're not going to write it }
-
-begin
-	unlock(linefile);
-end;
-
-
-
-
-{
-Index record 1 -- Description blocks that are free
-Index record 2 -- One liners that are free
-}
-
-
-procedure getindex(n: integer);
-var
-	err: integer;
-
-begin
-	indexfile^.indexnum := 0;
-	err := 0;
-	find(indexfile,n,error := continue);
-	while indexfile^.indexnum <> n do begin
-		deadcheck(err,'getindex');
-		collision_wait;
-		find(indexfile,n,error := continue);
-	end;
-	indx := indexfile^;
-end;
-
-procedure putindex;
-
-begin
-	locate(indexfile,indx.indexnum);
-	indexfile^ := indx;
-	put(indexfile);
-end;
-
-procedure freeindex;	{ unlock the record if you're not going to write it }
-
-begin
-	unlock(indexfile);
-end;
+procedure x_unwield; forward;
+procedure x_unwear; forward;
 
+procedure leave_universe; forward;
 
+{ function trim_filename moved to module CUSTOM }
 
-{
-First procedure of form alloc_X
-Allocates the oneliner resource using the indexrec bitmaps
-
-Return the number of a one liner if one is available
-and remove it from the free list
-}
-function alloc_line(var n: integer):boolean;
-var
-	found: boolean;
-
-begin
-	getindex(I_LINE);
-	if indx.inuse = indx.top then begin
-		freeindex;
-		n := 0;
-		alloc_line := false;
-		writeln('There are no available one line descriptions.');
-	end else begin
-		n := 1;
-		found := false;
-		while (not found) and (n <= indx.top) do begin
-			if indx.free[n] then
-				found := true
-			else
-				n := n + 1;
-		end;
-		if found then begin
-			indx.free[n] := false;
-			alloc_line := true;
-			indx.inuse := indx.inuse + 1;
-			putindex;
-		end else begin
-			freeindex;
-			writeln('%serious error in alloc_line; notify Monster Manager');
-			
-			alloc_line := false;
-		end;
-	end;
-end;
-
-{
-put the line specified by n back on the free list
-zeroes n also, for convenience
-}
-procedure delete_line(var n: integer);
-
-begin
-	if n = DEFAULT_LINE then
-		n := 0
-	else if n > 0 then begin
-		getindex(I_LINE);
-		indx.inuse := indx.inuse - 1;
-		indx.free[n] := true;
-		putindex;
-	end;
-	n := 0;
-end;
-
-
-
-function alloc_int(var n: integer):boolean;
-var
-	found: boolean;
-
-begin
-	getindex(I_INT);
-	if indx.inuse = indx.top then begin
-		freeindex;
-		n := 0;
-		alloc_int := false;
-		writeln('There are no available integer records.');
-	end else begin
-		n := 1;
-		found := false;
-		while (not found) and (n <= indx.top) do begin
-			if indx.free[n] then
-				found := true
-			else
-				n := n + 1;
-		end;
-		if found then begin
-			indx.free[n] := false;
-			alloc_int := true;
-			indx.inuse := indx.inuse + 1;
-			putindex;
-		end else begin
-			freeindex;
-			writeln('%serious error in alloc_int; notify Monster Manager');
-			
-			alloc_int := false;
-		end;
-	end;
-end;
-
-
-procedure delete_int(var n: integer);
-
-begin
-	if n > 0 then begin
-		getindex(I_INT);
-		indx.inuse := indx.inuse - 1;
-		indx.free[n] := true;
-		putindex;
-	end;
-	n := 0;
-end;
-
-
-
-{
-Return the number of a description block if available and
-remove it from the free list
-}
-function alloc_block(var n: integer):boolean;
-var
-	found: boolean;
-
-begin
-	if debug then
-		writeln('%alloc_block entry');
-	getindex(I_BLOCK);
-	if indx.inuse = indx.top then begin
-		freeindex;
-		n := 0;
-		alloc_block := false;
-		writeln('There are no available description blocks.');
-	end else begin
-		n := 1;
-		found := false;
-		while (not found) and (n <= indx.top) do begin
-			if indx.free[n] then
-				found := true
-			else
-				n := n + 1;
-		end;
-		if found then begin
-			indx.free[n] := false;
-			alloc_block := true;
-			indx.inuse := indx.inuse + 1;
-			putindex;
-			if debug then
-				writeln('%alloc_block successful');
-		end else begin
-			freeindex;
-			writeln('%serious error in alloc_block; notify Monster Manager');
-			alloc_block := false;
-		end;
-	end;
-end;
-
-
-
-
-{
-puts a description block back on the free list
-zeroes n for convenience
-}
-procedure delete_block(var n: integer);
-
-begin
-	if n = DEFAULT_LINE then
-		n := 0		{ no line really exists in the file }
-	else if n > 0 then begin
-		getindex(I_BLOCK);
-		indx.inuse := indx.inuse - 1;
-		indx.free[n] := true;
-		putindex;
-		n := 0;
-	end else if n < 0 then begin
-		n := (- n);
-		delete_line(n);
-	end;
-end;
-
-
-
-{
-Return the number of a room if one is available
-and remove it from the free list
-}
-function alloc_room(var n: integer):boolean;
-var
-	found: boolean;
-
-begin
-	getindex(I_ROOM);
-	if indx.inuse = indx.top then begin
-		freeindex;
-		n := 0;
-		alloc_room := false;
-		writeln('There are no available free rooms.');
-	end else begin
-		n := 1;
-		found := false;
-		while (not found) and (n <= indx.top) do begin
-			if indx.free[n] then
-				found := true
-			else
-				n := n + 1;
-		end;
-		if found then begin
-			indx.free[n] := false;
-			alloc_room := true;
-			indx.inuse := indx.inuse + 1;
-			putindex;
-		end else begin
-			freeindex;
-			writeln('%serious error in alloc_room; notify Monster Manager');
-			alloc_room := false;
-		end;
-	end;
-end;
-
-{
-Called by DEL_ROOM()
-put the room specified by n back on the free list
-zeroes n also, for convenience
-}
-procedure delete_room(var n: integer);
-
-begin
-	if n <> 0 then begin
-		getindex(I_ROOM);
-		indx.inuse := indx.inuse - 1;
-		indx.free[n] := true;
-		putindex;
-		n := 0;
-	end;
-end;
-
-
-
-function alloc_log(var n: integer):boolean;
-var
-	found: boolean;
-
-begin
-	getindex(I_PLAYER);
-	if indx.inuse = indx.top then begin
-		freeindex;
-		n := 0;
-		alloc_log := false;
-		writeln('There are too many monster players, you can''t find a space.');
-	end else begin
-		n := 1;
-		found := false;
-		while (not found) and (n <= indx.top) do begin
-			if indx.free[n] then
-				found := true
-			else
-				n := n + 1;
-		end;
-		if found then begin
-			indx.free[n] := false;
-			alloc_log := true;
-			indx.inuse := indx.inuse + 1;
-			putindex;
-		end else begin
-			freeindex;
-			writeln('%serious error in alloc_log; notify Monster Manager');
-			alloc_log := false;
-		end;
-	end;
-end;
-
-procedure delete_log(var n: integer);
-
-begin
-	if n <> 0 then begin
-		getindex(I_PLAYER);
-		indx.inuse := indx.inuse - 1;
-		indx.free[n] := true;
-		putindex;
-		n := 0;
-	end;
-end;
-
-
-function lowcase(s: string):string;
-var
-	sprime: string;
-	i: integer;
-
-begin
-	if length(s) = 0 then
-		lowcase := ''
-	else begin
-		sprime := s;
-		for i := 1 to length(s) do
-			if sprime[i] in ['A'..'Z'] then
-			   sprime[i] := chr(ord('a')+(ord(sprime[i])-ord('A')));
-		lowcase := sprime;
-	end;
-end;
-
-
-{ lookup a spell with disambiguation in the spell list }
-
-function lookup_spell(var n: integer;s:string): boolean;
-var
-	i,poss,maybe,num: integer;
-
+function play_allow: boolean; { check when database is open }
 begin
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to numspells do begin
-		if s = spells[i] then
-			num := i
-		else if index(spells[i],s) = 1 then begin
-			maybe := maybe + 1;
-			poss := i;
-		end;
-	end;
-	if num <> 0 then begin
-		n := num;
-		lookup_spell := true;
-	end else if maybe = 1 then begin
-		n := poss;
-		lookup_spell := true;
-	end else if maybe > 1 then begin
-		lookup_spell := false;
-	end else begin
-		lookup_spell := false;
-	end;
+    play_allow := manager_priv or (userid = MM_userid)
+		    or not work_time;
 end;
 
+{ function sysdate moved to module CUSTOM }
+          
+{ procedure gethere moved to module CUSTOM }
 
-function lookup_user(var pnum: integer;s: string): boolean;
-var
-	i,poss,maybe,num: integer;
+{ alloc_X and delete_X routines moved to module CUSTOM }
 
-begin
-	getuser;
-	freeuser;
-	getindex(I_PLAYER);
-	freeindex;
-
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to indx.top do begin
-		if not(indx.free[i]) then begin
-			if s = user.idents[i] then
-				num := i
-			else if index(user.idents[i],s) = 1 then begin
-				maybe := maybe + 1;
-				poss := i;
-			end;
-		end;
-	end;
-	if num <> 0 then begin
-		pnum := num;
-		lookup_user := true;
-	end else if maybe = 1 then begin
-		pnum := poss;
-		lookup_user := true;
-	end else if maybe > 1 then begin
-{		writeln('-- Ambiguous direction');	}
-		lookup_user := false;
-	end else begin
-		lookup_user := false;
-{		writeln('-- Unknown direction');	}
-	end;
-end;
-
-
-function alloc_obj(var n: integer):boolean;
-var
-	found: boolean;
-
-begin
-	getindex(I_OBJECT);
-	if indx.inuse = indx.top then begin
-		freeindex;
-		n := 0;
-		alloc_obj := false;
-		writeln('All of the possible objects have been made.');
-	end else begin
-		n := 1;
-		found := false;
-		while (not found) and (n <= indx.top) do begin
-			if indx.free[n] then
-				found := true
-			else
-				n := n + 1;
-		end;
-		if found then begin
-			indx.free[n] := false;
-			alloc_obj := true;
-			indx.inuse := indx.inuse + 1;
-			putindex;
-		end else begin
-			freeindex;
-			writeln('%serious error in alloc_obj; notify Monster Manager');
-			alloc_obj := false;
-		end;
-	end;
-end;
-
-
-procedure delete_obj(var n: integer);
-
-begin
-	if n <> 0 then begin
-		getindex(I_OBJECT);
-		indx.inuse := indx.inuse - 1;
-		indx.free[n] := true;
-		putindex;
-		n := 0;
-	end;
-end;
-
-
-
-
-function lookup_obj(var pnum: integer;s: string): boolean;
-var
-	i,poss,maybe,num: integer;
-	tmp: string;
-
-begin
-	getobjnam;
-	freeobjnam;
-	getindex(I_OBJECT);
-	freeindex;
-
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to indx.top do begin
-		if not(indx.free[i]) then begin
-			if s = objnam.idents[i] then
-				num := i
-			else if index(objnam.idents[i],s) = 1 then begin
-				maybe := maybe + 1;
-				poss := i;
-			end;
-		end;
-	end;
-	if num <> 0 then begin
-		pnum := num;
-		lookup_obj := true;
-	end else if maybe = 1 then begin
-		pnum := poss;
-		lookup_obj := true;
-	end else if maybe > 1 then begin
-{		writeln('-- Ambiguous direction');	}
-		lookup_obj := false;
-	end else begin
-		lookup_obj := false;
-{		writeln('-- Unknown direction');	}
-	end;
-end;
+{ lowcase moved to parser.pas }
 
+{ lookup_spell reimplemented in module PARSER }
 
+{ alloc_general and delete_general moved to DATABASE.PAS }
 
-{ returns true if object N is in this room }
+{ returns true if object N is in this room. if nohidden is true, not found
+  hidden objects (hurtta@finuh) }
 
-function obj_here(n: integer): boolean;
+function obj_here(n: integer; nohidden: boolean := false): boolean;
 var
 	i: integer;
 	found: boolean;
 
 begin
-	i := 1;
-	found := false;
-	while (i <= maxobjs) and (not found) do begin
-		if here.objs[i] = n then
-			found := true
-		else
-			i := i + 1;
-	end;
-	obj_here := found;
+    i := 1;
+    found := false;
+    while (i <= maxobjs) and (not found) do begin
+	if here.objs[i] = n then begin
+	    if not nohidden then found := true
+	    else if here.objhide[i] = 0 then found := true
+	    else i := i + 1;
+	end else i := i + 1;
+    end;
+    obj_here := found;
 end;
 
+[global]    { for PARSER module }
+function player_here(id: integer; var slot: integer): boolean;
+    { suppose that gethere and getpers have made }
+var i: integer;
+    name: shortstring;
+begin
+    slot := 0;
+    name := lowcase(pers.idents[id]);
+    for i := 1 to maxpeople do
+	if here.people[i].kind > 0 then
+		if lowcase(here.people[i].name) = name then slot := i;
+    player_here := slot > 0;
+end; { player_here }
 
 
+{ returns true if object N is being held by the player (id slot)}
 
-{ returns true if object N is being held by the player }
-
-function obj_hold(n: integer): boolean;
+function obj_hold(n: integer; slot: integer := 0): boolean;
 var
 	i: integer;
 	found: boolean;
 
 begin
+	if slot = 0 then slot := myslot;
+	
 	if n = 0 then
 		obj_hold := false
 	else begin
 		i := 1;
 		found := false;
 		while (i <= maxhold) and (not found) do begin
-			if here.people[myslot].holding[i] = n then
+			if here.people[slot].holding[i] = n then
 				found := true
 			else
 				i := i + 1;
@@ -1863,490 +405,69 @@ end;
 
 
 
+
 { similar to lookup_obj, but only returns true if the object is in
   this room or is being held by the player }
+{ and s may be in the middle of the objact name -- Leino@finuh }
 
-function parse_obj(var n: integer; s: string;override: boolean := false): boolean;
-var
-	slot: integer;
-
-begin
-	if lookup_obj(n,s) then begin
-		if obj_here(n) or obj_hold(n) then
-
-			{ took out a great block of code that wouldn't let
-			  parse_obj work if player couldn't see object }
-
-			parse_obj := true;
-	end else
-		parse_obj := false;
-end;
-
-
-
-
-function lookup_pers(var pnum: integer;s: string): boolean;
+function parse_obj (var pnum: integer;
+			s: string;
+			override: boolean := false): boolean;
 var
 	i,poss,maybe,num: integer;
-	pname: string;
+	tmp: string;
+	found: boolean;
 
 begin
-	getpers;
-	freepers;
-	getindex(I_PLAYER);
+	getobjnam;
+	freeobjnam;
+	getindex(I_OBJECT);
 	freeindex;
 
 	s := lowcase(s);
 	i := 1;
 	maybe := 0;
 	num := 0;
+	found := false;
 	for i := 1 to indx.top do begin
 		if not(indx.free[i]) then begin
-			pname := lowcase(pers.idents[i]);
-
-			if s = pname then
+			if s = objnam.idents[i] then
 				num := i
-			else if index(pname,s) = 1 then begin
+			else if ((index(objnam.idents[i],s) = 1) or
+				(index(objnam.idents[i],' '+s) > 0)) and
+				(obj_here(i) or obj_hold(i)) then begin
 				maybe := maybe + 1;
 				poss := i;
 			end;
 		end;
 	end;
 	if num <> 0 then begin
-		pnum := num;
-		lookup_pers := true;
+		found := obj_here(num) or obj_hold(num);
+		if found then
+			pnum := num;
+		parse_obj := found;
 	end else if maybe = 1 then begin
-		pnum := poss;
-		lookup_pers := true;
+		found := obj_here(poss) or obj_hold(poss);
+		if found then
+			pnum := poss;
+		parse_obj := found;
 	end else if maybe > 1 then begin
-{		writeln('-- Ambiguous direction');	}
-		lookup_pers := false;
+		if lookup_obj (poss, s) then begin
+			found := obj_here(poss) or obj_hold(poss);
+			if found then
+				pnum := poss;
+			parse_obj := found;
+		end else parse_obj := false;
 	end else begin
-		lookup_pers := false;
-{		writeln('-- Unknown direction');	}
+		parse_obj := false;
 	end;
 end;
 
+{ functions parse_pers, is_owner, room_owner, can_alter and can_make moved to 
+  module CUSTOM }
 
-
-function parse_pers(var pnum: integer;s: string): boolean;
-var
-	persnum: integer;
-	i,poss,maybe,num: integer;
-	pname: string;
-
-begin
-	gethere;
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to maxpeople do begin
-{		if here.people[i].username <> '' then begin	}
-
-		if here.people[i].kind > 0 then begin
-			pname := lowcase(here.people[i].name);
-
-			if s = pname then
-				num := i
-			else if index(pname,s) = 1 then begin
-				maybe := maybe + 1;
-				poss := i;
-			end;
-		end;
-	end;
-	if num <> 0 then begin
-		persnum := num;
-		parse_pers := true;
-	end else if maybe = 1 then begin
-		persnum := poss;
-		parse_pers := true;
-	end else if maybe > 1 then begin
-		persnum := 0;
-		parse_pers := false;
-	end else begin
-		persnum := 0;
-		parse_pers := false;
-	end;
-	if persnum > 0 then begin
-		if here.people[persnum].hiding > 0 then
-			parse_pers := false
-		else begin
-			parse_pers := true;
-			pnum := persnum;
-		end;
-	end;
-end;
-
-
-
-
-
-{
-Returns TRUE if player is owner of room n
-If no n is given default will be this room (location)
-}
-function is_owner(n: integer := 0;surpress:boolean := false): boolean;
-
-begin
-	gethere(n);
-	if (here.owner = userid) or (privd) then
-		is_owner := true
-	else begin
-		is_owner := false;
-		if not(surpress) then
-			writeln('You are not the owner of this room.');
-	end;
-end;
-
-
-function room_owner(n: integer): string;
-
-begin
-	if n <> 0 then begin
-		gethere(n);
-		room_owner := here.owner;
-		gethere;	{ restore old state! }
-	end else
-		room_owner := 'no room';
-end;
-
-{
-Returns TRUE if player is allowed to alter the exit
-TRUE if either this room or if target room is owned by player
-}
-
-function can_alter(dir: integer;room: integer := 0): boolean;
-
-begin
-	gethere;
-	if (here.owner=userid) or (privd) then begin
-		can_alter := true
-	end else begin
-		if here.exits[dir].toloc > 0 then begin
-			if room_owner(here.exits[dir].toloc) = userid then
-				can_alter := true
-			else
-				can_alter := false;
-		end else
-			can_alter := false;
-	end;
-end;
-
-function can_make(dir: integer;room: integer := 0): boolean;
-
-begin
-	gethere(room);	{ 5 is accept door }
-	if (here.exits[dir].toloc <> 0) then begin
-		writeln('There is already an exit there.  Use UNLINK or RELINK.');
-		can_make := false;
-	end else begin
-		if (here.owner = userid) or		{ I'm the owner }
-		   (here.exits[dir].kind = 5) or	{ there's an accept }
-		   (privd) or		{ Monster Manager }
-		   (here.owner = '*')			{ disowned room }
-							 then
-			can_make := true
-		else begin
-			can_make := false;
-			writeln('You are not allowed to create an exit there.');
-		end;
-	end;
-end;
-
-
-{
-print a one liner
-}
-procedure print_line(n: integer);
-
-begin
-	if n = DEFAULT_LINE then
-		writeln('<default line>')
-	else if n > 0 then begin
-		getline(n);
-		freeline;
-		writeln(oneliner.theline);
-	end;
-end;
-
-
-
-procedure print_desc(dsc: integer;default:string := '<no default supplied>');
-var
-	i: integer;
-
-begin
-	if dsc = DEFAULT_LINE then begin
-		writeln(default);
-	end else if dsc > 0 then begin
-		getblock(dsc);
-		freeblock;
-		i := 1;
-		while i <= block.desclen do begin
-			writeln(block.lines[i]);
-			i := i + 1;
-		end;
-	end else if dsc < 0 then begin
-		print_line(abs(dsc));
-	end;
-end;
-
-
-
-
-procedure make_line(var n: integer;prompt : string := '';limit:integer := 79);
-var
-	s: string;
-	ok: boolean;
-
-begin
-	writeln('Type ** to leave line unchanged, * to make [no line]');
-	grab_line(prompt,s);
-	if s = '**' then begin
-		writeln('No changes.');
-	end else if s = '***' then begin
-		n := DEFAULT_LINE;
-	end else if s = '*' then begin
-		if debug then
-			writeln('%deleting line ',n:1);
-		delete_line(n);
-	end else if s = '' then begin
-		if debug then
-			writeln('%deleting line ',n:1);
-		delete_line(n);
-	end else if length(s) > limit then begin
-		writeln('Please limit your string to ',limit:1,' characters.');
-	end else begin
-		if (n = 0) or (n = DEFAULT_LINE) then begin
-			if debug then
-				writeln('%makeline: allocating line');
-			ok := alloc_line(n);
-		end else
-			ok := true;
-
-		if ok then begin
-			if debug then
-				writeln('%ok in makeline');
-			getline(n);
-			oneliner.theline := s;
-			putline;
-
-			if debug then
-				writeln('%completed putline in makeline');
-		end;
-	end;
-end;
-
-
-{ translate a direction s [north, south, etc...] into the integer code }
-
-function lookup_dir(var dir: integer;s:string): boolean;
-var
-	i,poss,maybe,num: integer;
-
-begin
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to maxexit do begin
-		if s = direct[i] then
-			num := i
-		else if index(direct[i],s) = 1 then begin
-			maybe := maybe + 1;
-			poss := i;
-		end;
-	end;
-	if num <> 0 then begin
-		dir := num;
-		lookup_dir := true;
-	end else if maybe = 1 then begin
-		dir := poss;
-		lookup_dir := true;
-	end else if maybe > 1 then begin
-		lookup_dir := false;
-{		writeln('-- Ambiguous direction');	}
-	end else begin
-		lookup_dir := false;
-{		writeln('-- Unknown direction');	}
-	end;
-end;
-
-
-function lookup_show(var n: integer;s:string): boolean;
-var
-	i,poss,maybe,num: integer;
-
-begin
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to numshow do begin
-		if s = show[i] then
-			num := i
-		else if index(show[i],s) = 1 then begin
-			maybe := maybe + 1;
-			poss := i;
-		end;
-	end;
-	if num <> 0 then begin
-		n := num;
-		lookup_show := true;
-	end else if maybe = 1 then begin
-		n := poss;
-		lookup_show := true;
-	end else if maybe > 1 then begin
-		lookup_show := false;
-{		writeln('-- Ambiguous direction');	}
-	end else begin
-		lookup_show := false;
-{		writeln('-- Unknown direction');	}
-	end;
-end;
-
-function lookup_set(var n: integer;s:string): boolean;
-var
-	i,poss,maybe,num: integer;
-
-begin
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to numset do begin
-		if s = setkey[i] then
-			num := i
-		else if index(setkey[i],s) = 1 then begin
-			maybe := maybe + 1;
-			poss := i;
-		end;
-	end;
-	if num <> 0 then begin
-		n := num;
-		lookup_set := true;
-	end else if maybe = 1 then begin
-		n := poss;
-		lookup_set := true;
-	end else if maybe > 1 then begin
-		lookup_set := false;
-	end else begin
-		lookup_set := false;
-	end;
-end;
-
-
-function lookup_room(var n: integer; s: string): boolean;
-var
-	found: boolean;
-	top: integer;
-
-	i,
-	poss,
-	maybe,
-	num:	integer;
-
-begin
-	if s <> '' then begin
-		s := lowcase(s);		{ case insensitivity }
-		getnam;
-		freenam;
-		getindex(I_ROOM);
-		freeindex;
-		top := indx.top;
-
-
-		i := 1;
-		maybe := 0;
-		num := 0;
-		for i := 1 to top do begin
-			if s = nam.idents[i] then
-				num := i
-			else if index(nam.idents[i],s) = 1 then begin
-				maybe := maybe + 1;
-				poss := i;
-			end;
-		end;
-		if num <> 0 then begin
-			lookup_room := true;
-			n := num;
-		end else if maybe = 1 then begin
-			lookup_room := true;
-			n := poss;
-		end else if maybe > 1 then begin
-			lookup_room := false;
-		end else begin
-			lookup_room := false;
-		end;
-
-	end else
-		lookup_room := false;
-end;
-
-
-function exact_room(var n: integer;s: string): boolean;
-var
-	match: boolean;
-
-begin
-	if debug then
-		writeln('%exact room: s = ',s);
-	if lookup_room(n,s) then begin
-		if nam.idents[n] = lowcase(s) then
-			exact_room := true
-		else
-			exact_room := false;
-	end else
-		exact_room := false;
-end;
-
-
-function exact_pers(var n: integer;s: string): boolean;
-var
-	match: boolean;
-
-begin
-	if lookup_pers(n,s) then begin
-		if lowcase(pers.idents[n]) = lowcase(s) then
-			exact_pers := true
-		else
-			exact_pers := false;
-	end else
-		exact_pers := false;
-end;
-
-
-function exact_user(var n: integer;s: string): boolean;
-var
-	match: boolean;
-
-begin
-	if lookup_user(n,s) then begin
-		if lowcase(user.idents[n]) = lowcase(s) then
-			exact_user := true
-		else
-			exact_user := false;
-	end else
-		exact_user := false;
-end;
-
-
-function exact_obj(var n: integer;s: string): boolean;
-var
-	match: boolean;
-
-begin
-	if lookup_obj(n,s) then begin
-		if objnam.idents[n] = lowcase(s) then
-			exact_obj := true
-		else
-			exact_obj := false;
-	end else
-		exact_obj := false;
-end;
-
-
+{ procedures nice_print, print_short print_line, print_desc and make_line
+   moved to module CUSTOM }
 
 {
 Return n as the direction number if s is a valid alias for an exit
@@ -2364,42 +485,25 @@ begin
 	for i := 1 to maxexit do begin
 		if s = here.exits[i].alias then
 			num := i
-		else if index(here.exits[i].alias,s) = 1 then begin
+{		else if index(here.exits[i].alias,s) = 1 then begin
 			maybe := maybe + 1;
 			poss := i;
-		end;
+		end;				}
 	end;
 	if num <> 0 then begin
 		n := num;
 		lookup_alias := true;
-	end else if maybe = 1 then begin
+{	end else if maybe = 1 then begin
 		n := poss;
 		lookup_alias := true;
 	end else if maybe > 1 then begin
-		lookup_alias := false;
+		lookup_alias := false;		}
 	end else begin
 		lookup_alias := false;
 	end;
 end;
 
-
-procedure exit_default(dir, kind: integer);
-
-begin
-	case kind of
-
-	1: writeln('There is a passage leading ',direct[dir],'.');
-	2: writeln('There is a locked door leading ',direct[dir],'.');
-	5:	case dir of
-			north,south,east,west:
-				writeln('A note on the ',direct[dir],' wall says "Your exit here."');
-			up: writeln('A note on the ceiling says "Your exit here."');
-			down: writeln('A note on the floor says "Your exit here."');
-		end;
-	otherwise writeln('There is an exit: ',direct[dir]);
-	end;
-end;
-
+{ procedure exit_default moved to module CUSTOM }
 
 {
 Prints out the exits here for DO_LOOK()
@@ -2415,19 +519,16 @@ begin
 	for i := 1 to maxexit do begin
 		if (here.exits[i].toloc <> 0) or { there is an exit }
 		   (here.exits[i].kind = 5) then begin { there could be an exit }
-
 			if (here.exits[i].hidden = 0) or
-			   (found_exit[i]) then
-				cansee := true
-			else
-				cansee := false;
+			   (found_exit[i]) 
+                        then cansee := true
+			else cansee := false;
 
 			if here.exits[i].kind = 6 then begin
 				{ door kind only visible with object }
 				if obj_hold( here.exits[i].objreq ) then
 					cansee := true
-				else
-					cansee := false;
+				else cansee := false;
 			end;
 
 			if cansee then begin
@@ -2442,101 +543,24 @@ begin
 			end;
 		end;
 	end;
-	if one then
-		writeln;
+	if one then writeln;
 end;
 
-
 procedure setevent;
-
 begin
 	getevent;
 	freeevent;
 	myevent := event.point;
 end;
 
+{ functions isnum and number moved to module CUSTOM }
 
+{ log_event moved to DATABASE.PAS }
 
-function isnum(s: string): boolean;
-var
-	i: integer;
-
-begin
-	isnum := true;
-	if length(s) < 1 then
-		isnum := false
-	else begin
-		i := 1;
-		while i <= length(s) do begin
-			if not (s[i] in ['0'..'9']) then
-				isnum := false;
-			i := i + 1;
-		end;
-	end;
-end;
-
-function number(s: string): integer;
-var
-	i: integer;
-
-begin
-	if (length(s) < 1) or not(s[1] in ['0'..'9']) then
-		number := 0
-	else begin
-		readv(s,i);
-		number := i;
-	end;
-end;
-
-
-
-procedure log_event(	send: integer := 0;	{ slot of sender }
-			act:integer;		{ what event occurred }
-			targ: integer := 0;	{ target of event }
-			p: integer := 0;	{ expansion parameter }
-			s: string := '';	{ string for messages }
-			room: integer := 0	{ room to log event in }
-		   );
-
-begin
-	if room = 0 then
-		room := location;
-	getevent(room);
-	event.point := event.point + 1;
-	if debug then
-		writeln('%logging event ',act:1,' to point ',event.point:1);
-	if event.point > maxevent then
-		event.point := 1;
-	with event.evnt[event.point] do begin
-		sender := send;
-		action := act;
-		target := targ;
-		parm := p;
-		msg := s;
-		loc := room;
-	end;
-	putevent;
-end;
-
-procedure log_action(theaction,thetarget: integer);
-
-begin
-	if debug then
-		writeln('%log_action(',theaction:1,',',thetarget:1,')');
-	getroom;
-	here.people[myslot].act := theaction;
-	here.people[myslot].targ := thetarget;
-	putroom;
-
-	logged_act := true;
-	log_event(myslot,E_ACTION,thetarget,theaction,myname);
-end;
-
+{ function log_name moved to module CUSTOM }
 
 function desc_action(theaction,thetarget: integer): string;
-var
-	s: string;
-
+var s: string;
 begin
 	case theaction of	{ use command mnemonics }
 		look:      s:= ' looking around the room.';
@@ -2550,68 +574,128 @@ begin
 		e_usecrystal: s := ' hunched over a crystal orb, immersed in its glow.';
 		link:	   s := ' creating an exit here.';
 		c_system:  s := ' in system maintenance mode.';
+                c_dcl:     s := ' executing dcl.';
+		e_custommonster: s := ' customizing a monster.';
+		e_customspell: s := ' customizing a spell.';
 
 		otherwise s := ' here.'
 	end;
 	desc_action := s;
 end;
 
-
+[global]
 function protected(n: integer := 0): boolean;
-
+var tmp: objectrec;			{ is this necessary ? }
 begin
-	if n = 0 then
-		n := myslot;
+	protected := false;
+	if n = 0 then n := myslot;
+	tmp := obj;
+	if here.people[n].wielding > 0 then begin
+		getobj(here.people[n].wielding);
+		freeobj;
+		if obj.kind = O_MAGIC_RING then protected := true;
+	end;
 	if here.people[n].act in [e_detail,c_custom,
 				  e_custroom,e_program,
-				  c_self,c_system] then
-		protected := true
-	else
-		protected := false;
+				  c_self,c_system,c_dcl,
+				  e_custommonster,
+				  e_customspell] then
+		protected := true;
+
+	obj := tmp;
 end;
 
+{ ------- Stolen from MONSTER Version 3.0 ---------------------------------- }
+
+procedure do_s_announce (s:string);
+var
+   lcv : integer;
+begin
+    if (s<>'') and (s <> '?') then
+	for lcv :=1 to numevnts do
+          log_event(0,E_ANNOUNCE,0,0,s,lcv)
+    else writeln('Usage: w <message>');
+end; {do_announce}
+
+procedure do_s_shutdown (s:string);
+var
+   lcv : integer;
+begin
+      if (s<>'') and (s <> '?') then
+	for lcv :=1 to numevnts do
+          log_event(0,E_SHUTDOWN,0,0,s,lcv)
+      else writeln('Usage: d <message>')
+end; {do_shutdown}
+
+
+{ --------------------------------------------------------------------------- }
 
 
 {
 user procedure to designate an exit for acceptance of links
 }
 procedure do_accept(s: string);
+label exit_label;
 var
-	dir: integer;
+	dir,owner: integer;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
 
 begin
-	if lookup_dir(dir,s) then begin
+	if s = '' then grab_line('Direction? ',s,eof_handler := leave);
+
+	if lookup_dir(dir,s,true) then begin
 		if can_make(dir) then begin
 			getroom;
 			here.exits[dir].kind := 5;
 			putroom;
+
+			if exact_user(owner,here.owner) then
+			    add_counter(N_ACCEPT,owner);
 
 			log_event(myslot,E_ACCEPT,0,0);
 			writeln('Someone will be able to make an exit ',direct[dir],'.');
 		end;
 	end else
 		writeln('To allow others to make an exit, type ACCEPT <direction of exit>.');
+    exit_label:
 end;
-
 
 {
 User procedure to refuse an exit for links
 Note: may be unlink
 }
 procedure do_refuse(s: string);
+label exit_label;
 var
-	dir: integer;
+	dir,owner: integer;
 	ok: boolean;
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
 begin
+	if s = '' then grab_line('Direction? ',s,eof_handler := leave);
+
 	if not(is_owner) then
 		{ is_owner prints error message itself }
-	else if lookup_dir(dir,s) then begin
+	else if lookup_dir(dir,s,true) then begin
 		getroom;
 		with here.exits[dir] do begin
 			if (toloc = 0) and (kind = 5) then begin
 				kind := 0;
 				ok := true;
+			
+			    if exact_user(owner,here.owner) then
+				sub_counter(N_ACCEPT,owner);
+
 			end else
 				ok := false;
 		end;
@@ -2623,50 +707,20 @@ begin
 			writeln('Exits were not being accepted there.');
 	end else
 		writeln('To undo an Accept, type REFUSE <direction>.');
+    exit_label:
 end;
 
-
-
-function systime:string;
-var
-	hourstring: string;
-	hours: integer;
-	thetime: packed array[1..11] of char;
-	dayornite: string;
-
-begin
-	time(thetime);
-	if thetime[1] = ' ' then
-		hours := ord(thetime[2]) - ord('0')
-	else
-		hours := (ord(thetime[1]) - ord('0'))*10 +
-			  (ord(thetime[2]) - ord('0'));
-
-	if hours < 12 then
-		dayornite := 'am'
-	else
-		dayornite := 'pm';
-	if hours >= 13 then
-		hours := hours - 12;
-	if hours = 0 then
-		hours := 12;
-
-	writev(hourstring,hours:2);
-
-	systime := hourstring + ':' + thetime[4] + thetime[5] + dayornite;
-end;
-
-
+{ function systime moved to module CUSTOM }
 
 { substitute a parameter string for the # sign in the source string }
-function subs_parm(s,parm: string): string;
+function subs_parm(s,parm: string): mega_string;
 var
-	right,left: string;
+	right,left: mega_string;
 	i: integer;		{ i is point to break at }
-
 begin
 	i := index(s,'#');
-	if (i > 0) and ((length(s) + length(parm)) <= 80) then begin
+	if (i > 0) and ((length(s) + length(parm)) 
+	    <= terminal_line_len) then begin
 		if i >= length(s) then begin
 			right := '';
 			left := s;
@@ -2688,20 +742,44 @@ begin
 	end;
 end;
 
+{ function level moved to database module }
 
 procedure time_health;
-
+var tmp: objectrec;
+    tmp2: intrec;
+    mylevel,good,rel: integer;
 begin
+	mylevel:=level(myexperience);
+	good := leveltable[mylevel].health * 7 div 10;
 	if healthcycle > 0 then begin		{ how quickly they heal }
-		if myhealth < 7 then begin	{ heal a little bit }
-			myhealth := myhealth + 1;
+		if myhealth < good then begin	{ heal a little bit }
+			myhealth := myhealth + (good div 10) +1;
+
+			if mywield > 0 then begin
+				tmp := obj;
+				getobj(mywield);
+				freeobj;
+				if (obj.kind = O_HEALTH_RING) and
+				   (myhealth < leveltable[mylevel].health) then
+					myhealth := myhealth + good div 5;
+				obj := tmp;
+			end;
 
 			getroom;
 			here.people[myslot].health := myhealth;
 			putroom;
 
+			tmp2 := anint;
+			getint(N_HEALTH);	{ hurtta@finuh }
+			anint.int[mylog] := myhealth;
+			putint;
+			anint := tmp2;
+
 			{show new health rating }
-		case myhealth of
+			rel := myhealth * 10 div leveltable[mylevel].health;
+			if rel > 9 then rel := 9;
+                if myhealth = 0 then writeln('You are still dead.')
+		else case rel of
 			9: writeln('You are now in exceptional health.');
 			8: writeln('You feel much stronger.  You are in better than average condition.');
 			7: writeln('You are now in perfect health.');
@@ -2713,12 +791,11 @@ begin
 			4: writeln('You are only suffering from some minor wounds now.');
 			3: writeln('Your most serious wounds have healed, but you are still in bad shape.');
 			2: writeln('You have healed somewhat, but are still very badly wounded.');
-			1: writeln('You are in critical condition, but there may be hope.');
-			0: writeln('are still dead.');
+			0,1: writeln('You are in critical condition, but there may be hope.');
 			otherwise writeln('You don''t seem to be in any condition at all.');
 		end;
 
-		putchars(chr(10)+old_prompt+line);
+		reprint_grab;
 
 		end;
 		healthcycle := 0;
@@ -2741,18 +818,14 @@ begin
 	end;
 end;
 
-
 procedure time_trapdoor(silent: boolean);
-var
-	fall: boolean;
-
-begin
-	if rnd100 < here.trapchance then begin
+var fall: boolean;
+begin                   
+	if (rnd100-1) < here.trapchance then begin
 			{ trapdoor fires! }
-
 		if here.trapto > 0 then begin
-				{ logged action should cover {protected) }
-			if {(protected) or} (logged_act) then
+				{ logged action should cover (protected) }
+			if (protected) or (logged_act) then
 				fall := false
 			else if here.magicobj = 0 then
 				fall := true
@@ -2763,55 +836,102 @@ begin
 		end else
 			fall := false;
 
-		if fall then begin
+	  	if fall then begin
 			do_exit(here.trapto);
 			if not(silent) then
-				putchars(chr(10)+old_prompt+line);
+			    reprint_grab;
 		end;
 	end;
 end;
 
-
-procedure time_midnight;
-
+procedure time_teleport;
+var	tmp: objectrec;
+	target,i: integer;
 begin
-	if systime = '12:00am' then
-		log_event(0,E_MIDNIGHT,rnd100,0);
+	tmp := obj;
+	if mywield > 0 then begin
+		getobj(mywield);
+		freeobj;
+		if (obj.kind = O_TELEPORT_RING) and not protected then begin
+			target := location;
+			getindex(I_ROOM);
+			freeindex;
+			for i := 1 to indx.top do if not indx.free[i] then
+				if rnd100 < 30 then target := i;
+			if location <> target then begin
+				if obj.d1 > 0 then print_desc(obj.d1);
+				xpoof(target);
+				reprint_grab;
+			end;
+		end;
+	end;
+	obj := tmp;
 end;
 
+procedure time_midnight;
+begin
+  if systime = '12:00am' then log_event(0,E_MIDNIGHT,rnd100,0);
+end;
 
 { cause random events to occurr (ha ha ha) }
 
 procedure rnd_event(silent: boolean := false);
-var
-	n: integer;
-
+var n: integer;
 begin
-	if rndcycle = 200 then begin	{ inside here 3 times/min }
-
+	if rndcycle >= RANDOM_EVENT_CYCLE then begin { inside here 6 times/min }
 		time_noises;
 		time_health;
-		time_trapdoor(silent);
+		time_trapdoor(silent);         
 		time_midnight;
+		time_teleport;
 
 		rndcycle := 0;
 	end else
 		rndcycle := rndcycle + 1;
 end;
 
+{ handle levels }
 
-procedure do_die;
+function droplevel(score: integer): integer;
+var cur: integer;
+begin
+   cur := level(score);
+   if (cur > 1) and (not leveltable[cur].hidden) then cur := cur -1;
+   droplevel := leveltable[cur].exp;
+   if score >= protect_exp then droplevel := score;
+      { works even though we show Manager levels }
+end;
+
+{ function lookup_level moved to module CUSTOM }
+
+procedure do_die (killer : integer := 0);
 var
 	some: boolean;
+	tmp: intrec;
+	oldlevel,newlevel: integer;
 
 begin
+        if killer > 0 then log_event (myslot,E_ADDEXPERIENCE,killer,
+                                      (myexperience div 6) + 1);
+
+        oldlevel := level(myexperience);
 	writeln;
-	writeln('        *** You have died ***');
+	writeln('        *** You are dead ***');
 	writeln;
 	some := drop_everything;
-	myhealth := 7;
+	{ changes by hurtta@finuh }
+
+        tmp := anint;
+        myexperience := droplevel(myexperience);
+	newlevel := level(myexperience);
+        getint(N_EXPERIENCE);
+        anint.int[mylog] := myexperience;
+        putint; 
+        if newlevel < oldlevel then prevlevel(oldlevel,newlevel);
+	anint := tmp;
+
 	take_token(myslot,location);
-	log_event(0,E_DIED,0,0,myname);
+	log_event(0,E_DIED,0,0,log_name);
 	if put_token(2,myslot) then begin
 		location := 2;
 		inmem := false;
@@ -2821,51 +941,61 @@ begin
 	end else begin
 		writeln('The Monster universe regrets to inform you that you cannot be ressurected at');
 		writeln('the moment.');
+		finish_interpreter;
 		halt;
 	end;
 end;
 
-
-procedure poor_health(p: integer);
+procedure poor_health(p: integer; killer : integer := 0);
 var
 	some: boolean;
+	tmp: intrec;
+	rel,mylevel: integer;
 
 begin
+	mylevel := level(myexperience);
 	if myhealth > p then begin
 		myhealth := myhealth - 1;
 		getroom;
 		here.people[myslot].health := myhealth;
 		putroom;
+
+		tmp := anint;
+		getint(N_HEALTH);
+		anint.int[mylog] := myhealth;
+		putint;
+		anint := tmp;
+
 		log_event(myslot,E_WEAKER,myhealth,0);
 
 		{ show new health rating }
+		rel := myhealth * 10 div leveltable[mylevel].health;
+		if rel > 9 then rel := 9;
 		write('You ');
-		case here.people[myslot].health of
+                if myhealth = 0 then writeln('are dead.')
+                else if myhealth = 1 then writeln('will be die.')
+		else case rel of
 			9: writeln('are still in exceptional health.');
 			8: writeln('feel weaker, but are in better than average condition.');
 			7: writeln('are somewhat weaker, but are in perfect health.');
 			6: writeln('feel a little bit dazed.');
 			5: writeln('have some minor cuts and abrasions.');
 			4: writeln('have some wounds, but are still fairly strong.');
-			3: writeln('are suffering from some serious wounds.'); 
+			3: writeln('are suffering from some serious wounds.');
 			2: writeln('are very badly wounded.');
-			1: writeln('have many serious wounds, and are near death.');
-			0: writeln('are dead.');
+			0,1: writeln('have many serious wounds, and are near death.');
 			otherwise writeln('don''t seem to be in any condition at all.');
 		end;
 	end else begin { they died }
-		do_die;
+		do_die (killer);
 	end;
 end;
-
-
 
 { count objects here }
 
 function find_numobjs: integer;
 var
 	sum,i: integer;
-
 begin
 	sum := 0;
 	for i := 1 to maxobjs do
@@ -2874,17 +1004,12 @@ begin
 	find_numobjs := sum;
 end;
 
-
-
 { optional parameter is slot of player's objects to count }
 
 function find_numhold(player: integer := 0): integer;
-var
-	sum,i: integer;
-
+var sum,i: integer;
 begin
-	if player = 0 then
-		player := myslot;
+	if player = 0 then player := myslot;
 
 	sum := 0;
 	for i := 1 to maxhold do
@@ -2893,17 +1018,30 @@ begin
 	find_numhold := sum;
 end;
 
-
-
-
-procedure take_hit(p: integer);
-var
+procedure take_hit(p: integer; killer : integer := 0 );
+var                           
 	i: integer;
+	objtemp: objectrec;
+	pro: integer;
 
-begin
+begin        
+	if protected then p := 0               
+	else if mywear > 0 then begin
+		objtemp := obj; { is this necessary ? }
+
+		getobj (mywear); 
+		freeobj;         
+                     
+		pro := trunc(obj.ap*random);	{ He he He }
+		p := p - pro;
+		if p < 0 then p := 0;
+
+		obj := objtemp;
+	end;
+
 	if p > 0 then begin
 		if rnd100 < (55 + (p-1) * 30) then { chance that they're hit }
-			poor_health(p);
+			poor_health(p, killer);
 
 		if find_numobjs < maxobjs + 1 then begin
 			{ maybe they drop something if they're hit }
@@ -2912,7 +1050,6 @@ begin
 		end;
 	end;
 end;
-
 
 function punch_force(sock: integer): integer;
 var
@@ -2929,7 +1066,6 @@ begin
 end;
 
 procedure put_punch(sock: integer;s: string);
-
 begin
 	case sock of
 		1: writeln('You deliver a quick jab to ',s,'''s jaw.');
@@ -2950,9 +1086,7 @@ begin
 	end;
 end;
 
-
 procedure get_punch(sock: integer;s: string);
-
 begin
 	case sock of
 		1: writeln(s,' delivers a quick jab to your jaw!');
@@ -2974,7 +1108,6 @@ begin
 end;
 
 procedure view_punch(a,b: string;p: integer);
-
 begin
 	case p of
 		1: writeln(a,' jabs ',b,' in the jaw.');
@@ -2995,28 +1128,43 @@ begin
 	end;
 end;
 
-
-
-
 procedure desc_health(n: integer;header:shortstring := '');
-
+var tmp: objectrec;
+    hide : boolean;
+    wear,lev,rel: integer;
 begin
-	if header = '' then
-		write(here.people[n].name,' ')
-	else
+	lev := level(here.people[n].experience);
+
+	if header = '' then begin
+		hide := false;
+		wear := here.people[n].wearing;
+		if wear > 0 then begin
+			tmp := obj;
+
+			getobj(wear);
+			freeobj;
+			if obj.kind = O_DISGUISE then hide := true;
+
+			obj := tmp;
+		end;
+		if hide then write ('Someone ')
+		else write(here.people[n].name,' ')
+	end else
 		write(header);
 
-	case here.people[n].health of
+	rel := here.people[n].health * 10 div leveltable[lev].health;
+	if rel > 9 then rel := 9;
+        if here.people[n].health = 0 then writeln('is dead.')
+	else case rel of
 		9: writeln('is in exceptional health, and looks very strong.');
 		8: writeln('is in better than average condition.');
 		7: writeln('is in perfect health.');
 		6: writeln('looks a little dazed.');
 		5: writeln('has some minor cuts and abrasions.');
 		4: writeln('has some minor wounds.');
-		3: writeln('is suffering from some serious wounds.'); 
+		3: writeln('is suffering from some serious wounds.');
 		2: writeln('is very badly wounded.');
-		1: writeln('has many serious wounds, and is near death.');
-		0: writeln('is dead.');
+		0,1: writeln('has many serious wounds, and is near death.');
 		otherwise writeln('doesn''t seem to be in any condition at all.');
 	end;
 end;
@@ -3054,15 +1202,13 @@ begin
 		writeln('%<default line> in print_subs');
 end;
 
-
-
 { print out a (up to) 10 line description block, substituting string s for
   up to one occurance of # per line }
 
 procedure block_subs(n: integer;s: string);
 var
 	p,i: integer;
-
+	len: integer;
 begin
 	if n < 0 then
 		print_subs(abs(n),s)
@@ -3070,20 +1216,108 @@ begin
 		getblock(n);
 		freeblock;
 		i := 1;
+		len := 0;
 		while i <= block.desclen do begin
 			p := index(block.lines[i],'#');
 			if (p > 0) then
+			    if terminal_line_len < 80 then
+				print_short(subs_parm(block.lines[i],s),
+				    i = block.desclen,len)
+			    else
 				writeln(subs_parm(block.lines[i],s))
 			else
+			    if terminal_line_len < 80 then
+				print_short(block.lines[i],
+				    i = block.desclen,len)
+			    else
 				writeln(block.lines[i]);
 			i := i + 1;
 		end;
 	end;
 end;
 
+{ list_privileges moved to PARSER.PAS }
+
+{  function custom_privileges moved to module CUSTOM }
+
+procedure newlevel { (oldlev,newlev: integer) };
+var newpriv,oldpriv,sum: unsigned;
+    tmp: intrec;
+    i: integer;
+begin
+  tmp := anint;
+  writeln ('You are now ',leveltable[newlev].name,'.');
+  log_event(myslot,E_NEWLEVEL,,,leveltable[newlev].name);
+
+  { health }
+  myhealth := leveltable[newlev].health * 7 div 10;
+  getint(N_HEALTH);	
+  anint.int[mylog] := myhealth;
+  putint;	
+  getroom;
+  here.people[myslot].health := myhealth;
+  putroom;
+
+  { privileges }
+  getint(N_PRIVILEGES);
+  freeint;
+  oldpriv := anint.int[mylog];
+
+  sum := 0;
+  for i := oldlev+1 to newlev do sum := uor(sum,leveltable[i].priv);
+  newpriv := uor(oldpriv,sum);
+  getint(N_PRIVILEGES);
+  anint.int[mylog] :=  int(newpriv);
+  putint;
+
+  if newpriv > oldpriv then begin
+     write ('You have now follow privileges: ');
+     list_privileges(newpriv);
+     set_auth_priv(newpriv);
+     set_cur_priv(newpriv);
+  end;
+
+  anint := tmp;
+end; { newlevel }
+
+procedure prevlevel { (oldlev,newlev: integer) };
+var newpriv,oldpriv: unsigned;
+    tmp: intrec;
+    sum: unsigned;
+    i: integer;
+begin
+  tmp := anint;
+  writeln ('You are now only ',leveltable[newlev].name,'.');
+
+  { health }
+  myhealth := leveltable[newlev].health * 7 div 10;
+  getint(N_HEALTH);	
+  anint.int[mylog] := myhealth;
+  putint;	
+  getroom;
+  here.people[myslot].health := myhealth;
+  putroom;
+
+  { privileges }
+  getint(N_PRIVILEGES);
+  freeint;
+  oldpriv := anint.int[mylog];
+
+  sum := 0;
+  for i := newlev+1 to oldlev do sum := uor(sum,leveltable[i].priv);
+  newpriv := uand(oldpriv,unot(sum));
+  getint(N_PRIVILEGES);
+  anint.int[mylog] := int(newpriv);
+  putint;
+
+  if newpriv < oldpriv then begin
+     writeln('You have lost some privileges.');
+     set_auth_priv(newpriv);
+  end;
+  anint := tmp;
+end; { prevlevel }
 
 procedure show_noises(n: integer);
-
 begin
 	if n < 33 then
 		writeln('There are strange noises coming from behind you.')
@@ -3095,7 +1329,6 @@ end;
 
 
 procedure show_altnoise(n: integer);
-
 begin
 	if n < 33 then
 		writeln('A chill wind blows, ruffling your clothes and chilling your bones.')
@@ -3105,9 +1338,7 @@ begin
 		writeln('A loud crash can be heard in the distance.');
 end;
 
-
 procedure show_midnight(n: integer;var printed: boolean);
-
 begin
 	if midnight_notyet then begin
 		if n < 50 then begin
@@ -3122,32 +1353,201 @@ begin
 		printed := false;
 end;
 
+procedure low_experience (amount: integer);
+var prev,nlevel: integer;
+    tmp: intrec;
+Begin
+  prev := level(myexperience);
+  if myexperience >= protect_exp then { Protected }
+  else if myexperience - amount > 0 then
+     myexperience := myexperience - amount
+  else myexperience := 0;
+  tmp := anint;
+  getint (N_EXPERIENCE);
+  anint.int[mylog] := myexperience;
+  putint;
+  anint := tmp;
 
+  getroom;		{ write experience also to here }
+  here.people[myslot].experience := myexperience;
+  putroom;
+  inmem := true;	{ right 'here' IS in memory }
 
+  nlevel := level(myexperience);
+  if nlevel < prev then prevlevel(prev,nlevel);
+End;     
 
+Procedure add_experience (amount: integer); { hurtta@finuh }
+var prev,nlevel: integer;
+    tmp: intrec;
+Begin
+  prev := level(myexperience);
+  if myexperience > maxexperience then { Monster Manager }
+  else if myexperience + amount < maxexperience then
+     myexperience := myexperience + amount
+  else myexperience := maxexperience;
+  tmp := anint;
+  getint (N_EXPERIENCE);
+  anint.int[mylog] := myexperience;
+  putint;
+  anint := tmp;
+
+  getroom;		{ write experience also to here }
+  here.people[myslot].experience := myexperience;
+  putroom;
+  inmem := true;	{ right 'here' IS in memory }
+
+  nlevel := level(myexperience);
+  if nlevel > prev then newlevel(prev,nlevel);
+End;     
+
+Procedure p_getattack (att: String; mess: Integer);
+begin
+  if (mess = 0) or (mess = DEFAULT_LINE) Then
+    WriteLn (Att,' attacks you.')
+  else block_subs(mess,att)
+end;
+
+Procedure p_viewattack (att: String; mess: Integer);
+begin                         
+  if (mess = 0) or (mess = DEFAULT_LINE) Then
+    WriteLn (Att,' attacks someone.')
+  else block_subs(mess,att)
+end;
+
+Procedure get_hideattack (attacker,victim,weapon:integer);
+var objtemp: objectrec;
+    ath: string; 
+    power: Integer;
+begin 
+  objtemp := obj; { is this necessary ? }
+
+  getobj (weapon); 
+  freeobj;         
+  
+  if here.people[attacker].experience > (rnd100 * 3) then            
+    power := obj.ap + 3    { <<<<< }
+  else power := obj.ap +1; { Ha Ha }
+
+  ath := here.people[attacker].name;  
+  if victim = myslot then begin { oh }
+	Writeln (ath,' jumps from shadows and ...');
+	p_getattack (ath,obj.d1);
+        take_hit (power,attacker);
+  end else begin
+	Writeln (ath,' jumps from shadow and ...');
+	p_viewattack(ath,obj.d2);
+  end;   
+                 
+{ relic, but not harmful }		ping_answered := true;
+					healthcycle := 0;
+
+  obj := objtemp;
+end;
+
+Procedure get_attack (attacker,victim,weapon:integer);
+var objtemp: objectrec;
+    ath: string; 
+    power: Integer;
+begin     
+  objtemp := obj; { is this necessary ? }
+
+  getobj (weapon); 
+  freeobj;        
+  
+  if here.people[attacker].experience > (rnd100 * 10) then
+    power := obj.ap + 1
+  else power := obj.ap;
+  ath := here.people[attacker].name;
+  if victim = myslot then begin { oh }
+	p_getattack (ath,obj.d1);
+        take_hit (power ,attacker);
+  end else begin
+	p_viewattack(ath,obj.d2);
+  end;   
+                     
+{ relic, but not harmful }		ping_answered := true;
+					healthcycle := 0;
+
+  obj := objtemp; 
+end;
+
+procedure see_trap (victim,message: integer; object: string);
+var	name: string;                                      
+begin
+	name := here.people[victim].name;
+	if message <> 0 then
+		if message = DEFAULT_LINE then
+			Writeln (name,' tries to get ',object,', but ',object,
+				' bites ',name,' !')
+		else block_subs (message,name);
+end;
+	
 procedure handle_event(var printed: boolean);
 var
 	n,send,act,targ,p: integer;
 	s: string;
 	sendname: string;
-
+	tmp: objectrec;
+	tmp2: intrec;
+	wear: integer;
 begin
+	{ WARNING ! myslot (and sometimes mylog ) is 0 during log_ping
+	    and login password }
+
 	printed := true;
 	if debug then
 		writeln('%handling event ',myevent);
 	with event.evnt[myevent] do begin
 		send := sender;
 		act := action;
-		targ := target;
+                targ := target;
 		p := parm;
 		s := msg;
 	end;
-	if send <> 0 then
-		sendname := here.people[send].name
-	else
-		sendname := '<Unknown>';
+	if ((send <> 0) and 
+	    ( not ((act=E_DIED) or (act=E_ANNOUNCE)
+		 or (act=E_GLOBAL_CHANGE)))) then begin
+		tmp := obj;
+		sendname := here.people[send].name;
+		wear := here.people[send].wearing;
+		if wear > 0 then begin
+			getobj(wear);
+			freeobj;
+			if obj.kind = O_DISGUISE then sendname := 'Someone';
+		end;
+		obj := tmp;
+	end else
+		sendname := 'Unknown';
+
 
 	case act of
+		E_SUMMON: begin
+			    if (send > 0) and (targ = myslot) then begin
+				tmp2 := anint; { is this necessary ? }
+				getint(N_SPELL);
+				freeint;
+				getspell_name;
+				freespell_name;
+				writeln(sendname,' summons ',
+				    spell_name.idents[p],' to you.');
+				printed := run_monster('',anint.int[p],
+				    'summon', '','',
+				    sysdate + ' ' + systime,
+				    spell_name.idents[p],
+				    here.people[send].name);
+				anint := tmp2;
+			    end else begin
+				getspell_name;
+				freespell_name;
+				writeln(sendname,' summons ',
+				    spell_name.idents[p],' to someone.');
+				end;
+			end;
+                E_SUBMIT: begin
+				get_submit(targ,s,p);
+				printed := false;
+			end;
 		E_EXIT: begin
 				if here.exits[targ].goin = DEFAULT_LINE then
 					writeln(s,' has gone ',direct[targ],'.')
@@ -3223,7 +1623,7 @@ begin
 		E_PUNCH: begin
 				if targ = myslot then begin { punched me! }
 					get_punch(p,sendname);
-					take_hit( punch_force(p) );
+					take_hit( punch_force(p),send );
 { relic, but not harmful }		ping_answered := true;
 					healthcycle := 0;
 				end else
@@ -3249,18 +1649,18 @@ begin
 		E_NOISES: begin
 				if (here.rndmsg = 0) or
 				   (here.rndmsg = DEFAULT_LINE) then begin
-					show_noises(targ);
+					show_noises(rnd100);
 				end else
 					print_line(here.rndmsg);
 			  end;
 		E_ALTNOISE: begin
 				if (here.xmsg2 = 0) or
 				   (here.xmsg2 = DEFAULT_LINE) then
-					show_altnoise(targ)
+					show_altnoise(rnd100)
 				else
 					block_subs(here.xmsg2,myname);
 			    end;
-		E_REALNOISE: show_noises(targ);
+		E_REALNOISE: show_noises(rnd100);
 		E_HIDOBJ: writeln(sendname,' has hidden the ',s,'.');
 		E_PING: begin
 				if targ = myslot then begin
@@ -3275,7 +1675,7 @@ begin
 		E_HIDEPUNCH: begin
 				if targ = myslot then begin
 					writeln(sendname,' pounces on you from the shadows!');
-					take_hit(2);
+					take_hit(2,send);
 				end else begin
 					writeln(sendname,' jumps out of the shadows and attacks ',here.people[targ].name,'.');
 				end;
@@ -3312,7 +1712,8 @@ begin
 				if targ = myslot then begin { ohoh---pinged away }
 					writeln('The Monster program regrets to inform you that a destructive ping has');
 					writeln('destroyed your existence.  Please accept our apologies.');
-					halt;  { ugggg }
+					finish_interpreter;
+					halt; { uggg }
 				end else
 					writeln(s,' shimmers and vanishes from sight.');
 			  end;
@@ -3331,8 +1732,10 @@ begin
 
 				desc_health(send);
 			  end;
+		E_SCAN: writeln(sendname,' scans some object from universe.');
+		E_RESET: writeln(sendname,' has moved ',s,' to home position.');
 		E_OBJCLAIM: writeln(sendname,' is now the owner of the ',s,'.');
-		E_OBJDISOWN: writeln(sendname,' has disowned the object ',s,'.');
+		E_OBJDISOWN: writeln(sendname,' has disowned the ',s,'.');
 		E_SELFDONE: writeln(sendname,'''s self-description is finished.');
 		E_WHISPER: begin
 				if targ = myslot then begin
@@ -3345,7 +1748,7 @@ begin
 							writeln;
 						writeln('"',s,'"');
 					end;
-				end else if (privd) or (rnd100 > 85) then begin
+				end else if (manager_priv) or (rnd100 > 85) then begin { minor change by leino@finuha }
 					writeln('You overhear ',sendname,' whispering to ',here.people[targ].name,'!');
 					write(sendname,' whispers, ');
 					if length(s) > 50 then
@@ -3363,10 +1766,12 @@ begin
 					writeln('The orb becomes dark.');
 				  end;
 		E_DESTROY: writeln(s);
-		E_OBJPUBLIC: writeln('The object ',s,' is now public.');
+		E_OBJPUBLIC: writeln('The ',s,' is now public.');
 		E_SYSDONE: writeln(sendname,' is no longer in system maintenance mode.');
 		E_UNMAKE: writeln(sendname,' has unmade ',s,'.');
 		E_LOOKDETAIL: writeln(sendname,' is looking at the ',s,'.');
+		E_LOOKAROUND: writeln(sendname,' is looking around here.');
+		E_NEWLEVEL: writeln(sendname,' is now ',s,'.');
 		E_ACCEPT: writeln(sendname,' has accepted an exit here.');
 		E_REFUSE: writeln(sendname,' has refused an Accept here.');
 		E_DIED: writeln(s,' expires and vanishes in a cloud of greasy black smoke.');
@@ -3385,10 +1790,14 @@ begin
 				print_desc(targ);
 		E_NOISE2:begin
 				case targ of
-					1: writeln('Strange, gutteral noises sound from everywhere.');
+					1: writeln('Strange, guttural noises sound from everywhere.');
 					2: writeln('A chill wind blows past you, almost whispering as it ruffles your clothes.');
 					3: writeln('Muffled voices speak to you from the air!');
-					otherwise writeln('The air vibrates with a chill shudder.');
+					4: writeln('The air vibrates with a chill shudder.');
+					otherwise begin
+						writeln('An unidentified voice speaks to you:');
+						writeln('"',s,'"');
+					   end;
 				end;
 			 end;
 		E_INVENT: writeln(sendname,' is taking inventory.');
@@ -3417,9 +1826,56 @@ begin
 				writeln(sendname,' checks the "players" list.');
 			  end;
 		E_VIEWSELF: writeln(sendname,' is reading ',s,'''s self-description.');
-		E_MIDNIGHT: show_midnight(targ,printed);
+	  	E_MIDNIGHT: show_midnight(targ,printed);
+                E_DCLDONE: writeln(sendname,' is no longer in dcl-level.');
+                E_ADDEXPERIENCE: begin
+                                   if targ = myslot then add_experience(p)
+                                   else { some message ? }
+                                 end;
+                E_HATTACK: get_hideattack (send,targ,p);
+		E_ATTACK: get_attack (send,targ,p);
+		E_TRAP: see_trap (send,p,s);
+                E_ERASE: writeln (sendname,' is destroying monster here.');
+                E_MONSTERDONE: writeln(sendname,' is done customizing monster.');
+                E_SPELLDONE: writeln(sendname,' is done customizing spell.');
+		E_BROADCAST: writeln(s); { NPC broadcasting }
+
+		E_ATMOSPHERE: writeln(s); { s.c. atmosphere command }
+
 
 		E_ACTION:writeln(sendname,' is',desc_action(p,targ));
+
+		{ in that events targ is player's log - NOT player's slot }
+		E_KICK_OUT: begin
+		    if targ = mylog then begin
+			if s > '' then writeln(s)
+			else writeln('System throw you out from Monster.');
+			quit_monster; { generate eof }
+		    end else begin
+			getpers;
+			freepers;
+			writeln('System throw ',pers.idents[targ],
+			    ' out from Monster.');
+		    end;
+		end;
+		E_ANNOUNCE: if (((targ=0) and (p=0)) {For all} or
+				(targ=mylog) {For me} 
+				{or (p=md_grp)} )  {My group}
+			    then writeln(s)
+			    else printed:=false;
+		E_SHUTDOWN: if manager_priv then writeln('SHUTDOWN: ',s)
+			    else begin
+				writeln('MONSTER SHUTDOWN: ',s);
+				quit_monster;
+			    end;
+		E_GLOBAL_CHANGE: begin
+		    if s <> '' then writeln(s)
+		    else if manager_priv then writeln
+			('Global flags are changed.')
+		    else printed := false;
+		    read_global := true; { need read }
+		end;
+
 		otherwise writeln('*** Bad Event ***');
 	end;
 end;
@@ -3432,6 +1888,7 @@ var
 	tmp,printed: boolean;
 
 begin
+{ if not starting then begin }
 	getevent;
 	freeevent;
 
@@ -3452,11 +1909,15 @@ begin
 			writeln('  - event number = ',event.evnt[myevent].action:1);
 		end;
 
-		if (event.evnt[myevent].loc = location) then begin
+		if (event.evnt[myevent].loc = location) or
+		   (event.evnt[myevent].action = E_ANNOUNCE) or
+		   (event.evnt[myevent].action = E_SHUTDOWN) or 
+		   (event.evnt[myevent].action = E_GLOBAL_CHANGE) then begin
 			if (event.evnt[myevent].sender <> myslot) then begin
 
 						{ if sent by me don't look at it }
 						{ will use global record event }
+				gethere; 	{ we possible need this }
 				handle_event(tmp);
 				if tmp then
 					printed := true;
@@ -3464,64 +1925,29 @@ begin
 				inmem := false;	{ re-read important data that }
 				gethere;	{ may have been altered }
 
-				gotone := true;
+	  			gotone := true;
 			end;
 		end;
 	end;
-	if (printed) and (gotone) and not(silent) then begin
-		putchars(chr(10)+chr(13)+old_prompt+line);
+
+	if myslot > 0 then
+	    printed := time_check or printed;	{ run submit queue }
+	    { myslot is 0 during log_ping and during login password }
+
+	if (printed) {and (gotone)} and not(silent) then begin
+	  	reprint_grab;
 	end;
 
 	rnd_event(silent);
+{    end; } { if not starting } 
 end;
 
 
+{ function find_numpeople moved to module CUSTOM }
 
-{ count the number of people in this room; assumes a gethere has been done }
+{ procedure noisehide moved to module CUSTOM }
 
-function find_numpeople: integer;
-var
-	sum,i: integer;
-
-begin
-	sum := 0;
-	for i := 1 to maxpeople do
-		if here.people[i].kind > 0 then
-{		if here.people[i].username <> '' then	}
-			sum := sum + 1;
-	find_numpeople := sum;
-end;
-
-
-
-{ don't give them away, but make noise--maybe
-  percent is percentage chance that they WON'T make any noise }
-
-procedure noisehide(percent: integer);
-
-begin
-	{ assumed gethere;  }
-	if (hiding) and (find_numpeople > 1) then begin
-		if rnd100 > percent then
-			log_event(myslot,E_REALNOISE,rnd100,0);
-			{ myslot: don't tell them they made noise }
-	end;
-end;
-
-
-
-function checkhide: boolean;
-
-begin
-	if (hiding) then begin
-		checkhide := false;
-		noisehide(50);
-		writeln('You can''t do that while you''re hiding.');
-	end else
-		checkhide := true;
-end;
-
-
+{ function checkhide moved to module CUSTOM }
 
 procedure clear_command;
 
@@ -3543,17 +1969,19 @@ begin
 	with here.people[aslot] do begin
 		kind := 0;
 		username:= '';
-		name := '';
+		{ name := '';
+			prevents null messages when player exits rooms 
+			(hurtta@finuh)
+		}
 	end;
 	putroom;
 end;
 
 
-{ fowrard function put_token(room: integer;var aslot:integer;
-	hidelev:integer := 0):boolean;
+[global] function put_token(room: integer;var aslot:integer;
+	hidelev:integer := 0):boolean; {
 			 put a person in a room's people list
 			 returns myslot }
-function put_token;
 var
 	i,j: integer;
 	found: boolean;
@@ -3574,14 +2002,15 @@ begin
 	i := 1;
 	found := false;
 	while (i <= maxpeople) and (not found) do begin
-		if here.people[i].name = '' then
+		if here.people[i].kind = 0 then
+			{ minor change by hurtta@finuh }
 			found := true
 		else
 			i := i + 1;
 	end;
 	put_token := found;
 	if found then begin
-		here.people[i].kind := 1;	{ I'm a real player }
+		here.people[i].kind := P_PLAYER;	{ I'm a real player }
 		here.people[i].name := myname;
 		here.people[i].username := userid;
 		here.people[i].hiding := hidelev;
@@ -3591,9 +2020,13 @@ begin
 		here.people[i].wearing := mywear;
 		here.people[i].wielding := mywield;
 		here.people[i].health := myhealth;
-		here.people[i].self := myself;
+	  	here.people[i].self := myself;
+		here.people[i].experience := myexperience;
+			{ write experience also to here (hurtta@finuh) }
 
 		here.people[i].act := 0;
+
+		here.people[i].parm := 0; 	{ hurtta@finuh }
 
 		for j := 1 to maxhold do
 			here.people[i].holding[j] := savehold[j];
@@ -3604,9 +2037,12 @@ begin
 			found_exit[j] := false;	{ the new room }
 
 		{ note the user's new location in the logfile }
-		getint(N_LOCATION); 
+		getint(N_LOCATION);
 		anint.int[mylog] := room;
 		putint;
+		if debug then 
+		    writeln('%puttoken: <',mylog:1,'> => ',
+			room,'(',aslot:1,')');
 	end else
 		freeroom;
 end;
@@ -3614,27 +2050,27 @@ end;
 procedure log_exit(direction,room,sender_slot: integer);
 
 begin
-	log_event(sender_slot,E_EXIT,direction,0,myname,room);
+ 	log_event(sender_slot,E_EXIT,direction,0,log_name,room);
 end;
 
 procedure log_entry(direction,room,sender_slot: integer);
 
 begin
-	log_event(sender_slot,E_ENTER,direction,0,myname,room);
+	log_event(sender_slot,E_ENTER,direction,0,log_name,room);
 end;
 
 procedure log_begin(room:integer := 1);
 
 begin
-	log_event(0,E_BEGIN,0,0,myname,room);
+	log_event(0,E_BEGIN,0,0,log_name,room);
 end;
 
 procedure log_quit(room:integer;dropped:boolean);
 
 begin
-	log_event(0,E_QUIT,0,0,myname,room);
+	log_event(0,E_QUIT,0,0,log_name,room);
 	if dropped then
-		log_event(0,E_DROPALL,0,0,myname,room);
+		log_event(0,E_DROPALL,0,0,log_name,room);
 end;
 
 
@@ -3657,7 +2093,7 @@ begin
 	sum := 0;
 	for i := 1 to maxpeople do
 		if ( i <> selfslot ) and
-		   ( length(here.people[i].name) > 0 ) and
+		   ( here.people[i].kind > 0 ) and	{ hurtta@finuh }
 		   ( here.people[i].hiding = 0 ) then
 			sum := sum + 1;
 	n_can_see := sum;
@@ -3671,6 +2107,7 @@ function next_can_see(var point: integer): string;
 var
 	found: boolean;
 	selfslot: integer;
+	wear: integer;
 
 begin
 	if here.locnum <> location then
@@ -3680,7 +2117,7 @@ begin
 	found := false;
 	while (not found) and (point <= maxpeople) do begin
 		if (point <> selfslot) and
-		   (length(here.people[point].name) > 0) and
+		   (here.people[point].kind > 0) and	{ hurtta@finuh }
 		   (here.people[point].hiding = 0) then
 			found := true
 		else
@@ -3689,6 +2126,14 @@ begin
 
 	if found then begin
 		next_can_see := here.people[point].name;
+		wear := here.people[point].wearing;
+		if wear > 0 then begin
+			getobj(wear);
+			freeobj;
+			if obj.kind = O_DISGUISE then 
+				next_can_see := 'Someone (with '+
+					obj_part(wear,false)+')';
+		end;
 		point := point + 1;
 	end else begin
 		next_can_see := myname;	{ error!  error! }
@@ -3696,18 +2141,6 @@ begin
 	end;
 end;
 
-
-procedure niceprint(var len: integer; s: string);
-
-begin
-	if len + length(s) > 78 then begin
-		len := 0;
-		writeln;
-	end else begin
-		len := len + length(s);
-	end;
-	write(s);
-end;
 
 
 procedure people_header(where: shortstring);
@@ -3750,10 +2183,23 @@ end;
 
 procedure desc_person(i: integer);
 var
-	pname: shortstring;
-
+	pname : string;
+	wear: integer;
+	lev,rel: integer;
 begin
-	pname := here.people[i].name;
+	pname  := here.people[i].name;
+	wear   := here.people[i].wearing;
+	lev    := level(here.people[i].experience);
+
+	if wear > 0 then begin
+		getobj(wear);
+		freeobj;
+		if obj.kind = O_DISGUISE then begin
+			pname := 'Someone';
+			writeln('Someone is hiding behind ',obj_part(wear,false),'.');
+		end;
+	end;
+
 
 	if here.people[i].act <> 0 then begin
 		write(pname,' is');
@@ -3762,8 +2208,12 @@ begin
 					{ describes what person last did }
 	end;
 
-	if here.people[i].health <> GOODHEALTH then
-		desc_health(i);
+	rel := here.people[i].health * 10 div leveltable[lev].health;
+
+	if rel <> GOODHEALTH then desc_health(i,pname+' ');
+
+	if (wear > 0) and (pname <> 'Someone') then
+		writeln(pname,' is wearing ',obj_part(wear),'.');
 
 	if here.people[i].wielding > 0 then
 		writeln(pname,' is wielding ',obj_part(here.people[i].wielding),'.');
@@ -3778,7 +2228,8 @@ var
 begin
 	people_header('here.');
 	for i := 1 to maxpeople do begin
-		if (here.people[i].name <> '') and
+		if (here.people[i].kind > 0) and
+		    { minor change by hurtta@finuh }
 		   (i <> myslot) and
 		   (here.people[i].hiding = 0) then
 				desc_person(i);
@@ -3838,38 +2289,7 @@ begin
 	end;
 end;
 
-
-function lookup_detail(var n: integer;s:string): boolean;
-var
-	i,poss,maybe,num: integer;
-
-begin
-	n := 0;
-	s := lowcase(s);
-	i := 1;
-	maybe := 0;
-	num := 0;
-	for i := 1 to maxdetail do begin
-		if s = here.detail[i] then
-			num := i
-		else if index(here.detail[i],s) = 1 then begin
-			maybe := maybe + 1;
-			poss := i;
-		end;
-	end;
-	if num <> 0 then begin
-		n := num;
-		lookup_detail := true;
-	end else if maybe = 1 then begin
-		n := poss;
-		lookup_detail := true;
-	end else if maybe > 1 then begin
-		lookup_detail := false;
-	end else begin
-		lookup_detail := false;
-	end;
-end;
-
+{ function lookup_detail moved to module CUSTOM }
 
 function look_detail(s: string): boolean;
 var
@@ -3883,80 +2303,152 @@ begin
 			print_desc(here.detaildesc[n]);
 			log_event(myslot,E_LOOKDETAIL,0,0,here.detail[n]);
 			look_detail := true;
+			if here.hook > 0 then
+				run_monster('',here.hook,'look detail',
+					'detail',here.detail[n],
+					sysdate+' '+systime);
 		end;
 	end else
 		look_detail := false;
 end;
 
 
-function look_person(s: string): boolean;
+function look_person(s: string; silent: boolean := false): boolean;
+label 0; { for panic }
 var
-	objnum,i,n: integer;
+	objnum,i,n,lev,oldloc: integer;
 	first: boolean;
 
+    function restriction(slot: integer): boolean;
+    begin
+	restriction := here.people[slot].hiding = 0;
+	{ can't see hiding people }
+    end;
+
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	if n = myslot then begin
+	    log_event(myslot,E_LOOKSELF,n,0);
+	    writeln('You step outside of yourself for a moment to get an objective self-appraisal:');
+	    writeln;
+	end else log_event(myslot,E_LOOKYOU,n,0);
+
+	if here.people[n].self <> 0 then begin
+	    print_desc(here.people[n].self);
+	    writeln;
+	    
+	end;
+
+	if (here.people[n].kind = P_MONSTER) and 
+	    (here.people[n].parm > 0) then
+	    run_monster(here.people[n].name,
+		here.people[n].parm,'look you','','',
+		    sysdate+' '+systime);
+	if oldloc <> location then goto 0; { panic }
+
+	desc_health(n);
+
+	lev := level(here.people[n].experience);
+	if here.people[n].kind = P_PLAYER then
+	    writeln(here.people[n].name,' is ',leveltable[lev].name,'.');
+
+		{ Do an inventory of person S }
+		{ What is he wearing? }
+	if here.people[n].wearing <> 0 then
+	    writeln(here.people[n].name,' is wearing ',obj_part(here.people[n].wearing),'.');
+		{ What is he wielding? }
+	if here.people[n].wielding <> 0 then
+	    writeln(here.people[n].name,' is wielding ',obj_part(here.people[n].wielding),'.');
+	if here.people[n].act <> 0 then begin
+	    write(here.people[n].name,' is');
+	    writeln(desc_action(here.people[n].act,
+			here.people[n].targ));
+		{ describes what person last did }
+	end;
+
+
+			{ What other stuff does he carry? }
+	first := true;
+	for i := 1 to maxhold do begin
+	    objnum := here.people[n].holding[i];
+	    { Show only once those things he wears or wields }
+	    if (objnum <> 0) then begin
+		if (objnum <> here.people[n].wearing) and
+		    (objnum <> here.people[n].wielding) then begin
+		    if first then begin
+			writeln(here.people[n].name,' is holding:');
+			first := false;
+		    end;
+		    writeln('   ',obj_part(objnum));
+		end;
+	    end;
+	end;
+	if first then
+	    writeln(here.people[n].name,' is empty handed.');
+	action := true;
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end;    { action }
+
+
 begin
-	if parse_pers(n,s) then begin
-		if n = myslot then begin
-			log_event(myslot,E_LOOKSELF,n,0);
-			writeln('You step outside of yourself for a moment to get an objective self-appraisal:');
-			writeln;
-		end else
-			log_event(myslot,E_LOOKYOU,n,0);
-		if here.people[n].self <> 0 then begin
-			print_desc(here.people[n].self);
-			writeln;
-		end;
-
-		desc_health(n);
-
-			{ Do an inventory of person S }
-		first := true;
-		for i := 1 to maxhold do begin
-			objnum := here.people[n].holding[i];
-			if objnum <> 0 then begin
-				if first then begin
-					writeln(here.people[n].name,' is holding:');
-					first := false;
-				end;
-				writeln('   ',obj_part(objnum));
-			end;
-		end;
-		if first then
-			writeln(here.people[n].name,' is empty handed.');
-
-		look_person := true;
-	end else
-		look_person := false;
+    look_person := false;
+    oldloc := location;
+    if scan_pers_slot(action,s,silent,restriction) then begin
+	look_person := true;
+    end else
+	look_person := false;
+    0: { for panic }
 end;
 
 
-
 procedure do_examine(s: string;var three: boolean;silent:boolean := false);
+label 0;
 var
-	n: integer;
+	n,oldloc: integer;
 	msg: string;
 
-begin
-	three := false;
-	if parse_obj(n,s) then begin
-		if obj_here(n) or obj_hold(n) then begin
-			three := true;
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	    three := true;
 
-			getobj(n);
-			freeobj;
-			msg := myname + ' is examining ' + obj_part(n) + '.';
-			log_event(myslot,E_EXAMINE,0,0,msg);
-			if obj.examine = 0 then
-				writeln('You see nothing special about the ',
-						objnam.idents[n],'.')
-			else
-				print_desc(obj.examine);
-		end else
-			if not(silent) then
-				writeln('That object cannot be seen here.');
+		getobj(n);
+		freeobj;
+		msg := log_name + ' is examining ' + obj_part(n) + '.';
+		log_event(myslot,E_EXAMINE,0,0,msg);
+		if (obj.home = location) and (obj.homedesc <> 0) 
+		    and obj_here (n,TRUE) then
+		    print_desc(obj.homedesc)
+		else if obj.examine = 0 then
+		    writeln('You see nothing special about the ',
+			objnam.idents[n],'.')
+		else
+		    print_desc(obj.examine);
+		if obj.actindx > 0 then
+		    run_monster('',obj.actindx,
+			'look you','','',
+			sysdate+' '+systime);
+		action := true;
+	    checkevents (TRUE);
+	    if oldloc <> location then goto 0; { panic }
+       end; { action }
+
+    function restriction (n: integer): boolean;
+	begin
+	    restriction := obj_here(n,true) or obj_hold(n);
+	    { true = not found hidden objects }
+	end;
+
+begin
+	{ if s = '' then grab_line('Object? ',s); }
+
+	three	:= false;
+	oldloc	:= location;
+	if scan_obj(action,s,silent,restriction) then begin
 	end else
 		if not(silent) then
 			writeln('That object cannot be seen here.');
+	0: { for panic }
 end;
 
 
@@ -3968,6 +2460,12 @@ begin
 		0:;	{ don't print name }
 		1: writeln('You''re in ',here.nicename);
 		2: writeln('You''re at ',here.nicename);
+		3: writeln('You''re in the ',here.nicename);
+		4: writeln('You''re at the ',here.nicename);
+		5: writeln('You''re in a ',here.nicename);
+		6: writeln('You''re at a ',here.nicename);
+		7: writeln('You''re in an ',here.nicename);
+		8: writeln('You''re at an ',here.nicename);
 	end;
 
 	if not(brief) then begin
@@ -4001,32 +2499,42 @@ end;
 
 
 procedure do_look(s: string := '');
+label 1;
 var
 	n: integer;
 	one,two,three: boolean;
-
+	oldloc : integer;
 begin
 	gethere;
 	if s = '' then begin	{ do an ordinary top-level room look }
-
+		oldloc := location;
 		if hiding then begin
 			writeln('You can''t get a very good view of the details of the room from where');
 			writeln('you are hiding.');
 			noisehide(67);
 		end else begin
+			log_event(myslot,E_LOOKAROUND);
 			print_room;
 			show_exits;
 		end;		{ end of what you can't see when you're hiding }
-		show_people;
+		show_people;   if oldloc <> location then goto 1;
 		show_group;
-		show_objects;
+		show_objects;  if oldloc <> location then goto 1;
+		if here.hook > 0 then 
+			run_monster('',here.hook,'look around','','',
+				sysdate+' '+systime);
+		if oldloc <> location then goto 1;
+		meta_run('look','','');
 	end else begin		{ look at a detail in the room }
+                oldloc := location;
 		one := look_detail(s);
-		two := look_person(s);
-		do_examine(s,three,TRUE);
+		two := look_person(s,TRUE); if oldloc <> location then goto 1;
+		do_examine(s,three,TRUE); if oldloc <> location then goto 1;
 		if not(one or two or three) then
-			writeln('There isn''t anything here by that name to look at.');
+			writeln('There isn''t anything here by that name to look at.')
+		else meta_run('look','','')
 	end;
+	1:
 end;
 
 
@@ -4055,7 +2563,7 @@ end;
 
 procedure remove_exit(dir: integer);
 var
-	targroom,targslot: integer;
+	targroom,targslot,owner: integer;
 	hereacc,targacc: boolean;
 
 begin
@@ -4068,23 +2576,29 @@ begin
 	here.exits[dir].toloc := 0;
 	init_exit(dir);
 
-	if (here.owner = userid) or (privd) then
+	if (here.owner = userid) or 
+	    (owner_priv and (here.owner <> system_id)) or
+	    manager_priv then { minor change by leino@finuha and hurtta@finuha }
 		hereacc := false
 	else
 		hereacc := true;
 
-	if hereacc then
-		here.exits[dir].kind := 5	{ put an "accept" in its place }
-	else
+	if hereacc then begin
+		here.exits[dir].kind := 5;	{ put an "accept" in its place }
+		
+		if exact_user(owner,here.owner) then
+		    add_counter(N_ACCEPT,owner);
+
+	end else
 		here.exits[dir].kind := 0;
 
 	putroom;
-	log_event(myslot,E_DETACH,dir,0,myname,location);
+	log_event(myslot,E_DETACH,dir,0,log_name,location);
 
 	getroom(targroom);
 	here.exits[targslot].toloc := 0;
 
-	if (here.owner = userid) or (privd) then
+	if (here.owner = userid) or (owner_priv) then { minor change by leino@finuha }
 		targacc := false
 	else
 		targacc := true;
@@ -4097,7 +2611,7 @@ begin
 	putroom;
 
 	if targroom <> location then
-		log_event(0,E_DETACH,targslot,0,myname,targroom);
+		log_event(0,E_DETACH,targslot,0,log_name,targroom);
 	writeln('Exit destroyed.');
 end;
 
@@ -4106,13 +2620,23 @@ end;
 User procedure to unlink a room
 }
 procedure do_unlink(s: string);
+label exit_label;
 var
 	dir: integer;
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+
 begin
+	if s = '' then grab_line('Direction? ',s,eof_handler := leave);
+
 	gethere;
 	if checkhide then begin
-	if lookup_dir(dir,s) then begin
+	if lookup_dir(dir,s,true) then begin
 		if can_alter(dir) then begin
 			if here.exits[dir].toloc = 0 then
 				writeln('There is no exit there to unlink.')
@@ -4123,443 +2647,20 @@ begin
 	end else
 		writeln('To remove an exit, type UNLINK <direction of exit>.');
 	end;
+	exit_label:
 end;
 
+{ slead and bite moved to PARSER.PAS }
 
-
-function desc_allowed: boolean;
-
-begin
-	if (here.owner = userid) or
-	   (privd) then
-		desc_allowed := true
-	else begin
-		writeln('Sorry, you are not allowed to alter the descriptions in this room.');
-		desc_allowed := false;
-	end;
-end;
+{ function desc_allowed moved to module CUSTOM }
 
 
 
-function slead(s: string):string;
-var
-	i: integer;
-	going: boolean;
-
-begin 
-	if length(s) = 0 then
-		slead := ''
-	else begin
-		i := 1;
-		going := true;
-		while going do begin
-			if i > length(s) then
-				going := false
-			else if (s[i]=' ') or (s[i]=chr(9)) then
-				i := i + 1
-			else
-				going := false;
-		end;
-
-		if i > length(s) then
-			slead := ''
-		else
-			slead := substr(s,i,length(s)+1-i);
-	end;
-end;
-
-
-function bite(var s: string): string;
-var
-	i: integer;
-
-begin
-	if length(s) = 0 then
-		bite := ''
-	else begin
-		i := index(s,' ');
-		if i = 0 then begin
-			bite := s;
-			s := '';
-		end else begin
-			bite := substr(s,1,i-1);
-			s := slead(substr(s,i+1,length(s)-i));
-		end;
-	end;
-end;
-
-procedure edit_help;
-
-begin
-	writeln;
-	writeln('A	Append text to end');
-	writeln('C	Check text for correct length with parameter substitution (#)');
-	writeln('D #	Delete line #');
-	writeln('E	Exit & save changes');
-	writeln('I #	Insert lines before line #');
-	writeln('P	Print out description');
-	writeln('Q	Quit: THROWS AWAY CHANGES');
-	writeln('R #	Replace text of line #');
-	writeln('Z	Zap all text');
-	writeln('@	Throw away text & exit with the default description');
-	writeln('?	This list');
-	writeln;
-end;
-
-procedure edit_replace(n: integer);
-var
-	prompt: string;
-	s: string;
-
-begin
-	if (n > heredsc.desclen) or (n < 1) then
-		writeln('-- Bad line number')
-	else begin
-		writev(prompt,n:2,': ');
-		grab_line(prompt,s);
-		if s <> '**' then
-			heredsc.lines[n] := s;
-	end;
-end;
-
-procedure edit_insert(n: integer);
-var
-	i: integer;
-
-begin
-	if heredsc.desclen = descmax then
-		writeln('You have already used all ',descmax:1,' lines of text.')
-	else if (n < 1) or (n > heredsc.desclen) then begin
-		writeln('Invalid line #; valid lines are between 1 and ',heredsc.desclen:1);
-		writeln('Use A (add) to add text to the end of your description.');
-	end else begin
-		for i := heredsc.desclen+1 downto n + 1 do
-			heredsc.lines[i] := heredsc.lines[i-1];
-		heredsc.desclen := heredsc.desclen + 1;
-		heredsc.lines[n] := '';
-	end;
-end;
-
-procedure edit_doinsert(n: integer);
-var
-	s: string;
-	prompt: string;
-
-begin
-	if heredsc.desclen = descmax then
-		writeln('You have already used all ',descmax:1,' lines of text.')
-	else if (n < 1) or (n > heredsc.desclen) then begin
-		writeln('Invalid line #; valid lines are between 1 and ',heredsc.desclen:1);
-		writeln('Use A (add) to add text to the end of your description.');
-	end else repeat
-		writev(prompt,n:1,': ');
-		grab_line(prompt,s);
-		if s <> '**' then begin
-			edit_insert(n);		{ put the blank line in }
-			heredsc.lines[n] := s;	{ copy this line onto it }
-			n := n + 1;
-		end;
-	until (heredsc.desclen = descmax) or (s = '**');
-end;
-
-procedure edit_show;
-var
-	i: integer;
-
-begin
-	writeln;
-	if heredsc.desclen = 0 then
-		writeln('[no text]')
-	else begin
-		i := 1;
-		while i <= heredsc.desclen do begin
-			writeln(i:2,': ',heredsc.lines[i]);
-			i := i + 1;
-		end;
-	end;
-end;
-
-procedure edit_append;
-var
-	prompt,s: string;
-	stilladding: boolean;
-
-begin
-	if heredsc.desclen = descmax then
-		writeln('You have already used all ',descmax:1,' lines of text.')
-	else begin
-		stilladding := true;
-		writeln('Enter text.  Terminate with ** at the beginning of a line.');
-		writeln('You have ',descmax:1,' lines maximum.');
-		writeln;
-		while (heredsc.desclen < descmax) and (stilladding) do begin
-			writev(prompt,heredsc.desclen+1:2,': ');
-			grab_line(prompt,s);
-			if s = '**' then
-				stilladding := false
-			else begin
-				heredsc.desclen := heredsc.desclen + 1;
-				heredsc.lines[heredsc.desclen] := s;
-			end;
-		end;
-	end;
-end;
-
-procedure edit_delete(n: integer);
-var
-	i: integer;
-
-begin
-	if heredsc.desclen = 0 then
-		writeln('-- No lines to delete')
-	else if (n > heredsc.desclen) or (n < 1) then
-		writeln('-- Bad line number')
-	else if (n = 1) and (heredsc.desclen = 1) then
-		heredsc.desclen := 0
-	else begin
-		for i := n to heredsc.desclen-1 do
-			heredsc.lines[i] := heredsc.lines[i + 1];
-		heredsc.desclen := heredsc.desclen - 1;
-	end;
-end;
-
-
-procedure check_subst;
-var
-	i: integer;
-
-begin
-	if heredsc.desclen > 0 then begin
-		for i := 1 to heredsc.desclen do
-			if (index(heredsc.lines[i],'#') > 0) and
-			   (length(heredsc.lines[i]) > 59) then
-				writeln('Warning: line ',i:1,' is too long for correct parameter substitution.');
-	end;
-end;
-
-
-function edit_desc(var dsc: integer):boolean;
-var
-	cmd: char;
-	s: string;
-	done: boolean;
-	n: integer;
-
-begin
-	if dsc = DEFAULT_LINE then begin
-		heredsc.desclen := 0;
-	end else if dsc > 0 then begin
-		getblock(dsc);
-		freeblock;
-		heredsc := block;
-	end else if dsc < 0 then begin
-		n := (- dsc);
-		getline(n);
-		freeline;
-		heredsc.lines[1] := oneliner.theline;
-		heredsc.desclen := 1;
-	end else begin
-		heredsc.desclen := 0;
-	end;
-
-	edit_desc := true;
-	done := false;
-	if heredsc.desclen = 0 then
-		edit_append;
-	repeat
-		writeln;
-		repeat
-			grab_line('* ',s);
-			s := slead(s);
-		until length(s) > 0;
-		s := lowcase(s);
-		cmd := s[1];
-
-		if length(s)>1 then begin
-			n := number(slead(substr(s,2,length(s)-1)))
-		end else
-			n := 0;
-
-		case cmd of
-			'h','?': edit_help;
-			'a': edit_append;
-			'z': heredsc.desclen := 0;
-			'c': check_subst;
-			'p','l','t': edit_show;
-			'd': edit_delete(n);
-			'e': begin
-				check_subst;
-				if debug then
-					writeln('edit_desc: dsc is ',dsc:1);
-
-
-{ what I do here may require some explanation:
-
-	dsc is a pointer to some text structure:
-		dsc = 0 :  no text
-		dsc > 0 :  dsc refers to a description block (descmax lines)
-		dsc < 0 :  dsc refers to a description "one liner".  abs(dsc)
-			   is the actual pointer
-
-	If there are no lines of text to be written out (heredsc.desclen = 0)
-	then we deallocate whatever dsc is when edit_desc was invoked, if
-	it was pointing to something;
-
-	if there is one line of text to be written out, allocate a one liner
-	record, assign the string to it, and return dsc as negative;
-
-	if there is mmore than one line of text, allocate a description block,
-	store the lines in it, and return dsc as positive.
-
-	In all cases if there was already a record allocated to dsc then
-	use it and don't reallocate a new record.
-}
-
-{ kill the default }		if (heredsc.desclen > 0) and
-{ if we're gonna put real }		(dsc = DEFAULT_LINE) then
-{ texty in here }				dsc := 0;
-
-{ no lines, delete existing }	if heredsc.desclen = 0 then
-{ desc, if any }			delete_block(dsc)
-				else if heredsc.desclen = 1 then begin
-					if (dsc = 0) then begin
-						if alloc_line(dsc) then;
-						dsc := (- dsc);
-					end else if dsc > 0 then begin
-						delete_block(dsc);
-						if alloc_line(dsc) then;
-						dsc := (- dsc);
-					end;
-
-					if dsc < 0 then begin
-						getline( abs(dsc) );
-						oneliner.theline := heredsc.lines[1];
-						putline;
-					end;
-{ more than 1 lines }		end else begin
-					if dsc = 0 then begin
-						if alloc_block(dsc) then;
-					end else if dsc < 0 then begin
-						delete_line(dsc);
-						if alloc_block(dsc) then;
-					end;
-
-					if dsc > 0 then begin
-						getblock(dsc);
-						block := heredsc;
-{ This is a fudge }				block.descrinum := dsc;
-						putblock;
-					end;
-				end;
-				done := true;
-			     end;
-			'r': edit_replace(n);
-			'@': begin
-				delete_block(dsc);
-				dsc := DEFAULT_LINE;
-				done := true;
-			     end;
-			'i': edit_doinsert(n);
-			'q': begin
-				grab_line('Throw away changes, are you sure? ',s);
-				s := lowcase(s);
-				if (s = 'y') or (s = 'yes') then begin
-					done := true;
-					edit_desc := false; { signal caller not to save }
-				end;
-			     end;
-			otherwise writeln('-- Invalid command, type ? for a list.');
-		end;
-	until done;
-end;
-
-
-
-
-function alloc_detail(var n: integer;s: string): boolean;
-var
-	found: boolean;
-
-begin
-	n := 1;
-	found := false;
-	while (n <= maxdetail) and (not found) do begin
-		if here.detaildesc[n] = 0 then
-			found := true
-		else
-			n := n + 1;
-	end;
-	alloc_detail := found;
-	if not(found) then
-		n := 0
-	else begin
-		getroom;
-		here.detail[n] := lowcase(s);
-		putroom;
-	end;
-end;
-
-
-{
-User describe procedure.  If no s then describe the room
-
-Known problem: if two people edit the description to the same room one of their
-	description blocks could be lost.
-This is unlikely to happen unless the Monster Manager tries to edit a
-description while the room's owner is also editing it.
-}
-procedure do_describe(s: string);
-var
-	i: integer;
-	newdsc: integer;
-
-begin
-	gethere;
-	if checkhide then begin
-	if s = '' then begin { describe this room }
-		if desc_allowed then begin
-			log_action(desc,0);
-			writeln('[ Editing the primary room description ]');
-			newdsc := here.primary;
-			if edit_desc(newdsc) then begin
-				getroom;
-				here.primary := newdsc;
-				putroom;
-			end;
-			log_event(myslot,E_EDITDONE,0,0);
-		end;
-	end else begin{ describe a detail of this room }
-		if length(s) > veryshortlen then
-			writeln('Your detail keyword can only be ',veryshortlen:1,' characters.')
-		else if desc_allowed then begin
-			if not(lookup_detail(i,s)) then
-			if not(alloc_detail(i,s)) then begin
-				writeln('You have used all ',maxdetail:1,' details.');
-				writeln('To delete a detail, DESCRIBE <the detail> and delete all the text.');
-			end;
-			if i <> 0 then begin
-				log_action(e_detail,0);
-				writeln('[ Editing detail "',here.detail[i],'" of this room ]');
-				newdsc := here.detaildesc[i];
-				if edit_desc(newdsc) then begin
-					getroom;
-					here.detaildesc[i] := newdsc;
-					putroom;
-				end;
-				log_event(myslot,E_DONEDET,0,0);
-			end;
-		end;
-	end;
-{	clear_command;	}
-	end;
-end;
-
-
-
+{ procedure do_descibe moved to module CUSTOM }
 
 procedure del_room(n: integer);
 var
-	i: integer;
+	i,oldowner: integer;
 
 begin
 	getnam;
@@ -4571,17 +2672,34 @@ begin
 	putown;
 
 	getroom(n);
+	if not exact_user(oldowner,here.owner) then oldowner := 0;
+	change_owner(oldowner,0);
+
 	for i := 1 to maxexit do begin
 		with here.exits[i] do begin
 			delete_line(exitdesc);
-			delete_line(fail);
-			delete_line(success);
-			delete_line(comeout);
-			delete_line(goin);
+			delete_block(fail);
+			delete_block(success);
+			delete_block(comeout);
+			delete_block(goin);
+			delete_block(hidden);
 		end;
+	end;
+	for i := 1 to maxdetail do begin
+		delete_block(here.detaildesc[i]);
 	end;
 	delete_block(here.primary);
 	delete_block(here.secondary);
+        delete_line(here.objdesc);
+        delete_line(here.objdest);
+        delete_line(here.rndmsg);
+        delete_block(here.xmsg2);
+        delete_block(here.exitfail);
+        delete_block(here.ofail);
+	if here.hook > 0 then begin	{ delete hook -code }
+		delete_program(here.hook);
+		delete_general(I_HEADER,here.hook);
+	end;
 	putroom;
 	delete_room(n);	{ return room to free list }
 end;
@@ -4639,7 +2757,8 @@ begin
 		here.parm := 0;
 
 		here.xmsg2 := 0;
-		here.exp2 := 0;
+		here.hook := 0;
+
 		here.exp3 := 0;
 		here.exp4 := 0;
 		here.exitfail := DEFAULT_LINE;
@@ -4686,61 +2805,16 @@ begin
 {		here.exits := zero;	}
 
 				{ random accept for this room }
-		rand_accept := 1 + (rnd100 mod 6);
+		rand_accept := 1 + (rnd100 mod maxexit);
 		here.exits[rand_accept].kind := 5;
 
 		putroom;
+		writeln('Room created.');
+		change_owner(0,mylog);
 	end;
 end;
 
 
-
-procedure show_help;
-var
-	i: integer;
-	s: string;
-
-begin
-	writeln;
-	writeln('Accept/Refuse #  Allow others to Link an exit here at direction # | Undo Accept');
-	writeln('Brief            Toggle printing of room descriptions');
-	writeln('Customize [#]    Customize this room | Customize exit # | Customize object #');
-	writeln('Describe [#]     Describe this room | Describe a feature (#) in detail');
-	writeln('Destroy #        Destroy an instance of object # (you must be holding it)');
-	writeln('Duplicate #      Make a duplicate of an already-created object.');
-	writeln('Form/Zap #       Form a new room with name # | Destroy room named #');
-	writeln('Get/Drop #       Get/Drop an object');
-	writeln('#,Go #           Go towards # (Some: N/North S/South E/East W/West U/Up D/Down)');
-	writeln('Health           Show how healthy you are');
-	writeln('Hide/Reveal [#]  Hide/Reveal yoursef | Hide object (#)');
-	writeln('I,Inventory      See what you or someone else is carrying');
-	writeln('Link/Unlink #    Link/Unlink this room to/from another via exit at direction #');
-	writeln('Look,L [#]       Look here | Look at something or someone (#) closely');
-	writeln('Make #           Make a new object named #');
-	writeln('Name #           Set your game name to #');
-	writeln('Players          List people who have played Monster');
-	writeln('Punch #          Punch person #');
-	writeln('Quit             Leave the game');
-	writeln('Relink           Move an exit');
-	writeln;
-	grab_line('-more-',s);
-	writeln;
-	writeln('Rooms            Show information about rooms you have made');
-	writeln('Say, '' (quote)   Say line of text following command to others in the room');
-	writeln('Search           Look around the room for anything hidden');
-	writeln('Self #           Edit a description of yourself | View #''s self-description');
-	writeln('Show #           Show option # (type SHOW ? for a list)');
-	writeln('Unmake #         Remove the form definition of object #');
-	writeln('Use #            Use object #');
-	writeln('Wear #           Wear the object #');
-	writeln('Wield #          Wield the weapon #;  you must be holding it first');
-	writeln('Whisper #        Whisper something (prompted for) to person #');
-	writeln('Who              List of people playing Monster now');
-	writeln('Whois #          What is a player''s username');
-	writeln('?,Help           This list');
-	writeln('. (period)       Repeat last command');
-	writeln;
-end;
 
 
 function lookup_cmd(s: string):integer;
@@ -4775,91 +2849,15 @@ begin
 		lookup_cmd := error;	{ "Command not found " }
 end;
 
+{ addrooms moved to module DATABASE }
 
-procedure addrooms(n: integer);
-var
-	i: integer;
+{ addints moved to module DATABASE }
 
-begin
-	getindex(I_ROOM);
-	for i := indx.top+1 to indx.top+n do begin
-		locate(roomfile,i);
-		roomfile^.valid := i;
-		roomfile^.locnum := i;
-		roomfile^.primary := 0;
-		roomfile^.secondary := 0;
-		roomfile^.which := 0;
-		put(roomfile);
-	end;
-	indx.top := indx.top + n;
-	putindex;
-end;
+{ addlines moved to module DATABASE }
 
+{ addblocks moved to module DATABASE }
 
-
-procedure addints(n: integer);
-var
-	i: integer;
-
-begin
-	getindex(I_INT);
-	for i := indx.top+1 to indx.top+n do begin
-		locate(intfile,i);
-		intfile^.intnum := i;
-		put(intfile);
-	end;
-	indx.top := indx.top + n;
-	putindex;
-end;
-
-
-
-procedure addlines(n: integer);
-var
-	i: integer;
-
-begin
-	getindex(I_LINE);
-	for i := indx.top+1 to indx.top+n do begin
-		locate(linefile,i);
-		linefile^.linenum := i;
-		put(linefile);
-	end;
-	indx.top := indx.top + n;
-	putindex;
-end;
-
-procedure addblocks(n: integer);
-var
-	i: integer;
-
-begin
-	getindex(I_BLOCK);
-	for i := indx.top+1 to indx.top+n do begin
-		locate(descfile,i);
-		descfile^.descrinum := i;
-		put(descfile);
-	end;
-	indx.top := indx.top + n;
-	putindex;
-end;
-
-
-procedure addobjects(n: integer);
-var
-	i: integer;
-
-begin
-	getindex(I_OBJECT);
-	for i := indx.top+1 to indx.top+n do begin
-		locate(objfile,i);
-		objfile^.objnum := i;
-		put(objfile);
-	end;
-	indx.top := indx.top + n;
-	putindex;
-end;
-
+{ addobjects moved to module DATABASE }
 
 procedure dist_list;
 var
@@ -4878,13 +2876,16 @@ begin
 	getuser;		{ Corresponding userids of players }
 	freeuser;
 
+	getreal_user;		{ real usernames of players }
+	freereal_user;
+
 	getpers;		{ Personal names of players }
 	freepers;
 
 	getdate;		{ date of last play }
 	freedate;
 
-	if privd then begin
+	if manager_priv then begin { minor change by leino@finuha }
 		getint(N_LOCATION);
 		freeint;
 		where_they_are := anint;
@@ -4895,9 +2896,20 @@ begin
 
 	for i := 1 to maxplayers do begin
 		if not(indx.free[i]) then begin
-			write(f,user.idents[i]);
-			for j := length(user.idents[i]) to 15 do
-				write(f,' ');
+			if user.idents[i] = '' then write(f,'! <null>        ')
+			else if user.idents[i][1] = ':' then 
+				write(f,'! <monster>     ')
+			else if user.idents[i][1] = '"' then begin
+                                write(f,real_user.idents[i]);
+				for j := length(real_user.idents[i]) to 15 do
+					write(f,' ');
+			end else begin 
+{ if we have username, don't use real_username, because it can be of 	}
+{ Monster Manager 							}
+				write(f,user.idents[i]);
+				for j := length(user.idents[i]) to 15 do
+					write(f,' ');
+			end;
 			write(f,'! ',pers.idents[i]);
 			for j := length(pers.idents[i]) to 21 do
 				write(f,' ');
@@ -4911,7 +2923,7 @@ begin
 			else
 				write(f,'   ');
 
-			if privd then begin
+			if manager_priv then begin { minor change by leino@finuha }
 				write(f,nam.idents[ where_they_are.int[i] ]);
 			end;
 			writeln(f);
@@ -4965,7 +2977,28 @@ begin
 	free := total - used;
 	writeln('Integer file ',used:5,'  ',free:5,'   ',total:5);
 
-	writeln;
+	getindex(I_HEADER);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Header file  ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_SPELL);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Spells       ',used:5,'  ',free:5,'   ',total:5);
+
+	getindex(I_PLAYER);
+	freeindex;
+	used := indx.inuse;
+	total := indx.top;
+	free := total - used;
+	writeln('Players      ',used:5,'  ',free:5,'   ',total:5);
+
+	writeln;              
 end;
 
 
@@ -4979,13 +3012,17 @@ begin
 	if length(s) = 0 then
 		writeln('No user specified')
 	else begin
-		if lookup_user(n,s) then begin
+		if lookup_user(n,s,true) then begin
 			getindex(I_ASLEEP);
-			freeindex;
-			if indx.free[n] then begin
+			freeindex;                
+                        { variable user is reading in lookup_user }
+                        if user.idents[n][1] = ':' then begin
+ 				writeln ('That is monster, not player.');
+				writeln ('Use ERASE <monster name> to delete monster.')
+			end else if indx.free[n] then begin
 				delete_log(n);
 				writeln('Player deleted.');
-			end else
+	  		end else
 				writeln('That person is playing now.');
 		end else
 			writeln('No such userid found in log information.');
@@ -4998,65 +3035,97 @@ end;
 procedure disown_user(s:string);
 var
 	n: integer;
-	i: integer;
+	i,count: integer;
 	tmp: string;
 	theuser: string;
 
 begin
+
 	if length(s) > 0 then begin
-		if debug then
-			writeln('calling lookup_user with ',s);
-		if not lookup_user(n,s) then
-			writeln('User not in log info, attempting to disown anyway.');
+	    if not lookup_user(n,s) then begin
+		    writeln('User not in log info, attempting to disown anyway.');
+		    theuser := s;
+	    end else begin
+		    theuser := user.idents[n];
 
-		theuser := user.idents[n];
+	    end;
+	    { first disown all their rooms }
 
-		{ first disown all their rooms }
-
-		getown;
-		freeown;
-		for i := 1 to maxroom do
+	    getown;
+	    freeown;
+	    getindex(I_ROOM);
+	    freeindex;
+	    for i := 1 to indx.top do if not indx.free[i] then
 			if own.idents[i] = theuser then begin
-				getown;
-				own.idents[i] := '*';
-				putown;
+				    getown;
+				    own.idents[i] := disowned_id;
+				    putown;
 
-				getroom(i);
-				tmp := here.nicename;
-				here.owner := '*';
-				putroom;
+				    getroom(i);
+				    tmp := here.nicename;
+				    here.owner := disowned_id;
+				    putroom;
 
-				writeln('Disowned room ',tmp);
+				    writeln('Disowned room ',tmp);
 			end;
-		writeln;
+	    writeln;
 
-		getobjown;
-		freeobjown;
-		getobjnam;
-		freeobjnam;
-		for i := 1 to maxroom do
-			if objown.idents[i] = theuser then begin
-				getobjown;
-				objown.idents[i] := '*';
-				putobjown;
+	    getobjown;
+	    freeobjown;
+	    getobjnam;
+	    freeobjnam;
 
-				tmp := objnam.idents[i];
-				writeln('Disowned object ',tmp);
-			end;
+	    getindex(I_OBJECT);
+	    freeindex;
+	    for i := 1 to indx.top do if not indx.free[i] then
+				if objown.idents[i] = theuser then begin
+				    getobjown;
+				    objown.idents[i] := disowned_id;
+				    putobjown;
+
+				    tmp := objnam.idents[i];
+				    writeln('Disowned object ',tmp);
+				end;
+
+	    { writeln('Disown codes ...'); }
+	    count := 0;
+	    getindex(I_HEADER);
+	    freeindex;
+	    for i := 1 to indx.top do if not indx.free[i] then
+			    if monster_owner(i) = theuser then begin
+				set_owner(i,,disowned_id);
+				count := count +1;
+			    end;
+	    if count > 0 then 
+			writeln('Disowned ',count:1,' codes.');
+		    
+	    sub_counter(N_NUMROOMS,n,get_counter(N_NUMROOMS,n));
+	    sub_counter(N_ACCEPT,n,get_counter(N_ACCEPT,n));
 	end else
 		writeln('No user specified.');
 end;
 
-procedure move_asleep;
+procedure move_asleep (s : string);
+label exit_label;
 var
 	pname,rname:string;	{ player & room names }
 	newroom,n: integer;	{ room number & player slot number }
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+
 begin
-	grab_line('Player name? ',pname);
-	grab_line('Room name?   ',rname);
-	if lookup_user(n,pname) then begin
-		if lookup_room(newroom,rname) then begin
+	if s = '' then grab_line('Player name? ',pname,
+	    eof_handler := leave)
+	else pname := s;
+	if lookup_user(n,pname,true) then begin
+		grab_line('Room name?   ',rname,
+		    eof_handler := leave);
+		if lookup_room(newroom,rname,true) then begin
 			getindex(I_ASLEEP);
 			freeindex;
 			if indx.free[n] then begin
@@ -5070,37 +3139,556 @@ begin
 			writeln('No such room found.');
 	end else
 		writeln('User not found.');
+    exit_label:
 end;
 
+      
 
-procedure system_help;
+procedure authorize (param: string);
+label exit_label;
+{ leino@finuha }
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+
+var
+	s, prompt, pname: string;
+	cmd: char;
+	done: boolean;
+	n, i, j: integer;
+   	privs,
+	system,
+	poof,
+	room,
+	object,
+	special,
+	monster,
+	exp		: integer;
+	granted : unsigned;
 
 begin
-	writeln;
-	writeln('B	Add description blocks');
-	writeln('D	Disown <user>');
-	writeln('E	Exit (same as quit)');
-	writeln('I	Add Integer records');
-	writeln('K	Kill <user>');
-	writeln('L	Add one liner records');
-	writeln('M	Move a player who is asleep (not playing now)');
-	writeln('O	Add object records');
-	writeln('P	Write a distribution list of players');
-	writeln('Q	Quit (same as exit)');
-	writeln('R	Add rooms');
-	writeln('V	View current sizes/usage');
-	writeln('?	This list');
-	writeln;
+	prompt:= 'Authorize> ';
+	if param = '' then grab_line ('Player name? ', pname,
+	    eof_handler := leave)
+	else pname := param;
+	if lookup_user(n, pname, true) then begin
+
+		getint (N_PRIVILEGES);
+		freeint;
+
+		privs:= anint.int [n];
+
+		granted := all_privileges;
+		if userid <> MM_userid  then 
+		    granted := uand(granted,unot(PR_manager));
+
+		if custom_privileges(privs,granted) then begin
+		    
+		    getint (N_PRIVILEGES);
+		    anint.int [n] := privs;
+		    putint;
+		    writeln ('Database updated.');
+
+		end else writeln('Database not updated.');
+
+
+(*  		system:= privs mod 2;
+|		poof:= (privs mod 4) div 2;
+|		room:= (privs mod 8) div 4;
+|		object:= (privs mod 16) div 8;
+|		special:= (privs mod 32) div 16;
+|		monster:= (privs mod 64) div 32;
+|		exp:= (privs mod 128) div 64;
+|
+|		done:= false;
+|	  	repeat
+|			repeat
+|				grab_line(prompt,s,eof_handler := leave);
+|				s := slead(s);
+|			until length(s) > 0;
+|			s := lowcase(s);
+|			cmd := s[1];
+|
+|			case cmd of
+|			'h','?': begin       
+|					writeln ('C - Experience privilege');
+|					writeln ('D - Monster privilege');
+|					writeln ('E - Exit');
+|					writeln ('H - Help (this list)');
+|					if userid = MM_userid then
+|						writeln ('M - Manager rights');
+|					writeln ('O - Object privilege');
+|					writeln ('P - Poof privilege');
+|					writeln ('Q - Quit (do not save changes)');
+|					writeln ('R - Room privilege');
+|					writeln ('S - Special object privilege');
+|					writeln ('V - View current privileges');
+|					writeln ('? - This list'); 
+|				end;
+|			    'v': begin
+|					writeln ('Current privileges:');
+|					privs := system+ 2*poof+ 4*room+ 8*object+ 16*special+ 32*monster+ 64*exp;
+|					list_privileges (privs); end;
+|			    'm': 	if userid <> MM_userid then
+|						writeln ('Only the Monster Manager can grant manager rights.')
+|				else 	if system=1 then begin
+|						if n=mylog then
+|							writeln('You cannot remove your own manager rights.')
+|						else begin
+|							system:=0;
+|							writeln ('User has lost manager rights.');
+|						end;
+|				     	end  else begin
+|				     		system:=1;
+|				      	    	writeln ('User now has manager rights.');
+|				     	end;
+|			    'p':	if poof=1 then begin
+|						poof:=0;
+|						writeln ('User has lost poof privilege.');
+|					end else begin
+|						poof:=1;
+|				    		writeln ('User now has poof privilege.');
+|			     		end;                               
+|			    'r':	if room=1 then begin
+|						room:=0;
+|						writeln ('User has lost room privilege.');
+|					end else begin
+|						room:=1;
+|				    		writeln ('User now has room privilege.');
+|				     	end;
+|			    'o':	if object=1 then begin
+|						object:=0;
+|						writeln ('User has lost object privilege.');
+|					end else begin
+|						object:=1;
+|				    		writeln ('User now has object privilege.');
+|			     		end;
+|			    's':	if special=1 then begin
+|						special:=0;
+|						writeln ('User has lost special privilege.');
+|					end else begin
+|						special:=1;
+|				    		writeln ('User now has special privilege.');
+|				     	end;
+|			    'd':	if monster=1 then begin
+|						monster:=0;
+|						writeln ('User has lost monster privilege');
+|					end else begin
+|						monster:=1;
+|				    		writeln ('User now has monster privilege.');
+|				     	end;
+|			    'c':	if exp=1 then begin
+|						exp:=0;
+|						writeln ('User has lost experience privilege.');
+|					end else begin
+|						exp:=1;
+|				    		writeln ('User now has experience privilege.');
+|				     	end;
+|			'q': begin
+|					writeln ('Database not updated');
+|					done := true;
+|					end;
+|			'e': begin
+|		 			privs := system+ 2*poof+ 4*room+ 8*object+ 16*special+ 32*monster+ 64*exp;
+|					getint (N_PRIVILEGES);
+|					anint.int [n]:= privs;
+|					putint;
+|					writeln ('Database updated.');
+|					done := true;
+|					end;
+|			otherwise writeln('-- bad command, type ? for a list.');
+|			end;
+|		until done;
+*)
+
+	end else if (pname = '*') or (pname = 'all') then begin
+
+		getindex(I_PLAYER);	{ Rec of valid player log records  }
+		freeindex;		{ False if a valid player log }
+
+		getuser;		{ Corresponding userids of players }
+		freeuser;
+
+		getpers;		{ Personal names of players }
+		freepers;
+
+		getint (N_PRIVILEGES);	{ Privileges }
+		freeint;
+
+		for i := 1 to maxplayers do begin
+			if not(indx.free[i]) then begin
+				write (user.idents[i]);
+				for j := length(user.idents[i]) to 16 do
+					write (' ');
+				write(pers.idents[i]);
+				for j := length(pers.idents[i]) to 21 do
+					write (' ');
+				list_privileges (anint.int [i]);
+			end;
+		end;
+	end else
+		writeln('No such player.');
+    exit_label:
 end;
+
 
 
 { *************** FIX_STUFF ******************** }
 
-procedure fix_stuff;
+procedure fix_p_passwd(n: integer; s: string);
+label exit_label;
+var key: shortstring;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
 
 begin
+   if s = '' then grab_line('Player''s password? ',s,eof_handler := leave);
+   if length(s) > shortlen then 
+      writeln('Limit password to ',shortlen:1,' characters.')
+   else begin
+      key := s;
+      encrypt(key,n);
+      getpasswd;
+      passwd.idents[n] := key;
+      putpasswd;
+      writeln('Database updated.');
+   end;
+   exit_label:
+end; { fix_p_passwd }
+
+procedure fix_p_pers(n: integer; s: string);
+label exit_label;
+var dummy: integer;
+    ok: boolean;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+begin
+   if s = '' then grab_line('Player''s personal name? ',s,
+      eof_handler := leave);
+   s := slead(s);
+   if s = '' then
+      writeln('No changes.')
+   else if length(s) > shortlen then 
+      writeln('Limit password to ',shortlen:1,' characters.')
+   else begin
+      if exact_pers(dummy,s) then 
+         if dummy = n then ok := true
+         else ok := false
+      else ok := true;
+      if not ok then 
+         writeln('That persoanal name is already in use.')
+      else begin
+         getpers;
+         pers.idents[n] := s;
+         putpers;
+         writeln('Database updated.');
+      end;
+   end;
+   exit_label:
+end; { fix_p_pers }
+
+procedure fix_p_health(n: integer; s: string);
+label exit_label;
+var exp,lev, top: integer;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+begin
+   getint(N_EXPERIENCE);
+   freeint;
+   exp := anint.int[n];
+   lev := level(exp);
+   top := leveltable[lev].health;
+
+   if s = '' then begin
+      writeln('Enter health 0 - ',top:1);
+      grab_line('Player''s health? ',s,eof_handler := leave);
+   end;
+
+   if s = '' then writeln ('No changes.')
+   else if not isnum(s) then
+      writeln('No such health.')
+   else if (number(s) < 0) or (number(s)> top) then
+      writeln('Out of range.')
+   else begin
+      getint(N_HEALTH);
+      anint.int[n] := number(s);
+      putint;
+      writeln('Database updated.');
+   end;
+   exit_label:
+end; { fix_p_health }
+
+
+procedure fix_p_quota(n: integer; s: string);
+label exit_label;
+var exp,lev, top: integer;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+begin
+
+   if s = '' then begin
+      writeln('Enter quota 0 - ',maxroom:1);
+      grab_line('Player''s room quota? ',s,eof_handler := leave);
+   end;
+
+   if s = '' then writeln ('No changes.')
+   else if not isnum(s) then
+      writeln('No such quota.')
+   else if (number(s) < 0) or (number(s)> maxroom) then
+      writeln('Out of range.')
+   else begin
+      getint(N_ALLOW);
+      anint.int[n] := number(s);
+      putint;
+      writeln('Database updated.');
+   end;
+   exit_label:
+end; { fix_p_quota }
+
+
+
+procedure fix_p_level(n: integer; s: string);
+label exit_label;
+var exp,lev,i: integer;
+    ok : boolean;
+    prevlevel,nextlevel: integer;
+    prevpriv,nextpriv: unsigned;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+begin
+  if s = '' then begin
+     writeln('Enter player''s level ',leveltable[1].name,
+        ' - ',leveltable[levels].name);
+     writeln('or enter player experience 0 - ',maxexperience:1);
+     grab_line('Player''s level or experience? ',s,eof_handler := leave);
+  end;
+
+  if s = '' then writeln('No changes.')
+  else begin
+     ok := true;
+     if lookup_level(lev,s) then exp := leveltable[lev].exp
+     else if not isnum(s) then begin
+        writeln('No such level or experience.');
+        ok := false;
+     end else begin 
+        exp := number(s);
+        if (exp < 0) or (exp > maxexperience) then begin
+           writeln('Out of range.');
+           ok := false;
+        end;
+     end;
+
+     getint(N_EXPERIENCE);
+     freeint;
+     prevlevel := level(anint.int[n]);
+     nextlevel := level(exp);
+     if ok and (leveltable[prevlevel].hidden or leveltable[nextlevel].hidden) 
+         and (userid <> MM_userid) then begin
+            writeln('Only Monster Manager can make this change.');
+            ok := false;
+     end;
+
+     if ok then begin
+        getint(N_PRIVILEGES);
+        freeint;
+        prevpriv := uint(anint.int[n]);
+        
+        nextpriv := 0;
+        for i := 1 to nextlevel do nextpriv := uor(nextpriv,
+            leveltable[i].priv);
+
+        getint(N_PRIVILEGES);
+        anint.int[n] := int(nextpriv);
+        putint;
+
+        if (prevpriv <> nextpriv) then begin
+           write('Privileges changed from: '); list_privileges(int(prevpriv));
+           write('to:                      '); list_privileges(int(nextpriv));
+        end;
+
+	if (prevlevel <> nextlevel) then begin
+	    getint(N_HEALTH);
+	    anint.int[n] := leveltable[nextlevel].health * 7 div 10;
+	    putint;
+	    writeln('Health database updated.');
+	end;
+
+        getint(N_EXPERIENCE);
+        anint.int[n] := exp;
+        putint;
+        writeln('Experience database updated.');
+     end;
+  end;
+  exit_label:
+end; { fix_p_level }
+
+procedure fix_p_view(n: integer);
+var exp,lev: integer;
+begin
+   getpers;
+   freepers;
+   getuser;
+   freeuser;
+   writeln('Player''s personal name : ',pers.idents[n]);
+   writeln('         userident     : ',user.idents[n]);
+   getint(N_EXPERIENCE);
+   freeint;
+   writeln('         experience    : ',anint.int[n]:1);
+   writeln('         level         : ',leveltable[level(anint.int[n])].name);
+   getint(N_HEALTH);
+   freeint;
+   writeln('         health        : ',anint.int[n]:1);
+   getint(N_PRIVILEGES);
+   freeint;
+   write  ('         privileges    : '); list_privileges(anint.int[n]);
+   writeln('         room quota    : ',get_counter(N_ALLOW,n):1);
+   writeln('         rooms         : ',get_counter(N_NUMROOMS,n):1);
+   writeln('         accepts       : ',get_counter(N_ACCEPT,n):1);
+end; { fix_p_view }
+
+procedure fix_stuff(s: string);
+label exit_label;
+var player_id: integer;
+    param,raw: string;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto exit_label;
+    end;
+
+begin
+  if s = '' then grab_line('Player''s (user)name? ',s,
+    eof_handler := leave);
+  if (s = '') or (s = '?') then 
+     writeln('To customize player data in database, type 1 <player''s name>')
+  else if not lookup_user(player_id,s,true) then
+     writeln ('No such player name.')
+  else begin
+     getindex(I_ASLEEP);
+     freeindex;
+     if s[1] = ':' then
+        writeln('That isn''t player.')
+     else if not indx.free[player_id] then
+        writeln('This player playing now.')
+     else repeat
+        grab_line('Custom player> ',s,eof_handler := leave);
+
+        raw := slead(s); if bite(raw) > '' then;
+
+        param := slead(lowcase(s));
+        s := bite(param);
+
+        if s = '' then writeln ('Type ? for help.')
+        else case s[1] of
+          '?','h' : command_help('*fix p help*');
+          'a'     : fix_p_health(player_id,param);
+          'l'     : fix_p_level(player_id,param);
+          'v'     : fix_p_view(player_id);
+          'p'     : fix_p_passwd(player_id,raw);
+	  'r'	  : fix_p_quota(player_id,param);
+          'n'     : fix_p_pers(player_id,raw);
+          'e','q' : ;
+          otherwise writeln ('Type ? for help.');
+        end
+     until (s = 'e') or ( s = 'q');
+  end;
+  exit_label:
+end; 
+
+procedure system_2(s: string); forward;
+
+
+procedure throw_player(s: string); forward;
+
+function complete(s: string; n: integer): string;
+begin
+   while length(s) < n do s := s + ' ';
+   complete := s
 end;
 
+procedure system_who;
+label 1;
+var i,count: integer;
+    more: string;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 1;
+    end;
+
+begin
+    getindex(I_PLAYER);	{ Rec of valid player log records  }
+    freeindex;		{ False if a valid player log }
+
+    getpers;		{ player names }
+    freepers;
+
+    getuser;		{ userids }
+    freeuser;
+
+    getreal_user;	{ real userids for virtual userid }
+    freereal_user;
+
+    getint(N_EXPERIENCE);
+    freeint;
+
+    write(complete('Username',15));
+    write(complete('Real userid',15));
+    write(complete('Personal name',20));
+    writeln ('Level');
+
+             
+    count := 1;
+    for i := 1 to indx.top do if not indx.free[i] then begin
+	if user.idents[i][1] <> ':' then begin
+	    write(complete(user.idents[i],15));
+	    if user.idents[i][1] = '"' then 
+		write(complete(real_user.idents[i],15))
+	    else
+		write(complete('',15));
+	    write(complete(pers.idents[i],20));
+	    writeln(leveltable[level(anint.int[i])].name);
+	    count := count +1;
+	    if count > terminal_page_len -2 then begin
+		grab_line('-more-',more,erase := true,
+		    eof_handler := leave);
+		if more > '' then goto 1;
+		count := 0;
+	    end;
+	end;
+    end;
+    1:
+end;
 
 procedure do_system(s: string);
 var
@@ -5110,14 +3698,20 @@ var
 	n: integer;
 	p: string;
 
+    procedure leave;
+    begin
+	writeln('EXIT');
+	s := 'e';
+    end;
+
 begin
-	if privd then begin
+	if (manager_priv) or (wizard { and privd }) then begin { minor change by leino@finuha }
 		log_action(c_system,0);
 		prompt := 'System> ';
 		done := false;
 		repeat
 			repeat
-				grab_line(prompt,s);
+				grab_line(prompt,s,eof_handler := leave);
 				s := slead(s);
 			until length(s) > 0;
 			s := lowcase(s);
@@ -5130,28 +3724,30 @@ begin
 				n := number(p)
 			end;
 			if debug then begin
-				writeln('p = ',p);
+		       		writeln('p = ',p);
 			end;
-
+       
 			case cmd of
-				'h','?': system_help;
-				'1': fix_stuff;
+	  			'?': command_help('*system help*');
+	  			'1': fix_stuff(p);
+  				'a': authorize(p); { leino@finuha }
 {remove a user}			'k': kill_user(p);
+				'c': system_2(p);
 {disown}			'd': disown_user(p);
 {dist list of players}		'p': dist_list;
-{move where user will wakeup}	'm': move_asleep;
+{move where user will wakeup}	'm': move_asleep (p);
 {add rooms}			'r': begin
-					if n > 0 then begin
+	  				if n > 0 then begin
 						addrooms(n);
 					end else
 						writeln('To add rooms, say R <# to add>');
 				     end;
-{add ints}			'i': begin
+{add ints}	   {		'i': begin
 					if n > 0 then begin
 						addints(n);
 					end else
 						writeln('To add integers, say I <# to add>');
-				     end;
+				     end;	}
 {add description blocks}	'b': begin
 					if n > 0 then begin
 						addblocks(n);
@@ -5169,44 +3765,161 @@ begin
 						addlines(n);
 					end else
 						writeln('To add one liner records, say L <# to add>');
-				     end;
+	  			     end;
+{add header records }		'h': begin
+					if n > 0 then begin
+						addheaders(n)
+					end else 
+						writeln('To add header records, say H <# to add>.');
+                                     end;
 {view current stats}		'v': begin
 					system_view;
 				     end;
+				't': begin
+					throw_player(p);
+				     end;
+				'w': system_who;
 {quit}				'q','e': done := true;
 			otherwise writeln('-- bad command, type ? for a list.');
 			end;
 		until done;
 		log_event(myslot,E_SYSDONE,0,0);
 	end else
-		writeln('Only the Monster Manger may enter system maintenance mode.');
+		writeln('Only the Monster Manager may enter system maintenance mode.');
 end;
 
 
 procedure do_version(s: string);
-
 begin
-	writeln('Monster, a multiplayer adventure game where the players create the world');
-	writeln('and make the rules.');
-	writeln;
-	writeln('Written by Rich Skrenta at Northwestern University, 1988.');
+	monster_version;
 end;
 
 
+
+procedure do_score(s: string);
+label 1; { for out }
+var n: integer;
+    header_printed: boolean;
+    print_count: integer;
+    short_line: boolean;
+
+    sort_table : array [ 1 .. maxplayers ] of 0 .. maxplayers;
+    used : 0 .. maxplayers;
+
+    scorerec: intrec;
+
+    procedure sort_score;
+    var i,j,sco,loc: integer;
+	break: boolean;
+    begin
+	used := 0;
+	for i := 1 to indx.top do if not indx.free[i] then 
+	    if user.idents[i] > '' then if user.idents[i][1] <> ':' then begin
+		sco := scorerec.int[i];
+		loc := 1;
+		break := false;
+		while ( loc < used ) and not break do begin
+		    if scorerec.int[sort_table[loc]] >= sco then break := true
+		    else loc := loc +1;
+		end;
+		for j := used downto loc do sort_table[j+1] := sort_table[j];
+		used := used +1;
+		sort_table[loc] := i;
+	    end;
+    end; { sort_score }      
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 1;
+    end;
+
+   procedure write_line(i: integer);
+   var s: string;
+       c: char;
+   begin
+      if not header_printed then begin
+         if not short_line then write('  Level                 ');
+	 writeln('Name                   Score');
+         header_printed := true;         
+      end;          
+      if scorerec.int[i] > protect_exp then c := '*'
+      else c := ' ';
+      if not short_line then 
+	write(c,' ',complete(leveltable[level(scorerec.int[i])].name,22));
+      write(complete(pers.idents[i],20));
+      if scorerec.int[i] > maxexperience then writeln('-':8)
+      else writeln(scorerec.int[i]:8);
+      print_count := print_count +1;
+      if print_count > terminal_page_len -2 then begin
+	    grab_line('-more-',s,erase := true,eof_handler := leave);
+	    if s > '' then goto 1;
+	    print_count := 0;
+      end;
+   end;
+
+   procedure write_level(l: integer);
+   var i,j : integer;
+   begin
+      for j := used downto 1 do begin
+	i := sort_table[j];
+        if (level(scorerec.int[i]) = l) and (user.idents[i][1] <> ':') then
+           write_line(i);
+      end;
+   end;
+
+begin
+  short_line := terminal_line_len < 54;
+  print_count := 0;
+  header_printed := false;
+  getint(N_EXPERIENCE); freeint; scorerec := anint;
+  getuser;
+  freeuser;
+  if s = '?' then begin
+    command_help('score');
+  end else if s = '' then begin
+      getpers;
+      freepers;
+      write_line(mylog);
+   end else if (s = '*') or (s = 'all') then begin
+      getpers;
+      freepers;
+      getindex(I_PLAYER);
+      freeindex;
+      sort_score;
+      for n := used downto 1 do write_line(sort_table[n]);
+   end else if length(s) > shortlen then 
+      writeln('Limit name and level to ',shortlen:1,' characters.')
+   else if lookup_pers(n,s) then
+      write_line(n)
+   else if lookup_level(n,s) then begin
+      sort_score;
+      write_level(n);
+      if not header_printed then writeln('No players on this level.')
+   end else writeln('No such player or level.');
+   1:
+end;
+
+[global]
 procedure rebuild_system;
 var
 	i,j: integer;
 
 begin
-	writeln('Creating index file 1-6');
-	for i := 1 to 7 do begin
+	mylog := 0;
+	writeln('Creating index file 1-10');
+	for i := 1 to 10 do begin
 			{ 1 is blocklist
 			  2 is linelist
 			  3 is roomlist
 			  4 is playeralloc
 			  5 is player awake (playing game)
 			  6 are objects
-			  7 is intfile }
+			  7 is intfile 
+			  8 is headerfile
+			  9 is ???
+			  10 is spells
+			}
 
 		locate(indexfile,i);
 		for j := 1 to maxindex do
@@ -5216,7 +3929,7 @@ begin
 		indexfile^.inuse := 0;
 		put(indexfile);
 	end;
-
+          
 
 	writeln('Initializing roomfile with 10 rooms');
 	addrooms(10);
@@ -5228,11 +3941,13 @@ begin
 	addlines(10);
 
 	writeln('Initializing object file with 10 objects');
-	addobjects(10);
+	addobjects(10);   
 
+	writeln('Initializing header file for monsters with 5 headers');
+	addheaders(5);
 
-	writeln('Initializing namfile 1-8');
-	for j := 1 to 8 do begin
+	writeln('Initializing namfile 1-',T_MAX:1);
+	for j := 1 to T_MAX do begin
 		locate(namfile,j);
 		namfile^.validate := j;
 		namfile^.loctop := 0;
@@ -5250,19 +3965,27 @@ begin
 		put(eventfile);
 	end;
 
-	writeln('Initializing intfile');
-	for i := 1 to 6 do begin
+	writeln('Initializing intfile'); { minor changes by leino@finuha, }
+ 	for i := 1 to 10 do begin	{ hurtta@finuh }
 		locate(intfile,i);
-		intfile^.intnum := i;
+ 		intfile^.intnum := i;
 		put(intfile);
 	end;
 
 	getindex(I_INT);
-	for i := 1 to 6 do
+	for i := 1 to 10 do
 		indx.free[i] := false;
-	indx.top := 6;
-	indx.inuse := 6;
+	indx.top := 10;
+	indx.inuse := 10;
 	putindex;
+
+	writeln('Initializing global values.'); { Record #10 in intfile }
+	getglobal;
+	for I := 1 to GF_MAX do global.int[i] := 0;
+	putglobal;
+	set_global_flag(GF_VALID, TRUE); { Database is valid now }
+	set_global_flag(GF_ACTIVE, TRUE); { Database is open }
+	set_global_flag(GF_WARTIME, TRUE); { Violance is allowed }
 
 	{ Player log records should have all their slots initially,
 	  they don't have to be allocated because they use namrec
@@ -5279,43 +4002,1192 @@ begin
 	writeln('Creating the Great Hall');
 	createroom('Great Hall');
 	getroom(1);
-	here.owner := '';
+	here.owner := public_id;
 	putroom;
 	getown;
-	own.idents[1] := '';
+	own.idents[1] := public_id;
 	putown;
 
 	writeln('Creating the Void');
 	createroom('Void');			{ loc 2 }
+	getroom(2);
+	here.owner := system_id;
+	putroom;
+	getown;
+	own.idents[2] := system_id;
+	putown;
+
 	writeln('Creating the Pit of Fire');
 	createroom('Pit of Fire');		{ loc 3 }
-			{ note that these are NOT public locations }
+	getroom(3);
+	here.owner := system_id;
+	putroom;
+	getown;
+	own.idents[3] := system_id;
+	putown;
+
+	  		{ note that these are NOT public locations }
+
+	{ spells have constant amount }
+	getindex(I_SPELL);
+	indx.top := maxspells;
+	putindex;
 
 
 	writeln('Use the SYSTEM command to view and add capacity to the database');
 	writeln;
+end;                       
+
+procedure fix_help;     { fix -subsystem by hurtta@finuh }
+begin  
+
+   writeln ('A        Clear/create privileges database.');
+   writeln ('B        Clear/create health database.');
+   writeln ('C        Create event file.');
+   writeln ('D        Reallocate describtins');
+   writeln ('E        (Exit subsystem) Start monster playing.');
+   writeln ('F        Clear/create experience database.');
+   writeln ('G        Calculate objects'' number in existence.');
+   writeln ('GL       Clear/create global database.');
+   writeln ('GS       Mark moster shutdown to global database.');
+   writeln ('GU       Mark monster active to global database.');
+   writeln ('GV       Show global database.');
+   writeln ('G-       Mark monster database as invalid.');
+   writeln ('G+       Mark monster database as valid.');
+   writeln ('H        This list');
+   writeln ('I        Repair index file.');
+   writeln ('J        Repair paths.');
+   writeln ('K        Reallocate MDL codes.');
+   writeln ('L        Repair monsters'' location.');
+   writeln ('M        Clear/create MDL database.');
+   writeln ('N        Clear/create and recount quota database.');
+   writeln ('O        Clear/create object database.');
+   writeln ('OW       Check owners of objects, rooms and monsters.');
+   writeln ('P        Clear/create player database.');
+   writeln ('Q        (Quit) Leave monster.');
+   writeln ('R        Clear/create room database.');
+   writeln ('S        Clear/create password database.');
+   writeln ('SP       Clear/create spell database.');
+   writeln ('V        View database capacity.');
+   writeln ('?        This list'); 
+   writeln;
+   writeln ('Use SYSTEM command to add database capacity.');
+end; { fix_help }
+          
+function fix_sure (s: string; batch: boolean): boolean;
+var a: string;
+begin
+  if batch then begin
+    writeln(s,'yes');
+    fix_sure := true
+  end else begin
+    write (s); readln (a); writeln;  
+    a := lowcase(a);
+    fix_sure := (a = 'y') or (a = 'yes');        
+  end;
 end;
 
+procedure fix_initialize_event (batch: boolean);
+Var i: integer;
+begin
+   writeln('Initializing eventfile');
+   for i := 1 to numevnts + 1 do begin
+      locate(eventfile,i);
+      eventfile^.validat := i;
+      eventfile^.point := 1;
+      put(eventfile);
+   end;
+   writeln ('Ready.');
+end; { fix_initialize_event }
 
-procedure special(s: string);
+
+procedure fix_clear_monster (batch: boolean); 
+var i,j,apu: integer;
+begin  
+   if fix_sure ('Do you want clear monster (NPC) database ?',batch) then begin
+      writeln ('Clearing monster database...');
+     
+      locate(indexfile,I_HEADER);
+      indexfile^.indexnum := I_HEADER;
+      indexfile^.top := 0;
+      indexfile^.inuse := 0;  
+      for i := 1 to maxindex do indexfile^.free[i] := true;
+      put(indexfile);    
+  
+      writeln ('Deleting code files...');
+      DELETE_FILE (coderoot+'CODE*.MON.*'); { deleteing all codefiles }
+
+      writeln('Initializing header file for monsters with 5 headers');
+      addheaders(5);
+  
+      getindex (I_ROOM);
+      freeindex;
+                   
+      writeln ('Clearing monsters from room database...');
+      for i := 1 to maxroom do
+         if not indx.free[i] then begin
+   
+            getroom (i);
+            here.hook := 0;
+	
+	    for j := 1 to maxpeople do with here.people[j] do  
+               if kind = P_MONSTER then begin
+                  kind := 0;
+                  username := '';
+                  name := '';
+                  parm := 0;
+                end;
+            putroom;
+         end;          
+         
+      getuser;
+      freeuser;
+      getindex(I_player);
+      freeindex;
+    
+      Writeln ('Clearing monsters from player list...');
+      for i := 1 to maxplayers do 
+         if not indx.free[i] then if user.idents[i] = '' then begin 
+              apu := i;
+              delete_log(apu)     { delete_log also command } 
+                                  { getindex(I_PLAYER)      }
+         end else if user.idents[i][1] = ':' then begin
+             apu := i;
+             delete_log (apu);
+         end;
+
+      writeln('Clearing hook from objects...');
+      getindex(I_OBJECT);
+      freeindex;
+      for i := 1 to maxroom do
+         if not indx.free[i] then begin
+            getobj(i);
+            obj.actindx := 0;
+            putobj;
+         end;
+
+      writeln('Clearing spells...');
+      getindex(I_SPELL);
+      getint(N_SPELL);
+      for i := 1 to maxspells do
+          if not indx.free[i] then begin
+	    anint.int[i] := 0;
+	    indx.free[i] := true;
+	    indx.inuse := indx.inuse -1;
+	  end;
+      putindex;
+      putint;
+
+      writeln('Clearing global codes...');
+      getglobal;
+      for i := 1 to GF_Max do if GF_Types [i] = G_Code then
+	 global.int[i] := 0;
+      freeglobal;
+
+      writeln ('Ready.');
+   end;
+end;                
+
+procedure int_in_use (n:integer);
+var i: integer;
+    free: boolean;
+begin
+   getindex(I_INT);
+   free := false;
+   if indx.top < n then begin
+      for i := indx.top +1 to n do begin
+         locate(intfile,i);
+         intfile^.intnum := i;
+         put(intfile);
+         indx.free[i] := true;
+      end;
+      indx.top := n;
+   end;
+   if indx.free[n] then begin
+      indx.free[n] := false;
+      indx.inuse := indx.inuse +1
+   end;
+   putindex;
+end; { int_in_use }
+
+procedure fix_clear_spell (batch: boolean);
+var i,j: integer;
+begin
+    if fix_sure ('Do you want clear spell database ?',batch) then begin
+	writeln('Clearing spell levels...');
+	for i := 1 to maxplayers do begin
+	    locate(spellfile,i);
+	    spellfile^.recnum := i;
+	    for j := 1 to maxspells do spellfile^.level[j] := 0;
+	    put(spellfile);
+	end;
+	
+	writeln('Clearing spell using database...');
+	locate(indexfile,I_SPELL);
+	indexfile^.indexnum := I_SPELL;
+	indexfile^.top := maxspells;
+	indexfile^.inuse := 0;
+	for i := 1 to maxindex do indexfile^.free[i] := true;
+	put(indexfile);
+
+	writeln ('Clearing spellname database...');
+	locate(namfile,T_SPELL_NAME);   
+	namfile^.validate := T_SPELL_NAME;
+	namfile^.loctop := 0;
+	for i := 1 to maxroom do namfile^.idents[i] := '';
+	put(namfile);         
+
+	writeln ('Clearing spell link database....');
+	int_in_use(N_SPELL);
+	getint(N_SPELL);
+	for i := 1 to maxspells do anint.int[i] := 0;
+	putint;
+
+	writeln('Ready. Reallocate code file.');
+
+    end;
+end;
+
+procedure fix_clear_player (batch: boolean);  { don't handle monsters }
+var i,j: integer;
+begin
+  if fix_sure ('Do you want clear player file ?',batch) then begin
+     writeln  ('Clearing player database ...');
+
+     locate(indexfile,I_PLAYER);
+     indexfile^.indexnum := I_PLAYER;
+     indexfile^.top := maxplayers;
+     indexfile^.inuse := 0;
+     for i := 1 to maxindex do indexfile^.free[i] := true;
+     put(indexfile);
+
+     locate(indexfile,I_ASLEEP);
+     indexfile^.indexnum := I_ASLEEP;
+     indexfile^.top := maxplayers;
+     indexfile^.inuse := 0;
+     for i := 1 to maxindex do indexfile^.free[i] := true;
+     put(indexfile);
+
+     getindex(I_ROOM);
+     freeindex;
+
+     writeln ('Reset player names');
+     locate(namfile,T_USER);    { players' userids }
+     namfile^.validate := T_USER;
+     namfile^.loctop := 0;
+     for i := 1 to maxroom do namfile^.idents[i] := '';
+     put(namfile);         { players' personal names }
+     locate(namfile,T_PERS);
+     namfile^.validate := T_PERS;
+     namfile^.loctop := 0;
+     for i := 1 to maxroom do namfile^.idents[i] := '';
+     put(namfile);
+
+     writeln ('Disowning rooms...');
+     for i := 1 to maxroom do
+        if not indx.free[i] then begin
+           getown;
+	   if own.idents[i] <> system_id then
+	       own.idents[i] := disowned_id;
+           putown;
+   
+           getroom (i);
+	   if here.owner <> system_id then
+	       here.owner := disowned_id;
+	   putroom;
+        end;          
+
+                
+     getindex(I_OBJECT);
+     freeindex;
+     
+                           
+     writeln ('Disowning objects ...');
+     for i:= 1 to maxroom do if not indx.free[i] then begin
+
+        getobjown;
+	if objown.idents[i] <> system_id then
+	    objown.idents[i] := disowned_id;
+        putobjown;
+
+     end;
+
+     writeln ('Ready.');
+     writeln ('Clear monster database and reallocate usage of line and block descriptions.');
+     
+  end else writeln ('Cancel.');
+end;    
+
+procedure fix_owner (batch: boolean);
+var i,num: integer;
+    rm,ob,code: indexrec;
+    s: shortstring;
+begin
+
+    getindex(I_ROOM);
+    freeindex;
+    rm := indx;
+
+     writeln ('Checking rooms ...');
+     for i := 1 to maxroom do if not rm.free[i] then begin
+	getown;  { locked }
+	if (own.idents[i] <> system_id) and 
+	      (own.idents[i] <> disowned_id) and
+	      (own.idents[i] <> public_id) then
+		if not exact_user(num,own.idents[i]) then begin
+		    getroom(i); { locked }
+		    writeln('Invalid owner of ',here.nicename,': ',
+			own.idents[i],', disowning.');
+		    own.idents[i] := disowned_id;
+		    here.owner := disowned_id;
+		    putroom;	{ freed }
+		end;
+	putown; { freed }
+    end;
+
+     getindex(I_OBJECT);
+     freeindex; ob := indx;
+     getobjnam; freeobjnam;
+            
+     writeln ('Checking objects ...');
+     for i:= 1 to maxroom do if not ob.free[i] then begin
+        getobjown; { locked }
+	if (objown.idents[i] <> system_id) and 
+	    (objown.idents[i] <> disowned_id) and
+	    (objown.idents[i] <> public_id) then
+	    if not exact_user(num,objown.idents[i]) then begin
+		writeln('Invalid owner of ',objnam.idents[i],': ',
+		    objown.idents[i],', disowning.');
+		objown.idents[i] := disowned_id;
+	    end;
+	putobjown; { freed }
+    end;
+
+
+    getindex(I_HEADER);
+    freeindex; code := indx;
+
+    writeln ('Checking MDL codes (monsters and hooks) ...');
+    for i := 1 to code.top do if not code.free[i] then begin
+	s := monster_owner(i);
+	if (s <> system_id) and  (s <> disowned_id) and (s <> public_id) then
+	    if not exact_user(num,s) then begin
+		writeln('Invalid owner of MDL code #',i:1,': ',
+		    s,', disowning (author: ',monster_owner(i,1),').');
+		set_owner(i,0,disowned_id); { don't change author of code }
+	    end;
+    end;
+
+    writeln('Ready.');
+end; { fix_owner }
+
+procedure fix_clear_room (batch: boolean);
+var i: integer;
+begin
+  mylog := 0;
+  if fix_sure('Do you want clear room database ? ',batch) then begin
+
+     Writeln ('Creating index record for room database.');
+     locate(indexfile, I_ROOM);
+     for i := 1 to maxindex do indexfile^.free[i] := true;
+     indexfile^.indexnum := I_ROOM;
+     indexfile^.top := 0; { none of each to start }
+     indexfile^.inuse := 0;
+     put(indexfile);
+
+     writeln ('Reseting room names');
+     locate(namfile,T_NAM);
+     namfile^.validate := T_NAM;
+     namfile^.loctop := 0;
+     for i := 1 to maxroom do namfile^.idents[i] := '';
+     put(namfile);
+
+     writeln ('Reset room owners');
+     locate(namfile,T_OWN);
+     namfile^.validate := T_OWN;
+     namfile^.loctop := 0;
+     for i := 1 to maxroom do namfile^.idents[i] := '';
+     put(namfile);
+
+     writeln('Initializing roomfile with 10 rooms');
+     addrooms(10);
+
+     writeln('Creating the Great Hall');
+     createroom('Great Hall');
+     getroom(1);
+     here.owner := public_id; { public location }
+     putroom;
+     getown;
+     own.idents[1] := public_id;
+     putown;
+
+     writeln('Creating the Void');
+     createroom('Void');			{ loc 2 }
+     getroom(2);
+     here.owner := system_id;
+     putroom;
+     getown;
+     own.idents[2] := system_id;
+     putown;
+
+
+     writeln('Creating the Pit of Fire');
+     createroom('Pit of Fire');		{ loc 3 }
+     getroom(3);
+     here.owner := system_id;
+     putroom;
+     getown;
+     own.idents[3] := system_id;
+     putown;
+
+	  		{ note that these are NOT public locations }
+
+     writeln ('Put all players to Great Hall');
+     locate(intfile,N_LOCATION);
+     intfile^.intnum := N_LOCATION;
+     for i := 1 to maxplayers do intfile^.int[i] := 1;
+     put(intfile);
+
+     writeln ('Set existence of object to zero.');
+     getindex(I_OBJECT);
+     freeindex;
+     for i := 1 to indx.top do if not indx.free[i] then begin
+       getobj(i);
+       obj.numexist := 0;
+       putobj;
+     end;
+     writeln ('Ready.');
+     writeln ('Clear monster (NPC) database and reallocate block and line descriptions');
+
+  end else writeln ('Cancel.');
+end;
+
+procedure fix_clear_global (batch: boolean);
+var i: integer;
+begin
+   if fix_sure ('Do you want clear global value database ? ',batch) then begin
+	writeln ('Clearing global value database ...');
+
+	int_in_use(N_GLOBAL);
+	locate(intfile,N_GLOBAL);
+	intfile^.intnum := N_GLOBAL;
+	for i := 1 to GF_MAX do intfile^.int[i] := 0;
+	put(intfile);
+
+	writeln('Ready.');
+	writeln('Reallocate code file (NPC database) and desciptions.');
+    end;
+end; { fix_clear_global }
+
+
+procedure fix_clear_object (batch: boolean);
+var i: integer;
+begin
+   if fix_sure ('Do you want clear object database ? ',batch) then begin
+      writeln ('Clearing object database ...');
+
+      locate(indexfile,I_OBJECT);
+      indexfile^.indexnum := I_OBJECT;
+      indexfile^.top := 0;
+      indexfile^.inuse := 0;
+      for i := 1 to maxindex do indexfile^.free[i] := true;
+      put(indexfile);
+
+     writeln ('Reseting object names');
+     locate(namfile,T_OBJNAM);
+     namfile^.validate := T_OBJNAM;
+     namfile^.loctop := 0;
+     for i := 1 to maxroom do namfile^.idents[i] := '';
+     put(namfile);
+
+     writeln ('Reset object owners');
+     locate(namfile,T_OBJOWN);
+     namfile^.validate := T_OBJOWN;
+     namfile^.loctop := 0;
+     for i := 1 to maxroom do namfile^.idents[i] := '';
+     put(namfile);
+
+      writeln('Initializing object file with 10 objects');
+      addobjects(10);   
+
+      writeln ('Ready.');
+      writeln ('Reallocate usage of block and line descriptions.');
+   end;
+end;                            
+
+procedure fix_repair_index (batch: boolean);
+var i,j,count,old: integer;
+begin
+   writeln ('Repairing index file...');
+   for i := 1 to 10 do begin
+      getindex(i);  
+      count := 0;
+      for j := 1 to indx.top do 
+         if not indx.free[j] then count := count +1;
+      old := indx.inuse;
+      indx.inuse := count;
+      putindex;
+      if old <> count then writeln('In index record #',i:1,
+         ' is wrong allocation counter. Repaired.');
+   end;
+   writeln('Ready.');
+end;                         
+
+
+procedure fix_codes (batch: boolean);    
+var ro,ob,cd,sp: indexrec;
+    i,j: integer; 
+
+    procedure alloc(n: integer);
+    begin
+      if n > 0 then begin
+        cd.free[n] := false;
+        cd.inuse := cd.inuse +1
+      end;
+    end;
 
 begin
-	if (s = 'rebuild') and (privd) then begin
-		if REBUILD_OK then begin
-			writeln('Do you really want to destroy the entire universe?');
-			readln(s);
-			if length(s) > 0 then
-				if substr(lowcase(s),1,1) = 'y' then
-					rebuild_system;
-		end else
-			writeln('REBUILD is disabled; you must recompile.');
-	end else if s = 'version' then begin
-		{ Don't take this out please... }
-	  	writeln('Monster, written by Rich Skrenta at Northwestern University, 1988.');
-	end else if s = 'quit' then
-		done := true;
+  writeln ('Reallacation MDL codes...');
+  getindex(I_HEADER);
+  freeindex;
+  cd := indx;
+  cd.inuse := 0;
+  for i := 1 to maxindex do cd.free[i] := true;
+
+  getindex(I_ROOM);
+  freeindex;
+  ro := indx;
+
+  getindex(I_OBJECT);
+  freeindex;
+  ob := indx;
+
+  getindex(I_SPELL);
+  freeindex;
+  sp := indx;
+
+  writeln('Scan object file');
+  for i := 1 to ob.top do if not ob.free[i] then begin
+    getobj(i);
+    freeobj;
+    with obj do begin
+      alloc (actindx);
+    end
+  end;
+  
+  writeln ('Scan room file');
+  for i := 1 to ro.top do if not ro.free[i] then begin
+    getroom(i);
+    freeroom;
+    alloc (here.hook);
+    for j := 1 to maxpeople do with here.people[j] do begin
+	if (kind = P_MONSTER) then alloc (parm);
+    end
+  end;               
+
+  writeln('Scan spell database');
+  getint(N_SPELL);
+  freeint;
+  for i := 1 to sp.top do if not sp.free[i] then 
+    if anint.int[i] > 0 then alloc(anint.int[i]);
+
+  locate(indexfile,I_HEADER);
+  indexfile^ := cd;
+  put(indexfile);
+
+  writeln('Scan global codes');
+  getglobal;
+  freeglobal;
+  for i := 1 to GF_MAX do if GF_Types[i] = G_Code then
+    if global.int[i] > 0 then alloc(global.int[i]);
+  
+  writeln ('Ready.');
 end;
 
+procedure fix_descriptions (batch: boolean);    
+var pe,ro,ob,ln,bl: indexrec;
+    i,j: integer; 
+
+    procedure alloc(n: integer);
+    begin
+      if (abs(n) = DEFAULT_LINE) or (n = 0) then { no allocate }
+      else if n < 0 then begin
+        ln.free[-n] := false;
+        ln.inuse := ln.inuse +1
+      end else begin
+        bl.free[n] := false;
+        bl.inuse := bl.inuse +1
+      end;
+    end;
+
+begin
+  writeln ('Reallocation descriptions...');
+  getindex(I_LINE);
+  freeindex;
+  ln := indx;
+
+  ln.inuse := 0;
+  for i := 1 to maxindex do ln.free[i] := true;
+
+  getindex(I_BLOCK);
+  freeindex;
+  bl := indx;
+
+  bl.inuse := 0;
+  for i := 1 to maxindex do bl.free[i] := true;
+        
+
+  getindex (I_PLAYER);
+  freeindex;
+  pe := indx;
+
+  getindex(I_ROOM);
+  freeindex;
+  ro := indx;
+
+  getindex(I_OBJECT);
+  freeindex;
+  ob := indx;
+
+  writeln ('Scan self descriptions');
+  getint(N_SELF);
+  freeint;
+  for i := 1 to pe.top do if not pe.free[i] then alloc (anint.int[i]);
+
+  writeln('Scan object file');
+  for i := 1 to ob.top do if not ob.free[i] then begin
+    getobj(i);
+    freeobj;
+    with obj do begin
+      alloc (-linedesc);
+      alloc (homedesc);
+      alloc (examine);
+      alloc (getfail);
+      alloc (getsuccess); 
+      alloc (usefail);
+      alloc (usesuccess);
+      alloc (d1);
+      alloc (d2);
+    end
+  end;
+  
+  writeln ('Scan room file');
+  for i := 1 to ro.top do if not ro.free[i] then begin
+    getroom(i);
+    freeroom;
+    with here do begin
+      for j := 1 to maxexit do with exits[j] do begin
+        alloc(-exitdesc);
+        { alloc(-closed); This isn't use yet }
+        alloc(fail);
+        alloc(success); 
+        alloc(goin);
+        alloc(comeout);     
+        alloc(hidden);      { is this in use ? }
+      end;                                    
+      for j := 1 to maxdetail do alloc(here.detaildesc[j]);
+      alloc(primary);
+      alloc(secondary);
+      alloc(-objdesc);  
+      alloc(-objdest);
+      alloc(-rndmsg);                       
+      alloc(xmsg2);
+      alloc(exitfail);
+      alloc(ofail);
+    end
+  end;               
+
+  writeln('Scan global codes');
+  getglobal;
+  freeglobal;
+  for i := 1 to GF_MAX do if GF_Types[i] = G_Text then alloc(global.int[i]);
+ 
+  locate(indexfile,I_LINE);
+  indexfile^ := ln;
+  put(indexfile);
+
+  locate(indexfile,I_BLOCK);
+  indexfile^ := bl;
+  put(indexfile);
+  
+  writeln ('Ready.');
+end;
+
+procedure fix_clear_privileges (batch: boolean);
+var i,mm: integer;
+begin
+  if fix_sure('Do you want clear privileges database ? ',batch) then begin
+     if not exact_user(mm,MM_userid) then mm := 0;
+     int_in_use(N_PRIVILEGES);
+     getint(N_PRIVILEGES);
+     for i := 1 to maxplayers do anint.int[i] := 0;
+     if mm > 0 then anint.int[mm] := all_privileges; 
+	{ more privilege for Monster Manager }
+     putint;
+     writeln ('Ready.');
+  end;
+end; { fix_clear_privileges }
+
+procedure fix_clear_experience (batch: boolean);
+var i,mm: integer;
+begin
+  if fix_sure('Do you want clear experience database ? ',batch) then begin
+     if not exact_user(mm,MM_userid) then mm := 0;
+     int_in_use(N_EXPERIENCE);
+     getint(N_EXPERIENCE);
+     for i := 1 to maxplayers do anint.int[i] := 0;
+     if mm > 0 then anint.int[mm] := MaxInt; 
+        { Monster Manager is Archwizard }
+     putint;
+     writeln ('Ready.');
+  end;
+end; { fix_clear_privileges }
+
+procedure fix_clear_health (batch: boolean);
+var i: integer;
+    exp: intrec;
+begin
+  if fix_sure('Do you want clear health database ? ',batch) then begin
+     getint(N_EXPERIENCE);
+     freeint;
+     exp := anint;
+     int_in_use(N_HEALTH);
+     getint(N_HEALTH);
+     for i := 1 to maxplayers do anint.int[i] := 
+         leveltable[level(exp.int[i])].health * goodhealth div 10;
+     putint;
+     writeln ('Ready.');
+  end;
+end; { fix_clear_health }
+
+
+procedure fix_clear_password (batch: boolean);
+var password: shortstring;
+    i: integer;
+begin
+     if fix_sure('Want you really clear password database ? ',batch) then begin
+
+        writeln('Intializing password record...');
+        locate(namfile,T_PASSWD);
+        namfile^.validate := T_PASSWD;
+        namfile^.loctop := 0;
+        for i := 1 to maxroom do namfile^.idents[i] := '';
+	put(namfile);
+
+        writeln('Initializing real name record ...');
+        locate(namfile,T_REAL_USER);
+        namfile^.validate := T_REAL_USER;
+        namfile^.loctop := 0;
+        for i := 1 to maxroom do namfile^.idents[i] := '';
+	put(namfile);
+
+	getuser;
+	freeuser;
+
+	writeln ('Making pseudo passowords... (same as virtual userid)');
+        for i := 1 to maxplayers do begin
+            password := user.idents[i];
+            if password > '' then if password[1] = '"' then begin
+               encrypt(password,i);
+               getpasswd;
+               passwd.idents[i] := password;
+               putpasswd;
+               getreal_user;
+               real_user.idents[i] := '';
+               putreal_user;
+            end;
+        end;
+        writeln ('Ready.');
+     end
+end; { fix_clear_password }
+
+procedure fix_clear_quotas(batch: boolean);
+var numrooms,allow,accept: intrec;
+    room,exit,player,acp,i: integer; 
+    roomindx: indexrec;
+begin
+    writeln('Scanning rooms....');
+    for i := 1 to maxplayers do numrooms.int[i] := 0;
+    numrooms.intnum := N_NUMROOMS;
+    for i := 1 to maxplayers do allow.int[i] := default_allow;
+    allow.intnum := N_ALLOW;
+    for i := 1 to maxplayers do accept.int[i] := 0;
+    accept.intnum := N_ACCEPT;
+    getindex(I_ROOM);
+    freeindex;
+    roomindx := indx;
+    for room := 1 to roomindx.top do if not roomindx.free[room] then begin
+	gethere(room);
+	if exact_user(player,here.owner) then begin
+	    acp := 0;
+	    for exit := 1 to maxexit do 
+		if here.exits[exit].kind = 5 then acp := acp +1;
+	    numrooms.int[player] := numrooms.int[player] +1;
+	    accept.int[player] := accept.int[player]     +acp;
+	end;
+    end;
+    writeln('Clearing quota database and writing results to it...');
+    int_in_use(N_NUMROOMS);
+    int_in_use(N_ALLOW);
+    int_in_use(N_ACCEPT);
+
+    getint(N_NUMROOMS);
+    anint := numrooms;
+    putint;
+
+    getint(N_ALLOW);
+    anint := allow;
+    putint;
+
+    getint(N_ACCEPT);
+    anint := accept;
+    putint;
+
+    writeln('OK.');
+end;
+
+
+procedure fix_repair_location(batch: boolean);
+var id,loc,slot,code,room,true_loc,found_counter: integer;
+var ex_indx,sleep_indx,room_indx,header_indx: indexrec;
+    locs: intrec;
+    temp: namrec;
+begin
+    writeln('Scanning monsters...');
+    getpers;
+    freepers;
+    getuser;
+    freeuser;
+    getindex(I_PLAYER);
+    freeindex;
+    ex_indx := indx;
+    getindex(I_ASLEEP);
+    freeindex;
+    sleep_indx := indx;
+    getindex(I_ROOM);
+    freeindex;
+    room_indx := indx;
+    getindex(I_HEADER);
+    freeindex;
+    header_indx := indx;
+    getint(N_LOCATION);
+    freeint;
+    locs := anint;
+    for id := 1 to ex_indx.top do if not ex_indx.free[id] then 
+	if user.idents[id] = '' then begin
+	    writeln('Bad player username record #',id:1);
+	    writeln('    player name: ',pers.idents[id]);
+	end else if user.idents[id][1] = ':' then begin 
+	    found_counter := 0;
+	    true_loc := 0;
+	    loc := locs.int[id];
+	    for room := 1 to room_indx.top do if not room_indx.free[room] then begin
+		gethere(room);
+		for slot := 1 to maxpeople do begin
+		    if (here.people[slot].username = user.idents[id]) and 
+			(here.people[slot].kind = P_MONSTER) then begin
+			found_counter := found_counter +1;
+			true_loc := room;
+		    end;
+		end;
+	    end;
+	    if (found_counter = 1) and (true_loc = loc) then
+		writeln(pers.idents[id],': ok')
+	    else if found_counter = 0 then begin
+		writeln(pers.idents[id],': not found from any room - deleted ',
+		    '- can''t update code database.');
+		ex_indx.free[id] := true;
+		ex_indx.inuse := ex_indx.inuse - 1;
+		if not sleep_indx.free[id] then begin
+		    sleep_indx.free[id] := true;
+		    sleep_indx.inuse := sleep_indx.inuse - 1; 
+			{ onkohan tarpeelista ? }
+		end;
+		pers.idents[id] := '';
+		user.idents[id] := '';
+		getint(N_SELF);		{ destroy self description }
+		delete_block(anint.int[id]);
+		putint;
+	    end else if (found_counter = 1) and ( loc <> true_loc) then begin
+		writeln(pers.idents[id],': found from wrong location - updated.');
+		locs.int[id] := true_loc;
+	    end else if (found_counter > 1) then begin
+		writeln(pers.idents[id],': duplicated monster - deleted.');
+		for room := 1 to room_indx.top do if not room_indx.free[room] then begin
+		    code := 0;
+		    getroom(room); { locking }
+		    for slot := 1 to maxpeople do begin
+			if (here.people[slot].username = user.idents[id]) and 
+			(here.people[slot].kind = P_MONSTER) then begin
+			    code := here.people[slot].parm;
+			    here.people[slot].username := '';
+			    here.people[slot].kind     := 0;
+			    here.people[slot].parm     := 0;
+			end;
+		    end;
+		    putroom;	    { unlocking }
+		    if code > 0 then begin
+			if not header_indx.free[code] then begin
+			    header_indx.free[code] := true;
+			    header_indx.inuse := sleep_indx.inuse - 1; 
+			    delete_program(code);			
+			end;
+		    end;
+		end; { end of room loop }
+		ex_indx.free[id] := true;
+		ex_indx.inuse := ex_indx.inuse - 1;
+		if not sleep_indx.free[id] then begin
+		    sleep_indx.free[id] := true;
+		    sleep_indx.inuse := sleep_indx.inuse - 1; 
+			{ onkohan tarpeelista ? }
+		end;
+		pers.idents[id] := '';
+		user.idents[id] := '';
+		getint(N_SELF);		{ destroy self description }
+		delete_block(anint.int[id]);
+		putint;
+    	    end else writeln('%',pers.idents[id],': bad software error.');
+	end;
+    writeln('Updating database...');
+
+    temp := pers;
+    getpers;
+    pers := temp;
+    putpers;
+    
+    temp := user;
+    getuser;
+    user := temp;
+    putuser;
+    
+    getindex(I_PLAYER);
+    indx := ex_indx;
+    putindex;
+    getindex(I_ASLEEP);
+    indx := sleep_indx;
+    putindex;
+    getindex(I_ROOM);
+    indx := room_indx;
+    putindex;
+    getindex(I_HEADER);
+    indx := header_indx;
+    freeindex;
+    getint(N_LOCATION);
+    anint := locs;
+    putint;
+    writeln('Ready.');
+end; { fix_repair_location }
+
+procedure fix_calculate_existence(batch: boolean);
+var table: array [1 .. maxroom ] of integer;
+    i,room,slot,object,old_value,pslot,inv: integer;
+begin
+    writeln ('Calculate objects'' number in existence');
+    for i := 1 to maxroom do table[i] := 0;
+    getindex(I_ROOM);
+    freeindex;
+    writeln ('Scan room file');
+    for room := 1 to indx.top do if not indx.free[room] then begin
+	gethere (room);
+	for slot := 1 to maxobjs do begin
+	    i := here.objs[slot];
+	    if (i < 0) or (i > maxroom) then
+		writeln('Invalid object #',i:1,' entry #',slot:1,
+		    ' at room ',here.nicename)
+	    else if i > 0 then table[i] := table[i] +1;
+	end;
+	for pslot := 1 to maxpeople do begin
+	    if here.people[pslot].kind > 0 then begin
+		for inv := 1 to maxhold do begin
+		    i := here.people[pslot].holding[inv];
+		    if (i < 0) or (i > maxroom) then
+			writeln('Invalid object #',i:1,' entry #',inv:1,
+			    ' at monster ',here.people[pslot].name)
+		    else if i > 0 then table[i] := table[i] +1;
+		end;
+	    end;
+	end;
+    end;
+    writeln('Write result to object file');
+    getindex(I_OBJECT);
+    freeindex;
+    for object := 1 to maxroom do begin
+	if (object > indx.top) or indx.free[object] then begin
+	    if table[object] > 0 then begin
+		writeln('Object #',object:1,' not exist but here is');
+		writeln('  ',table[object],' entries in room file.');
+	    end;
+	end else begin
+	    getobj(object);
+	    old_value := obj.numexist;
+	    obj.numexist := table[object];
+	    putobj;
+	    if old_value <> table[object] then writeln(obj.oname,' fixed.');
+	end;
+    end;
+    writeln ('Ready.');
+end;	{ fix_calculate_existence }
+
+
+procedure fix_repair_paths(batch: boolean);
+var room,exit,room_to,second_exit,exit2: integer;
+
+    procedure delete_exit(room,exit: integer);
+    begin
+	getroom(room);
+	writeln('  Removing exit from ',here.nicename,
+	    ' to ',direct[exit],'.');
+	here.exits[exit].kind  := 0;
+	here.exits[exit].toloc := 0;
+	here.exits[exit].slot  := 0;
+	putroom;
+    end; { delete_exit }
+	
+begin
+    writeln('Repairing paths...');
+    
+    getindex(I_ROOM);
+    freeindex;
+    for room := 1 to indx.top do if not indx.free[room] then begin
+	for exit := 1 to maxexit do begin
+
+	    gethere(room);	{ reread here }
+	    if not (here.exits[exit].kind in [0,5]) then begin
+		room_to := here.exits[exit].toloc;
+		second_exit := here.exits[exit].slot;
+
+		if (second_exit < 0) or (second_exit > maxexit) then begin
+		    writeln('Exit from ',here.nicename,' to ',direct[exit],
+			' is bad: target slot is out of range');
+		    delete_exit(room,exit);
+		
+		end else if room_to = 0 then begin
+		    writeln('Exit from ',here.nicename,' to ',direct[exit],
+			' is nowhere.');
+
+		end else if (room_to < 1) or (room_to > indx.top) then begin
+		    writeln('Exit from ',here.nicename,' to ',direct[exit],
+			' is bad: target room is out of range.');
+		    delete_exit(room,exit);
+
+		end else if indx.free[room_to] then begin
+		    writeln('Exit from ',here.nicename,' to ',direct[exit],
+			' is bad: target room isn''t in use');
+		    delete_exit(room,exit);
+
+		end else begin
+		    if room = room_to then
+			writeln('Exit from ',here.nicename,' to ',direct[exit],
+			    ' is loop.');
+		    if second_exit = 0 then begin
+			writeln('Exit from ',here.nicename,' to ',direct[exit],
+			    ' is bad: no target slot');
+			delete_exit(room,exit);
+		    end else begin
+			gethere(room_to);
+			if (here.exits[second_exit].toloc <> room) or
+			   (here.exits[second_exit].slot <> exit) then begin
+			    writeln('Exits from ',here.nicename,' to ',
+				direct[second_exit],
+				' and');
+			    gethere(room);
+			    writeln(' from ',here.nicename,' to ',direct[exit],
+				' are bad: bad link');
+			    delete_exit(room,exit);
+			end;
+		    end;
+		end;
+	    end else if here.exits[exit].toloc <> 0 then begin
+		writeln('Exit from ',here.nicename,' to ',direct[exit],
+		    ' isn''t exit.');
+	    end; 
+	end;	{ exit }
+    end;    { room }
+    writeln ('Ready.');
+end;
+
+procedure fix_view_global_flags;
+begin
+    writeln('Global flags and values:');
+    writeln;
+    writeln('Monster active: ',view_global_value(GF_ACTIVE,TRUE));
+    writeln('Database valid: ',view_global_value(GF_VALID));
+    writeln('Wartime:        ',view_global_value(GF_WARTIME));
+    writeln('Welcome text:   ',view_global_value(GF_STARTGAME));
+    writeln('NewPlayer text: ',view_global_value(GF_NEWPLAYER));
+    writeln('Global Hook:    ',view_global_value(GF_CODE));
+end;
+
+[global]
+function fix_system
+	(batch: string := ''):  { in this procedure you not have logged in }
+				{ system ! }
+	boolean;
+var s: string;
+    done: boolean;
+    batch_mode: boolean;
+begin            	
+   done := batch > '';
+   fix_system := true;
+   repeat
+      if batch > '' then begin
+	    s := batch;
+	    { writeln('Batch mode: ',s); }
+	    batch_mode := true;
+      end else begin
+	    write ('fix> '); readln (s); writeln;
+	    batch_mode := false;
+      end;
+      s := lowcase(s);
+      if s = '' then writeln ('Enter h for help.')
+      else case s[1] of  
+	'a'	: fix_clear_privileges	    (batch_mode);
+	'b'	: fix_clear_health	    (batch_mode);
+        'c'	: fix_initialize_event	    (batch_mode);
+        'd'     : fix_descriptions	    (batch_mode);
+        'f'     : fix_clear_experience	    (batch_mode);
+	'g'	: 
+	begin
+		if s = 'g' then		fix_calculate_existence	(batch_mode)
+		else if s = 'gl' then	fix_clear_global	(batch_mode)
+		else if s = 'gs' then	set_global_flag(GF_ACTIVE,FALSE)
+		else if s = 'gu' then   set_global_flag(GF_ACTIVE,TRUE)
+		else if s = 'g-' then	set_global_flag(GF_VALID,FALSE)
+		else if s = 'g+' then   set_global_flag(GF_VALID,TRUE)
+		else if s = 'gv' then   fix_view_global_flags
+		else writeln ('Enter ? for help.');
+	end;
+        'i'     : fix_repair_index	    (batch_mode);
+	'j'	: fix_repair_paths	    (batch_mode);
+	'k'	: fix_codes		    (batch_mode);
+	'l'	: fix_repair_location	    (batch_mode);
+        'm'     : fix_clear_monster	    (batch_mode);
+	'n'	: fix_clear_quotas	    (batch_mode);
+        'o'     : 
+	begin
+	    if s = 'o' then fix_clear_object(batch_mode)
+	    else if s = 'ow' then fix_owner (batch_mode)
+	    else writeln('Enter ? for help.');
+	end;
+        'p'     : fix_clear_player	    (batch_mode);
+        'r'     : fix_clear_room	    (batch_mode);
+        's'     : 
+	begin
+	    if s = 's' then fix_clear_password	    (batch_mode)
+	    else if s = 'sp' then fix_clear_spell   (batch_mode)
+	    else writeln('Enter ? for help.');
+	end;
+        'v'     : system_view;
+        'h','?' : fix_help;
+        'e'     : done := true;
+        'q'     : begin
+			fix_system := false;
+			done := true;
+		end;
+        otherwise writeln ('Use ? for help');
+      end; { case }
+   until done
+end;
 
 { put an object in this location
   if returns false, there were no more free object slots here:
@@ -5326,19 +5198,14 @@ function place_obj(n: integer;silent:boolean := false): boolean;
 var
 	found: boolean;
 	i: integer;
-
 begin
-	if here.objdrop = 0 then
-		getroom
-	else
-		getroom(here.objdrop);
+	if here.objdrop = 0 then getroom
+	else getroom(here.objdrop);
 	i := 1;
 	found := false;
 	while (i <= maxobjs) and (not found) do begin
-		if here.objs[i] = 0 then
-			found := true
-		else
-			i := i + 1;
+		if here.objs[i] = 0 then found := true
+		else i := i + 1;
 	end;
 	place_obj := found;
 	if found then begin
@@ -5359,7 +5226,7 @@ begin
 			if here.objdesc <> 0 then
 				print_subs(here.objdesc,obj_part(n))
 			else
-				writeln('Dropped.');
+				writeln('Dropped ',obj_part(n),'.');
 		end;
 	end else
 		freeroom;
@@ -5368,7 +5235,6 @@ end;
 
 { remove an object from this room }
 function take_obj(objnum,slot: integer): boolean;
-
 begin
 	getroom;
 	if here.objs[slot] = objnum then begin
@@ -5485,80 +5351,98 @@ begin
 
 		drop_obj(i);
 		if place_obj(objnum,TRUE) then begin
-			getobjnam;
-			freeobjnam;
-			writeln('The ',objnam.idents[objnum],' has slipped out of your hands.');
+		    getobj(objnum);
+		    freeobj;
 
+		    writeln('The ',obj.oname,' has slipped out of your hands.');
 			
-		s := objnam.idents[objnum];
-			log_event(myslot,E_SLIPPED,0,0,s);
+		    log_event(myslot,E_SLIPPED,0,0,obj.oname);
+
+		    if obj.actindx > 0 then
+			run_monster('',obj.actindx,'drop you','','',
+			    sysdate+' '+systime);
+
 		end else
-			writeln('%error in maybe_drop; unsuccessful place_obj; notify Monster Manager');
+		    writeln('%error in maybe_drop; unsuccessful place_obj; notify Monster Manager');
 
 	end;
 end;
 
-
-
-{ return TRUE if the player is allowed to program the object n
-  if checkpub is true then obj_owner will return true if the object in
-  question is public }
-
-function obj_owner(n: integer;checkpub: boolean := FALSE):boolean;
-
-begin
-	getobjown;
-	freeobjown;
-	if (objown.idents[n] = userid) or (privd) then begin
-		obj_owner := true;
-	end else if (objown.idents[n] = '') and (checkpub) then begin
-		obj_owner := true;
-	end else begin
-		obj_owner := false;
-	end;
-end;
-
+{ function obj_owner moved to module CUSTOM }
 
 procedure do_duplicate(s: string);
+label 0; { for panic }
 var
-	objnum: integer;
+	objnum,oldloc: integer;
 
-begin
-   if length(s) > 0 then begin
-	if not is_owner(location,TRUE) then begin
-			{ only let them make things if they're on their home turf }
-		writeln('You may only create objects when you are in one of your own rooms.');
-	end else begin
-		if lookup_obj(objnum,s) then begin
-			if obj_owner(objnum,TRUE) then begin
-				if not(place_obj(objnum,TRUE)) then
-					{ put the new object here }
-					writeln('There isn''t enough room here to make that.')
-				else begin
+    function action(s: shortstring; objnum: integer): boolean;
+    begin
+	if obj_owner(objnum,TRUE) then begin
+	    if not(place_obj(objnum,TRUE)) then begin
+			{ put the new object here }
+		writeln('There isn''t enough room here to make that.');
+		goto 0; { leave loop }
+	    end else begin
 { keep track of how many there }	getobj(objnum);
 { are in existence }			obj.numexist := obj.numexist + 1;
 					putobj;
 
-					log_event(myslot,E_MADEOBJ,0,0,
-						myname + ' has created an object here.');
-					writeln('Object created.');
-				end;
-			end else
-				writeln('Power to create that object belongs to someone else.');
-		end else
-			writeln('There is no object by that name.');
+		log_event(myslot,E_MADEOBJ,0,0,log_name + ' has created an object here.');
+		writeln('Object ',s,' created.');
+	    end;
+	end else
+	    writeln('Power to create ',s,' belongs to someone else.');
+	action := true;
+	checkevents(true);
+	if oldloc <> location then goto 0; { panic }
+    end;
+    
+    function restriction (n: integer): boolean;
+	begin
+		restriction := true;
+	end;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto 0;
+    end;
+
+
+begin
+    if s = '' then grab_line('Object? ',s,eof_handler := leave);
+    oldloc := location;
+    if length(s) > 0 then begin
+	if not is_owner(location,TRUE) then begin
+	    { only let them make things if they're on their home turf }
+	    writeln('You may only create objects when you are in one of your own rooms.');
+	end else begin
+	    if scan_obj(action,s,,restriction) then begin
+	    end else
+		writeln('There is no object by that name.');
 	end;
    end else
-		writeln('To duplicate an object, type DUPLICATE <object name>.');
+	writeln('To duplicate an object, type DUPLICATE <object name>.');
+    0: { for panic }
 end;
 
 
 { make an object }
 procedure do_makeobj(s: string);
+label exit_label;
 var
 	objnum: integer;
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+
 begin
+	if s = '' then grab_line('Object? ',s,eof_handler := leave);
+
 	gethere;
 	if checkhide then begin
 	if not is_owner(location,TRUE) then begin
@@ -5619,8 +5503,9 @@ begin
 
 						obj.d1 := 0;
 						obj.d2 := 0;
-						obj.exp3 := 0;
-						obj.exp4 := 0;
+						obj.ap := 0;
+						obj.exreq := 0;
+
 						obj.exp5 := DEFAULT_LINE;
 						obj.exp6 := DEFAULT_LINE;
 					putobj;
@@ -5635,7 +5520,7 @@ begin
 					writeln('%error in makeobj - could not place object; notify the Monster Manager.')
 				else begin
 					log_event(myslot,E_MADEOBJ,0,0,
-						myname + ' has created an object here.');
+						log_name + ' has created an object here.');
 					writeln('Object created.');
 				end;
 
@@ -5645,25 +5530,94 @@ begin
 	end else
 		writeln('To create an object, type MAKE <object name>.');
 	end;
+    exit_label:
+end;
+
+procedure do_summon(s: string);
+label exit_label;
+var
+	n: integer;
+	sname: string;
+	vname: string;
+
+	sid: integer;
+	vslot: integer;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+begin
+	if s = '' then grab_line('Spell? ',s,eof_handler := leave);
+	sname := s;
+	grab_line('Victim? ',s,eof_handler := leave);
+	vname := s;
+
+	if not lookup_spell(sid,sname) then writeln('Unkown spell.')
+	else if not parse_pers(vslot,vname) then writeln('Victim isn''t here.')
+	else begin
+	    getspell(mylog);
+	    freespell;
+	    if spell.level[sid] = 0 then writeln('Unkown spell.')
+	    else if vslot = myslot then begin
+		writeln('Spell summoned.');
+		log_event(myslot,E_SUMMON,vslot,sid);
+		getint(N_SPELL);
+		freeint;
+		getspell_name;
+		freespell_name;
+		run_monster('',anint.int[sid],
+		    'summon', '','',sysdate + ' ' + systime,
+		    spell_name.idents[sid], here.people[myslot].name);
+	    end else begin
+		log_event(myslot,E_SUMMON,vslot,sid);
+		writeln('Spell summoned.');
+	    end;
+	end;
+    exit_label:
 end;
 
 { remove the type block for an object; all instances of the object must
   be destroyed first }
 
 procedure do_unmake(s: string);
+label exit_label;
 var
 	n: integer;
 	tmp: string;
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
 begin
+	if s = '' then grab_line('Object? ',s,eof_handler := leave);
+
 	if not(is_owner(location,TRUE)) then
 		writeln('You must be in one of your own rooms to UNMAKE an object.')
-	else if lookup_obj(n,s) then begin
+	else if lookup_obj(n,s,true) then begin
 		tmp := obj_part(n);
 			{ this will do a getobj(n) for us }
 
 		if obj.numexist = 0 then begin
 			delete_obj(n);
+                        delete_line(obj.linedesc);
+                        delete_block(obj.homedesc);
+			delete_block(obj.examine);
+                        delete_block(obj.getfail);
+                        delete_block(obj.getsuccess);
+			delete_block(obj.usefail);
+			delete_block(obj.usesuccess);
+                        delete_block(obj.d1);
+                        delete_block(obj.d2);
+			if obj.actindx > 0 then begin { delete hook (hurtta@finuh) }
+				delete_program(obj.actindx);
+				delete_general(I_HEADER,obj.actindx);
+			end;
 
 			log_event(myslot,E_UNMAKE,0,0,tmp);
 			writeln('Object removed.');
@@ -5671,54 +5625,86 @@ begin
 			writeln('You must DESTROY all instances of the object first.');
 	end else
 		writeln('There is no object here by that name.');
+    exit_label:
 end;
+
 
 
 { destroy a copy of an object }
 
 procedure do_destroy(s: string);
+label 0;    { for panic }
 var
-	slot,n: integer;
+	slot,n,oldloc: integer;
+	pub: shortstring;
+
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	getobjown;
+	freeobjown;
+	if (objown.idents[n] <> userid) and (objown.idents[n] <> public_id) and
+       (not owner_priv) then begin { minor change by leino@finuha }
+	    writeln('You must be the owner of ',s,' or');
+	    writeln(s,' must be public to destroy it.');
+	    action := true;
+	end else if obj_hold(n) then begin
+	    if mywear = n then x_unwear;
+	    if mywield = n then x_unwield;
+
+	    slot := find_hold(n);
+	    drop_obj(slot);
+
+	    log_event(myslot,E_DESTROY,0,0,
+		log_name + ' has destroyed ' + obj_part(n) + '.');
+	    writeln('Object destroyed.');
+
+	    getobj(n);
+	    obj.numexist := obj.numexist - 1;
+	    putobj;
+	    action := true;
+	end else if obj_here(n) then begin
+	    slot := find_obj(n);
+	    if not take_obj(n,slot) then
+		writeln('Someone picked ',s,' up before you could destroy it.')
+	    else begin
+		log_event(myslot,E_DESTROY,0,0,
+		log_name + ' has destroyed ' + obj_part(n,FALSE) + '.');
+		writeln('Object ',s,', destroyed.');
+
+		getobj(n);
+		obj.numexist := obj.numexist - 1;
+		putobj;
+	    end;
+	    action := true;
+	end else action := false;
+	checkevents(TRUE);
+	if location <> oldloc then goto 0;  { panic }
+    end; { action }
+
+    function restriction (n: integer): boolean;
+	begin
+	    restriction := obj_here(n,true) or obj_hold(n);
+	    { true = not found hidden objects }
+	end;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto 0;
+    end;
 
 begin
+	if s = '' then grab_line('Object? ',s,eof_handler := leave);
+
+	oldloc := location;
 	if length(s) = 0 then	
 		writeln('To destroy an object you own, type DESTROY <object>.')
 	else if not is_owner(location,TRUE) then
 		writeln('You must be in one of your own rooms to destroy an object.')
-	else if parse_obj(n,s) then begin
-		getobjown;
-		freeobjown;
-		if (objown.idents[n] <> userid) and (objown.idents[n] <> '') and
-		   (not privd) then
-			writeln('You must be the owner of an object to destroy it.')
-		else if obj_hold(n) then begin
-			slot := find_hold(n);
-			drop_obj(slot);
-
-			log_event(myslot,E_DESTROY,0,0,
-				myname + ' has destroyed ' + obj_part(n) + '.');
-			writeln('Object destroyed.');
-
-			getobj(n);
-			obj.numexist := obj.numexist - 1;
-			putobj;
-		end else if obj_here(n) then begin
-			slot := find_obj(n);
-			if not take_obj(n,slot) then
-				writeln('Someone picked it up before you could destroy it.')
-			else begin
-				log_event(myslot,E_DESTROY,0,0,
-					myname + ' has destroyed ' + obj_part(n,FALSE) + '.');
-				writeln('Object destroyed.');
-
-				getobj(n);
-				obj.numexist := obj.numexist - 1;
-				putobj;
-			end;
-		end else
-			writeln('Such a thing is not here.');
+	else if scan_obj(action,s,,restriction) then begin
 	end else
 		writeln('No such thing can be seen here.');
+	0: { for panic }
 end;
 
 
@@ -5742,77 +5728,189 @@ end;
 
 { make a room }
 procedure do_form(s: string);
+label exit_label;
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
 
 begin
 	gethere;
 	if checkhide then begin
-		if links_possible then begin
+		if (get_counter(N_NUMROOMS,mylog) 
+		    >= get_counter(N_ALLOW,mylog))
+		    and not quota_priv then begin
+		    writeln('Yow haven''t room quota left.');
+		    writeln('Use SHOW QUOTA to check limits.');
+		end else if (get_counter(N_NUMROOMS,mylog) >= min_room) and 
+			(get_counter(N_ACCEPT,mylog) < min_accept) and
+			not quota_priv then begin
+		    writeln('You haven''t made Accepts enaugh.');
+		    writeln('Use SHOW QUOTA to check limits.');
+
+		end else if links_possible then begin
 			if s = '' then begin
-				grab_line('Room name: ',s);
+				grab_line('Room name? ',s,eof_handler := leave);
 			end;
 			s := slead(s);
 
 			createroom(s);
+
 		end else begin
 			writeln('You may not create any new exits here.  Go to a place where you can create');
 			writeln('an exit before FORMing a new room.');
 		end;
 	end;
+    exit_label:
 end;
 
 
+
+
+
 procedure xpoof; { loc: integer; forward }
+label 0; { panic }
 var
 	targslot: integer;
+	oldloc: integer;
+	prevcode: integer;
 
 begin
+	getnam;		{ rooms' names }
+	freenam;
+
+	oldloc := location;
+	prevcode := here.hook;
+        if here.hook > 0 then
+           run_monster('',here.hook,'poof out','target',nam.idents[loc],
+               sysdate+' '+systime);
+
+        if oldloc = location then meta_run('leave','target',nam.idents[loc]);
+
 	if put_token(loc,targslot,here.people[myslot].hiding) then begin
 		if hiding then begin
-			log_event(myslot,E_HPOOFOUT,0,0,myname,location);
-			log_event(myslot,E_HPOOFIN,0,0,myname,loc);
+			log_event(myslot,E_HPOOFOUT,0,0,log_name,location);
+			log_event(myslot,E_HPOOFIN,0,0,log_name,loc);
 		end else begin
-			log_event(myslot,E_POOFOUT,0,0,myname,location);
-			log_event(targslot,E_POOFIN,0,0,myname,loc);
+			log_event(myslot,E_POOFOUT,0,0,log_name,location);
+			log_event(targslot,E_POOFIN,0,0,log_name,loc);
 		end;
 
 		take_token(myslot,location);
 		myslot := targslot;
 		location := loc;
 		setevent;
-		do_look;
+
+		{ one trap }
+                oldloc := location;		
+		if prevcode > 0 then 
+		    run_monster('',prevcode,'escaped','','',
+			sysdate+' '+systime);
+		if oldloc <> location then goto 0; { panic }
+
+		do_look; if oldloc <> location then goto 0;
+  
+              if here.hook > 0 then
+			run_monster('',here.hook,'poof in','','',
+				sysdate+' '+systime);
+
+		if location = oldloc then meta_run('enter','','');
+
 	end else
 		writeln('There is a crackle of electricity, but the poof fails.');
+	0: { for panic }
 end;
 
+procedure poof_monster(n: integer; s: string); forward;
 
-procedure do_poof(s: string);
+procedure poof_other(n: integer);
+label exit_label;
 var
-	n,loc: integer;
+	loc: integer;
+	s: string;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
 
 begin
-	if privd then begin
-		gethere;
-		if lookup_room(loc,s) then begin
-			xpoof(loc);
-		end else if parse_pers(n,s) then begin
-			grab_line('What room? ',s);
-			if lookup_room(loc,s) then begin
-				log_event(myslot,E_POOFYOU,n,loc);
-				writeln;
-				writeln('You extend your arms, muster some energy, and ',here.people[n].name,' is');
-				writeln('engulfed in a cloud of orange smoke.');
-				writeln;
-			end else
-				writeln('There is no room named ',s,'.');
+	if not protected(n) then begin
+		grab_line('What room? ',s,eof_handler := leave);
+		if here.people[n].kind <> P_PLAYER then 
+		    if here.people[n].kind = P_MONSTER then
+			poof_monster(n,s)
+		    else writeln('%error in poof_other.')
+		else if protected(n) then writeln ('You can''t poof ',here.people[n].name,' now.')
+		    {   !!! necessary double checking !! }
+		else if lookup_room(loc,s) then begin
+			log_event(myslot,E_POOFYOU,n,loc);
+			writeln;
+			writeln('You extend your arms, muster some energy, and ',here.people[n].name,' is');
+			writeln('engulfed in a cloud of orange smoke.');
+			writeln;
 		end else
 			writeln('There is no room named ',s,'.');
-	end else
-		writeln('Only the Monster Manager may poof.');
+	end else writeln ('You can''t poof ',here.people[n].name,' now.');
+    exit_label:
 end;
+
+procedure do_poof(s: string);
+label exit_label;
+var
+	n,loc: integer;
+        sown,town: veryshortstring;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+begin
+	if poof_priv then begin { minor change by leino@finuha }
+		gethere;
+		if ((lookup_room(loc,s) and parse_pers(n,s)) or (s='')) then begin
+			grab_line('Poof who? (<RETURN> for yourself) ',s,
+			    eof_handler := leave);
+			if s='' then begin
+				grab_line('What room? ',s,
+					eof_handler := leave);
+				if lookup_room(loc,s) then
+					xpoof(loc);
+			end else if parse_pers(n,s) then
+					poof_other(n)
+				else
+					writeln('I can see no-one named ',s,' here.');
+		end else if lookup_room(loc,s) then
+			xpoof(loc)
+		else if parse_pers(n,s) then
+			poof_other(n)
+		else
+			writeln('There is no room named ',s,'.');
+
+	end else begin { unprivileged poof (hurtta@finuh) }
+            gethere;
+            sown := here.owner;
+            if s = '' then grab_line('What room? ',s,eof_handler := leave);
+            if (s = '') or (s='?') then command_help('poof')
+            else if lookup_room(loc,s) then begin
+              gethere(loc);
+              town := here.owner;
+              if (sown <> userid) or (town <> userid) then
+                 writeln ('Only Monster Manager may poof in other people''s rooms.')
+              else xpoof(loc);
+            end else writeln ('No such room');
+	end;	
+    exit_label:
+end;
+
 
 
 procedure link_room(origdir,targdir,targroom: integer);
-
+var owner: integer;
 begin
 	{ since exit creation involves the writing of two records,
 	  perhaps there should be a global lock around this code,
@@ -5825,6 +5923,10 @@ begin
 
 	getroom;
 	with here.exits[origdir] do begin
+
+		if (kind = 5) and exact_user(owner,here.owner) then
+		    sub_counter(N_ACCEPT,owner);
+
 		toloc := targroom;
 		kind := 1; { type of exit, they can customize later }
 		slot := targdir; { exit it comes out in in target room }
@@ -5833,12 +5935,16 @@ begin
 	end;
 	putroom;
 
-	log_event(myslot,E_NEWEXIT,0,0,myname,location);
+	log_event(myslot,E_NEWEXIT,0,0,log_name,location);
 	if location <> targroom then
-		log_event(0,E_NEWEXIT,0,0,myname,targroom);
+		log_event(0,E_NEWEXIT,0,0,log_name,targroom);
 
 	getroom(targroom);
 	with here.exits[targdir] do begin
+
+		if (kind = 5) and exact_user(owner,here.owner) then
+		    sub_counter(N_ACCEPT,owner);
+
 		toloc := location;
 		kind := 1;
 		slot := origdir;
@@ -5854,6 +5960,7 @@ end;
 User procedure to link a room
 }
 procedure do_link(s: string);
+label exit_label;
 var
 	ok: boolean;
 	orgexitnam,targnam,trgexitnam: string;
@@ -5861,6 +5968,13 @@ var
 	targdir,	{ number of target exit direction }
 	origdir: integer;{ number of exit direction here }
 	firsttime: boolean;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
 
 begin
 
@@ -5881,11 +5995,12 @@ begin
 
 	repeat
 		if not(firsttime) then
-			grab_line('Direction of exit? ',orgexitnam)
+			grab_line('Direction of exit? ',orgexitnam,
+				eof_handler := leave)
 		else
 			firsttime := false;
 
-		ok :=lookup_dir(origdir,orgexitnam);
+		ok :=lookup_dir(origdir,orgexitnam,true);
 		if ok then
 			ok := can_make(origdir);
 	until (orgexitnam = '') or ok;
@@ -5900,19 +6015,21 @@ begin
 
 		repeat
 			if not(firsttime) then
-				grab_line('Room to link to? ',targnam)
+				grab_line('Room to link to? ',targnam,
+				    eof_handler := leave)
 			else
 				firsttime := false;
 
-			ok := lookup_room(targroom,targnam);
+			ok := lookup_room(targroom,targnam,true);
 		until (targnam = '') or ok;
 	end;
 
 	if ok then begin
 		repeat
 			writeln('Exit comes out in target room');
-			grab_line('from what direction? ',trgexitnam);
-			ok := lookup_dir(targdir,trgexitnam);
+			grab_line('from what direction? ',trgexitnam,
+				eof_handler := leave);
+			ok := lookup_dir(targdir,trgexitnam,true);
 			if ok then
 				ok := can_make(targdir,targroom);
 		until (trgexitnam='') or ok;
@@ -5924,6 +6041,7 @@ begin
 	end;
    end else
 	writeln('No links are possible here.');
+    exit_label:
 end;
 
 
@@ -5931,7 +6049,7 @@ procedure relink_room(origdir,targdir,targroom: integer);
 var
 	tmp: exit;
 	copyslot,
-	copyloc: integer;
+	copyloc,owner: integer;
 
 begin
 	gethere;
@@ -5956,6 +6074,7 @@ end;
 
 
 procedure do_relink(s: string);
+label exit_label;
 var
 	ok: boolean;
 	orgexitnam,targnam,trgexitnam: string;
@@ -5963,6 +6082,12 @@ var
 	targdir,	{ number of target exit direction }
 	origdir: integer;{ number of exit direction here }
 	firsttime: boolean;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
 
 begin
 	log_action(c_relink,0);
@@ -5980,11 +6105,12 @@ begin
 
 	repeat
 		if not(firsttime) then
-			grab_line('Direction of exit to relink? ',orgexitnam)
+			grab_line('Direction of exit to relink? ',orgexitnam,
+			    eof_handler := leave)
 		else
 			firsttime := false;
 
-		ok :=lookup_dir(origdir,orgexitnam);
+		ok :=lookup_dir(origdir,orgexitnam,true);
 		if ok then
 			ok := can_alter(origdir);
 	until (orgexitnam = '') or ok;
@@ -5999,19 +6125,21 @@ begin
 
 		repeat
 			if not(firsttime) then
-				grab_line('Room to relink exit into? ',targnam)
+				grab_line('Room to relink exit into? ',targnam,
+				    eof_handler := leave)
 			else
 				firsttime := false;
 
-			ok := lookup_room(targroom,targnam);
+			ok := lookup_room(targroom,targnam,true);
 		until (targnam = '') or ok;
 	end;
 
 	if ok then begin
 		repeat
 			writeln('New exit comes out in target room');
-			grab_line('from what direction? ',trgexitnam);
-			ok := lookup_dir(targdir,trgexitnam);
+			grab_line('from what direction? ',trgexitnam,
+			    eof_handler := leave);
+			ok := lookup_dir(targdir,trgexitnam,true);
 			if ok then
 				ok := can_make(targdir,targroom);
 		until (trgexitnam='') or ok;
@@ -6021,11 +6149,12 @@ begin
 		relink_room(origdir,targdir,targroom);
 	end;
 	end;
+    exit_label:
 end;
 
 
 { print the room default no-go message if there is one;
-  otherwise supply the generic "you can't go that way" }
+  otherwise supply the generic "you can't do that." }
 
 procedure default_fail;
 
@@ -6033,7 +6162,7 @@ begin
 	if (here.exitfail <> 0) and (here.exitfail <> DEFAULT_LINE) then
 		print_desc(here.exitfail)
 	else
-		writeln('You can''t go that way.');
+		writeln('You can''t do that.');
 end;
 
 procedure  exit_fail(dir: integer);
@@ -6083,19 +6212,23 @@ end;
 
 
 procedure do_exit; { (exit_slot: integer)-- declared forward }
+label	0;
 var
 	orig_slot,
 	targ_slot,
 	orig_room,
 	enter_slot,
-	targ_room: integer;
+	targ_room,
+	old_loc,prevcode: integer;
 	doalook: boolean;
 
 begin
+	getnam;		{ rooms' names }
+	freenam;
+
 	if (exit_slot < 1) or (exit_slot > 6) then
 		exit_fail(exit_slot)
 	else if here.exits[exit_slot].toloc > 0 then begin
-		block_subs(here.exits[exit_slot].success,myname);
 
 		orig_slot := myslot;
 		orig_room := location;
@@ -6103,6 +6236,23 @@ begin
 		enter_slot := here.exits[exit_slot].slot;
 		doalook := here.exits[exit_slot].autolook;
 
+		old_loc := location;
+		prevcode := here.hook;
+		if here.hook > 0 then
+			run_monster('',here.hook,'leave',
+				'target',nam.idents[targ_room],
+				sysdate+' '+systime);
+		if old_loc = location then meta_run('leave',
+				'target',nam.idents[targ_room]);
+		if old_loc = location then meta_run_2('leave',
+				'target',nam.idents[targ_room]);
+		if location <> old_loc then begin
+			{ writeln ('You must interrupt walking.'); }
+			goto 0
+		end;
+
+		block_subs(here.exits[exit_slot].success,myname);
+                
 				{ optimization for exit that goes nowhere;
 				  why go nowhere?  For special effects, we
 				  don't want it to take too much time,
@@ -6115,8 +6265,14 @@ begin
 			log_entry(enter_slot,targ_room,orig_slot);
 				{ orig_slot in log_entry 'cause we're not
 				  really going anwhere }
+			old_loc := location;
 			if doalook then
 				do_look;
+			if here.hook > 0 then
+				run_monster('',here.hook,'enter','','',
+					sysdate+' '+systime);
+			if old_loc = location then meta_run('enter','','');
+			if old_loc = location then meta_run_2('enter','','');
 		end else begin
 			take_token(orig_slot,orig_room);
 			if not put_token(targ_room,targ_slot) then begin
@@ -6130,15 +6286,32 @@ begin
 				log_entry(enter_slot,targ_room,targ_slot);
 
 				myslot := targ_slot;
+				{ one trap }
 				location := targ_room;
+				old_loc := location;
 				setevent;
-	
+
+				if prevcode > 0 then 
+				    run_monster('',prevcode,'escaped','','',
+				    sysdate+' '+systime);
+				if old_loc <> location then goto 0; { panic }
+
 				if doalook then
 					do_look;
+				if old_loc <> location then goto 0;
+
+				if here.hook > 0 then
+					run_monster('',here.hook,'enter',
+						'','',
+       						sysdate+' '+systime);
+				if old_loc = location then meta_run('enter','','');
+                                if old_loc = location then meta_run_2('enter','','');
+
 			end;
 		end;
 	end else
-		exit_fail(exit_slot);
+	  	exit_fail(exit_slot);
+	0: { if monster (NPC) trow player to somewhere }
 end;
 
 
@@ -6154,7 +6327,7 @@ begin
 	if ch in ['1','3','5','7','9'] then
 		cycle_open := true
 	else
-		cycle_open := false;
+		cycle_open := false;                    
 end;
 
 
@@ -6257,28 +6430,44 @@ Put him through the exit	( in do_exit )
 Do a look for him		( in do_exit )
 }
 procedure do_go(s: string;verb:boolean := true);
+label exit_label;
 var
-	dir: integer;
+	dir: integer;                
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+    procedure exit_fail2(dir: integer);
+    begin
+	if here.hook = 0 then exit_fail(dir)
+	else if not run_monster (
+	    '',here.hook,'wrong dir','direction',
+	    s,sysdate+' '+systime) then exit_fail(dir);
+    end; { exit_fail2 }
 
 begin
-	gethere;
-	if checkhide then begin
-		if length(s) = 0 then
-			writeln('You must give the direction you wish to travel.')
-		else begin
-			if which_dir(dir,s) then begin
-				if (dir >= 1) and (dir <= maxexit) then begin
-					if here.exits[dir].toloc = 0 then begin
-						exit_fail(dir);
-					end else begin
-						exit_case(dir);
-					end;
-				end else
-					exit_fail(dir);
-			end else
-				exit_fail(dir);
-		end;
+    if s = '' then grab_line('Direction? ',s,eof_handler := leave);
+
+    gethere;
+    if checkhide then begin
+	if length(s) = 0 then
+	    writeln('You must give the direction you wish to travel.')
+	else begin
+	    if which_dir(dir,s) then begin
+		if (dir >= 1) and (dir <= maxexit) then begin
+		    if here.exits[dir].toloc = 0 then exit_fail2(dir)
+		    else if here.exits[dir].reqverb and not verb then 
+			exit_fail2(dir)
+		    else exit_case(dir);
+
+		end else exit_fail2(dir);
+	    end else exit_fail2(dir);
 	end;
+    end;
+    exit_label:
 end;
 
 
@@ -6299,8 +6488,19 @@ end;
 
 
 procedure do_say(s:string);
+label exit_label;
+var	old_loc: integer;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
 
 begin
+	if s = '' then grab_line('Message? ',s,
+	    eof_handler := leave);
+
 	if length(s) > 0 then begin
 
 {		if length(s) + length(myname) > 79 then begin
@@ -6313,9 +6513,16 @@ begin
 		if hiding then
 			log_event(myslot,E_HIDESAY,0,0,s)
 		else
-			log_event(myslot,E_SAY,0,0,s);
+	  		log_event(myslot,E_SAY,0,0,s);
+
+		old_loc := location;
+		if here.hook > 0 then 
+			run_monster('',here.hook,'say','speech',s,
+				sysdate+' '+systime);
+		if old_loc = location then meta_run('say','speech',s);
 	end else
 		writeln('To talk to others in the room, type SAY <message>.');
+    exit_label:
 end;
 
 procedure do_setname(s: string);
@@ -6326,61 +6533,129 @@ var
 	sprime: string;
 
 begin
-	gethere;
-	if s <> '' then begin
-	if length(s) <= shortlen then begin
-		sprime := lowcase(s);
-		if (sprime = 'monster manager') and (userid <> MM_userid) then begin
-			writeln('Only the Monster Manager can have that personal name.');
-			ok := false;
-		end else if (sprime = 'vice manager') and (userid <> MVM_userid) then begin
-			writeln('Only the Vice Manager can have that name.');
-			ok := false;
-		end else if (sprime = 'faust') and (userid <> FAUST_userid) then begin
-			writeln('You are not Faust!  You may not have that name.');
-			ok := false;
-		end else
-			ok := true;
+  { if s = '' then grab_line('Name? ',s); }
 
-		if ok then
-			if exact_pers(dummy,sprime) then begin
-				if dummy = myslot then
-					ok := true
-				else begin
-					writeln('Someone already has that name.  Your personal name must be unique.');
-					ok := false;
-				end;
-			end;
-
-		if ok then begin
-			myname := s;
-			getroom;
-			notice := here.people[myslot].name;
-			here.people[myslot].name := s;
-			putroom;
-			notice := notice + ' is now known as ' + s;
-
-			if not(hiding) then
-				log_event(0,E_SETNAM,0,0,notice);
-					{ slot 0 means notify this player also }
-
-			getpers;	{ note the new personal name in the logfile }
-			pers.idents[mylog] := s; { don't lowcase it }
-			putpers;
-		end;
-	end else
-		writeln('Please limit your personal name to ',shortlen:1,' characters.');
-	end else
-		writeln('You are known to others as ',myname);
+  gethere;
+  if s <> '' then begin
+     if length(s) <= shortlen then begin
+         sprime := lowcase(s);
+	 if (sprime = 'monster manager') and (userid <> MM_userid) then begin
+            writeln('Only the Monster Manager can have that personal name.');
+            ok := false;
+         end else ok := true;
+         if ok then begin
+            if exact_pers(dummy,sprime) then begin
+               if dummy = mylog then ok := true
+               else begin 
+                  writeln('Someone already has that name.  Your personal name must be unique.');
+                  ok := false;
+               end;
+            end;
+         end;
+         if ok then begin
+            myname := s;
+            getroom;
+            notice := here.people[myslot].name;
+            here.people[myslot].name := s;
+            putroom;
+            notice := notice + ' is now known as ' + s;
+            if not(hiding) then log_event(0,E_SETNAM,0,0,notice);
+            { slot 0 means notify this player also }
+            getpers;	{ note the new personal name in the logfile }
+            pers.idents[mylog] := s; { don't lowcase it }
+            putpers;
+         end;
+     end else writeln('Please limit your personal name to ',shortlen:1,' characters.');
+  end else writeln('You are known to others as ',myname);
 end;
 
-function sysdate:string;
-var
-	thedate: packed array[1..11] of char;
+procedure meta_run; { (label_name,variable: shortstring;
+                    value: mega_string); forward }
+label 1;
+var i: integer;
+    oldloc: integer;
+begin     
+   oldloc := location;
+   gethere;
+   for i:= 1 to maxpeople do
+      if here.people[i].kind = P_MONSTER then 
+         if here.people[i].health > 0 then begin
+            run_monster (here.people[i].name,
+                                  here.people[i].parm,
+                                  label_name,variable,value,
+                                  sysdate+' '+systime);
+            if location <> oldloc then goto 1; { oobss !! }
+	    gethere;	    { this is necessary }
+         end;
+  1:
+end;
 
+procedure meta_run_2; { (label_name,variable: shortstring;
+                    value: mega_string); forward }
+label 1;
+var i: integer;
+    oldloc,num: integer;
+begin     
+   oldloc := location;
+   gethere;
+   for i:= 1 to maxobjs do begin
+      num := here.objs[i];
+      if num > 0 then begin
+         getobj(num);
+         freeobj;
+         if obj.actindx > 0 then
+            run_monster ('',obj.actindx,
+                                  label_name,variable,value,
+                                  sysdate+' '+systime);
+         if location <> oldloc then goto 1; { oobss !! }
+	 gethere;	    { this is neccessary }
+      end;
+  end;
+  1:
+end;
+
+   
+procedure attack_monster(mslot,power: integer);
+var health,mid,old_health: integer;
+    tmp: intrec;
 begin
-	date(thedate);
-	sysdate := thedate;
+   getroom;
+   if here.people[mslot].kind <> P_MONSTER then begin
+      freeroom;
+      writeln ('%trap_1 in attack_monster. Notify Monster Manager.');
+      writeln ('% I mean that really !!');
+   end else begin
+      if not exact_user(mid,here.people[mslot].username) then begin
+           freeroom;
+           writeln('%trap_2 in attack_monster. Notify Monster Manager.');
+           writeln('% It is best for you !');
+      end else begin
+         health := here.people[mslot].health;
+	 old_health := health;
+         health := health - power; if health < 0 then health := 0;
+         here.people[mslot].health := health;
+         putroom;           
+
+         tmp := anint;
+         getint(N_HEALTH);
+         anint.int[mid] := health;
+         putint;
+         anint := tmp;
+
+         if health = 0 then begin
+	    drop_everything(mslot);
+	    if old_health > 0 then 
+		if monster_owner(here.people[mslot].parm) <> userid then
+		    add_experience(here.people[mslot].experience div 6 +1);
+	 end;
+         if power > 0 then desc_health(mslot);
+         if health > 0 then 
+            run_monster (here.people[mslot].name,
+                                  here.people[mslot].parm,
+                               'attack','','',
+                               sysdate+' '+systime);
+      end
+   end
 end;
 
 
@@ -6393,15 +6668,51 @@ example display for alignment:
 
 }
 
-procedure do_who;
+procedure do_who (param: string);
+label 1,2; { exit }
 var
 	i,j: integer;
 	ok: boolean;
 	metaok: boolean;
 	roomown: veryshortstring;
+        code: integer;
+	c: char;
+	s: shortstring;
+	play,exist: indexrec;
+	write_this: boolean;
+	count: integer;
+	s1: string;
+	type_players,type_monsters: boolean;
 
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 2;
+    end;
+
+
+var short_line : boolean;
 begin
+
+    short_line := terminal_line_len < 50;
+
+    param := lowcase(param);
+    if param = '' then param := 'players';
+
+    type_monsters := index(param,'mon') > 0;
+    type_players  := index(param,'pla') > 0;
+    if param = 'all' then begin
+	type_monsters := true;
+	type_players := true;
+    end;
+    if param = '?' then begin
+	command_help('who');
+    end else if not type_monsters and not type_players then
+	    writeln ('Type WHO ? for help.')
+    else begin
+
 	log_event(myslot,E_WHO,0,(rnd100 mod 4));
+	count := 0;
 
 	{ we need just about everything to print this list:
 		player alloc index, userids, personal names,
@@ -6409,6 +6720,10 @@ begin
 
 	getindex(I_ASLEEP);	{ Get index of people who are playing now }
 	freeindex;
+	play := indx;
+	getindex(I_PLAYER);
+	freeindex;
+	exist := indx;
 	getuser;
 	freeuser;
 	getpers;
@@ -6419,153 +6734,228 @@ begin
 	freeown;
 	getint(N_LOCATION);	{ get where they are }
 	freeint;
-	writeln('                   Monster Status');
-	writeln('                ',sysdate,' ',systime);
+	if not short_line then write('              ');
+	writeln('     Monster Status');
+	if not short_line then write('              ');
+	writeln('  ',sysdate,' ',systime);
 	writeln;
-	writeln('Username        Game Name                 Where');
+	if not short_line then write('Username        ');
+	writeln('Game Name                 Where');
 
-	if (privd) { or has_kind(O_ALLSEEING) } then
+
+	if (poof_priv or owner_priv) { or has_kind(O_ALLSEEING) } then { minor change by leino@finuha }
 		metaok := true
 	else
 		metaok := false;
 
-	for i := 1 to indx.top do begin
-		if not(indx.free[i]) then begin
-			write(user.idents[i]);
-			j := length(user.idents[i]);
-			while j < 16 do begin
-				write(' ');
-				j := j + 1;
-			end;
+	for i := 1 to exist.top do begin
+		if not(exist.free[i]) then begin
 
-			write(pers.idents[i]);
-			j := length(pers.idents[i]);
-			while j <= 25 do begin
-				write(' ');
-				j := j + 1;
-			end;
-
-			if not(metaok) then begin
-				roomown := own.idents[anint.int[i]];
+			write_this := not play.free[i];
+                        if user.idents[i] = '' then begin
+                           if write_this and not short_line then 
+			    write('<unknown>       ')
+                        end else if user.idents[i][1] <> ':' then begin
+			   if not type_players then write_this := false;
+			   if write_this and not short_line then begin
+				write(user.idents[i]);
+				for j := length(user.idents[i]) to 15 do
+				    write(' ');
+			   end;
+                        end else begin
+			   readv(user.idents[i],c,code);
+			   write_this := write_this or monster_runnable(code);
+			   if not type_monsters then write_this := false;
+			   if write_this and not short_line then begin
+			      s := monster_owner(code);
+			      write('<',class_out(s),'>');
+                              for j := length(class_out(s)) to 13 do write(' ');
+                           end;
+                        end;
+                        
+                        if write_this then begin
+			   write(pers.idents[i]);
+			   j := length(pers.idents[i]);
+			   while j <= 25 do begin
+			      write(' ');
+			      j := j + 1;
+			   end;
+                                                    
+			   if not(metaok) then begin
+			      roomown := own.idents[anint.int[i]];
 
 { if a person is in a public or disowned room, or
   if they are in the domain of the WHOer, then the player should know
   where they are  }
 
-				if (roomown = '') or (roomown = '*') or
-					(roomown = userid) then
+			      if (roomown = public_id) or
+				    (roomown = disowned_id) or
+				    (roomown = userid) then
 					ok := true
-				else
+			      else
 					ok := false;
 
 
-{ the player obviously knows where he is }
-				if i = mylog then
-					ok := true;
-			end;
+			   end;
 
 
-			if ok or metaok then begin
+			   if ok or metaok then begin
 				writeln(nam.idents[anint.int[i]]);
-			end else
+			   end else
 				writeln('n/a');
+			  count := count +1;
+			  if count mod ( terminal_page_len - 2) = 0 then begin
+				grab_line('-more-',s1,erase := true,
+				    eof_handler := leave);
+				if s1 > '' then goto 1;
+			  end;
+                       end; { write_this }
 		end;
 	end;
-end;
-
-function own_trans(s: string): string;
-
-begin
-	if s = '' then
-		own_trans := '<public>'
-	else if s = '*' then
-		own_trans := '<disowned>'
-	else
-		own_trans := s;
+	1:  { for quit }
+    end;
+    2:
 end;
 
 
-procedure list_rooms(s: shortstring);
+procedure list_rooms(s: shortstring; PROCEDURE more);
 var
 	first: boolean;
 	i,j,posit: integer;
 
+	columns: integer;
 begin
+	columns := terminal_line_len div 24;
+	if columns < 1 then columns := 1;
+
 	first := true;
 	posit := 0;
 	for i := 1 to indx.top do begin
 		if (not indx.free[i]) and (own.idents[i] = s) then begin
-			if posit = 3 then begin
+			if posit = columns then begin
 				posit := 1;
 				writeln;
+				more;
 			end else
 				posit := posit + 1;
 			if first then begin
 				first := false;
-				writeln(own_trans(s),':');
+				writeln(class_out(s),':');
+				more;
 			end;
 			write('    ',nam.idents[i]);
 			for j := length(nam.idents[i]) to 21 do
 				write(' ');
 		end;
 	end;
-	if posit <> 3 then
+	if posit <> 3 then begin
 		writeln;
+		more;
+	end;
+
 	if first then
-		writeln('No rooms owned by ',own_trans(s))
+		writeln('No rooms owned by ',class_out(s))
 	else
 		writeln;
+	more;
 end;
 
 
 procedure list_all_rooms;
+label 1;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 1;
+    end;
+
 var
 	i,j: integer;
 	tmp: packed array[1..maxroom] of boolean;
+	linecount: integer;
+
+    procedure more;
+    var s: string;
+    begin
+	linecount := linecount +1;
+	if linecount > terminal_page_len -2 then begin
+	    grab_line('-more-',s,erase:=true,
+		eof_handler := leave);
+	    if s > '' then goto 1;
+	    linecount := 0
+	end;
+    end;
 
 begin
+
+	linecount := 0;
 	tmp := zero;
-	list_rooms('');		{ public rooms first }
-	list_rooms('*');	{ disowned rooms next }
+
+	list_rooms(public_id,more); 	{ public rooms first }
+	list_rooms(system_id,more); 	{ system rooms }
+	list_rooms(disowned_id,more); 	{ disowned rooms next }
 	for i := 1 to indx.top do begin
 		if not(indx.free[i]) and not(tmp[i]) and
-		   (own.idents[i] <> '') and (own.idents[i] <> '*') then begin
-				list_rooms(own.idents[i]);	{ player rooms }
+		   (own.idents[i] <> system_id) and 
+		   (own.idents[i] <> disowned_id) and
+		   (own.idents[i] <> public_id) then begin
+				list_rooms(own.idents[i],more);	{ player rooms }
 				for j := 1 to indx.top do
 					if own.idents[j] = own.idents[i] then
 						tmp[j] := TRUE;
 		end;
 	end;
+    1: { out } 
 end;
 
 procedure do_rooms(s: string);
+label 1;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 1;
+    end;
+
 var
 	cmd: string;
-	id: veryshortstring;
+	id: shortstring;
 	listall: boolean;
+	linecount: integer;
+
+    procedure more;
+    var s: string;
+    begin
+	linecount := linecount +1;
+	if linecount > terminal_page_len -2 then begin
+	    grab_line('-more-',s,erase:=true,
+		eof_handler := leave);
+	    if s > '' then goto 1;
+	    linecount := 0
+	end;
+    end;
+
 
 begin
-	getnam;
-	freenam;
-	getown;
-	freeown;
-	getindex(I_ROOM);
-	freeindex;
+    linecount := 0;
+    getnam;
+    freenam;
+    getown;
+    freeown;
+    getindex(I_ROOM);
+    freeindex;
 
-	listall := false;
-	s := lowcase(s);
-	cmd := bite(s);
+    listall := false;
+    s := lowcase(s);
+    cmd := bite(s);
+    if cmd = '?' then begin
+	command_help('rooms');
+    end else begin
 	if cmd = '' then
 		id := userid
-	else if cmd = 'public' then
-		id := ''
-	else if cmd = 'disowned' then
-		id := '*'
-	else if cmd = '<public>' then
-		id := ''
-	else if cmd = '<disowned>' then
-		id := '*'
-	else if cmd = '*' then
+	else if lookup_class(id,cmd) then   { hurtta@finuh }
+	else if (cmd = '*') or (cmd = 'all') then
 		listall := true
 	else if length(cmd) > veryshortlen then
 		id := substr(cmd,1,veryshortlen)
@@ -6573,79 +6963,316 @@ begin
 		id := cmd;
 
 	if listall then begin
-		if privd then
+		if poof_priv or owner_priv then { minor change by leino@finuha }
 			list_all_rooms
 		else
 			writeln('You may not obtain a list of all the rooms.');
 	end else begin
-		if privd or (userid = id) or (id = '') or (id = '*') then
-			list_rooms(id)
+		if poof_priv or owner_priv or 
+			(userid = id) or 
+			(id = public_id) or 
+			(id = disowned_id) then
+			{ minor change by leino@finuha }
+			list_rooms(id,more)
 		else
 			writeln('You may not list rooms that belong to another player.');
 	end;
+    end;
+    1: { out }
 end;
 
 
 
-procedure do_objects;
+procedure do_objects (param: string);
+label 0; { out }
 var
 	i: integer;
-	total,public,disowned,private: integer;
+	total,public,disowned,private,system: integer;
+	id: shortstring;
+	print_count: integer;
+	s1: string;
+	all: boolean; 
+	player: shortstring;
+	myindex: indexrec;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 0;
+    end;
 
 begin
+    param := lowcase(param);
+    all := false;
+    if param = '' then player := userid
+    else if (param = '*') or (param = 'all') then begin
+	player := '<all objects>';
+	all := true
+    end else if lookup_class(player,param) then
+    else if length(param) > shortlen then 
+	player := substr(param,1,shortlen)
+    else player := param;
+	
+    if param = '?' then begin
+	command_help('objects');
+    end else if (player <> public_id) and (player <> disowned_id) and
+	(player <> userid) and not owner_priv then
+	writeln('You can only get list of your own objects.')
+    else begin
+	if all then writeln('Objects:')
+	else writeln('Objects of ',class_out(player),':');
+	print_count := 0;
 	getobjnam;
 	freeobjnam;
 	getobjown;
 	freeobjown;
 	getindex(I_OBJECT);
-	freeindex;
+	freeindex; myindex := indx;
 
 	total := 0;
 	public := 0;
 	disowned := 0;
 	private := 0;
+	system := 0;
 
 	writeln;
-	for i := 1 to indx.top do begin
-		if not(indx.free[i]) then begin
-			total := total + 1;
-			if objown.idents[i]='' then begin
-				writeln(i:4,'    ','<public>':12,'    ',objnam.idents[i]);
-				public := public + 1
-			end else if objown.idents[i]='*' then begin
-				writeln(i:4,'    ','<disowned>':12,'    ',objnam.idents[i]);
-				disowned := disowned + 1
-			end else begin
-				private := private + 1;
+	for i := 1 to myindex.top do 
+	    if not(myindex.free[i]) then begin
+		total := total + 1;
+		id := objown.idents[i];
+		if id = public_id then public := public + 1
+		else if id = disowned_id then  disowned := disowned + 1
+		else if id = system_id then system := system + 1
+		else private := private + 1;
 
-				if (objown.idents[i] = userid) or
-				 (privd) then begin
-{ >>>>>> }	writeln(i:4,'    ',objown.idents[i]:12,'    ',objnam.idents[i]);
-				end;
+		if (id = player) or (all) then  begin 
+			writeln(i:4,'    ',
+			    class_out(id):12,'    ',
+			    objnam.idents[i]);
+			print_count := print_count +1;
+			if print_count > terminal_page_len -2 then begin
+			    grab_line('-more-',s1,erase := true,
+				eof_handler := leave);
+			    if s1 > '' then goto 0;
+			    print_count := 0;
 			end;
-		end;
-	end;
+		    end;
+	    end;
 	writeln;
 	writeln('Public:      ',public:4);
 	writeln('Disowned:    ',disowned:4);
 	writeln('Private:     ',private:4);
+	writeln('System:      ',system:4);
 	writeln('             ----');
 	writeln('Total:       ',total:4);
+    end;
+    0:
+end;
+
+procedure do_monsters (param: string);
+label 0; { out }
+var
+	i: integer;
+	total,public,disowned,private,system,mid: integer;
+	id: shortstring;
+	print_count: integer;
+	s1: string;
+	all: boolean; 
+	player: shortstring;
+	myindex: indexrec;
+	c,x: char;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 0;
+    end;
+
+begin
+    param := lowcase(param);
+    all := false;
+    if param = '' then player := userid
+    else if (param = '*') or (param = 'all') then begin
+	player := '<all monsters>';
+	all := true
+    end else if lookup_class(player,param) then
+    else if length(param) > shortlen then 
+	player := substr(param,1,shortlen)
+    else player := param;
+	
+    if param = '?' then begin
+	command_help('monsters');
+    end else if (player <> public_id) and (player <> disowned_id) and
+	(player <> userid) and not owner_priv then
+	writeln('You can only get list of your own monsters.')
+    else begin
+	if all then writeln('Monsters:')
+	else writeln('Monsters of ',class_out(player),':');
+	print_count := 0;
+	getuser;
+	freeuser;
+	getpers;
+	freepers;
+	getindex(I_PLAYER);
+	freeindex; myindex := indx;
+
+	total := 0;
+	public := 0;
+	disowned := 0;
+	private := 0;
+	system := 0;
+
+	writeln;
+	for i := 1 to myindex.top do 
+	    if not(myindex.free[i]) then begin
+		id := user.idents[i];
+		if id > '' then if id[1] = ':' then begin
+		    total := total + 1;
+		    readv(id,c,mid);
+		    id := monster_owner(mid);
+
+		    if monster_runnable(mid) then x := '*'
+		    else x := ' ';
+
+		    if id = public_id then public := public + 1
+		    else if id = disowned_id then  disowned := disowned + 1
+		    else if id = system_id then system := system + 1
+		    else private := private + 1;
+
+		    if (id = player) or (all) then  begin 
+			writeln(i:4,' ',x,'  ',
+			    class_out(id):12,'    ',
+			    pers.idents[i]);
+			print_count := print_count +1;
+			if print_count > terminal_page_len -2 then begin
+			    grab_line('-more-',s1,erase := true,
+				eof_handler := leave);
+			    if s1 > '' then goto 0;
+			    print_count := 0;
+			end;
+		    end;
+		end;
+	    end;
+	writeln;
+	writeln('Public:      ',public:4);
+	writeln('Disowned:    ',disowned:4);
+	writeln('Private:     ',private:4);
+	writeln('System:      ',system:4);
+	writeln('             ----');
+	writeln('Total:       ',total:4);
+    end;
+    0:
+end; { do_monsters }
+
+procedure do_spells (param: string);
+label 0; { out }
+var
+	i: integer;
+	total,public,disowned,private,system: integer;
+	id: shortstring;
+	print_count: integer;
+	s1: string;
+	all: boolean; 
+	player: shortstring;
+
+	myindex: indexrec;
+	myint:   intrec;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 0;
+    end;
+
+begin
+    param := lowcase(param);
+    all := false;
+    if param = '' then player := userid
+    else if (param = '*') or (param = 'all') then begin
+	player := '<all spells>';
+	all := true
+    end else if lookup_class(player,param) then
+    else if length(param) > shortlen then 
+	player := substr(param,1,shortlen)
+    else player := param;
+	
+    if param = '?' then begin
+	command_help('spells');
+    end else if (player <> public_id) and (player <> disowned_id) and
+	(player <> userid) and not owner_priv then
+	writeln('You can only get list of your own spells.')
+    else begin
+	if all then writeln('Spells:')
+	else writeln('Spells of ',class_out(player),':');
+	print_count := 0;
+	getspell_name;
+	freespell_name;
+	getint(N_SPELL);
+	freeint; myint := anint;
+
+	getindex(I_SPELL);
+	freeindex; myindex := indx;
+
+	total := 0;
+	public := 0;
+	disowned := 0;
+	private := 0;
+	system := 0;
+
+	writeln;
+	for i := 1 to myindex.top do 
+	    if not(myindex.free[i]) then begin
+		total := total + 1;
+		id := monster_owner(myint.int[i]);
+		if id = public_id then public := public + 1
+		else if id = disowned_id then  disowned := disowned + 1
+		else if id = system_id then system := system + 1
+		else private := private + 1;
+
+		if (id = player) or (all) then  begin 
+			writeln(i:4,'    ',
+			    class_out(id):12,'    ',
+			    spell_name.idents[i]);
+			print_count := print_count +1;
+			if print_count > terminal_page_len -2 then begin
+			    grab_line('-more-',s1,erase := true,
+				eof_handler := leave);
+			    if s1 > '' then goto 0;
+			    print_count := 0;
+			end;
+		    end;
+	    end;
+	writeln;
+	writeln('Public:      ',public:4);
+	writeln('Disowned:    ',disowned:4);
+	writeln('Private:     ',private:4);
+	writeln('System:      ',system:4);
+	writeln('             ----');
+	writeln('Total:       ',total:4);
+    end;
+    0:
 end;
 
 
 procedure do_claim(s: string);
 var
-	n: integer;
+	n,code,mslot: integer;
 	ok: boolean;
 	tmp: string;
+	oldowner : integer;
 
 begin
 	if length(s) = 0 then begin	{ claim this room }
 		getroom;
-		if (here.owner = '*') or (privd) then begin
+		if not exact_user(oldowner,here.owner) then oldowner := 0;
+		if (here.owner = disowned_id) or 
+		    (owner_priv and (here.owner <> system_id)) or
+		    manager_priv then begin { minor change by leino@finuha }
+					    { and hurtta@finuh }
 			here.owner := userid;
 			putroom;
+			change_owner(oldowner,mylog);
+			if here.hook > 0 then set_owner(here.hook,0,userid);
 			getown;
 			own.idents[location] := userid;
 			putown;
@@ -6653,18 +7280,27 @@ begin
 			writeln('You are now the owner of this room.');
 		end else begin
 			freeroom;
-			if here.owner = '' then
+			if here.owner = public_id then
 				writeln('This is a public room.  You may not claim it.')
+			else if here.owner = system_id then
+				writeln('The system own this room.  You may not claim it.')
 			else
 				writeln('This room has an owner.');
 		end;
 	end else if lookup_obj(n,s) then begin
 		getobjown;
 		freeobjown;
-		if objown.idents[n] = '' then
-			writeln('That is a public object.  You may DUPLICATE it, but may not CLAIM it.')
-		else if objown.idents[n] <> '*' then
-			writeln('That object has an owner.')
+      	  	{*** Let the MM claim any object ***}
+		{ jlaiho@finuh }
+		if ( (objown.idents[n] = public_id) 
+		    and (not owner_priv) ) then { minor change by leino@finuha }
+		    writeln('That is a public object.  You may DUPLICATE it, but may not CLAIM it.')
+		else if ( (objown.idents[n] = system_id) 
+		    and (not manager_priv) ) then { minor change by hurtta@finuha }
+		    writeln('That is a system''s object. ')
+		else if ( (objown.idents[n] <> disowned_id) 
+		    and (not owner_priv) ) then { minor change by leino@finuha }
+		    writeln('That object has an owner.')
 		else begin
 			getobj(n);
 			freeobj;
@@ -6676,41 +7312,86 @@ begin
 				else
 					ok := false;
 			end;
-
+                        
 			if ok then begin
 				getobjown;
 				objown.idents[n] := userid;
 				putobjown;
+				if obj.actindx > 0 then
+					set_owner(obj.actindx,0,userid);
 				tmp := obj.oname;
 				log_event(myslot,E_OBJCLAIM,0,0,tmp);
-				writeln('You are now the owner the ',tmp,'.');
+				writeln('You are now the owner of ',tmp,'.');
 			end else
 				writeln('You must have one to claim it.');
 		end;
-	end else
-		writeln('There is nothing here by that name to claim.');
+	end else if lookup_pers(n,s) then begin
+		if parse_pers(mslot,s) then begin   { parse_pers make gethere }
+			if here.people[mslot].kind = P_MONSTER then begin
+          			code := here.people[mslot].parm;
+				if ( (monster_owner(code) = public_id) 
+				    and (not owner_priv) ) then 
+				    writeln('That is a public monster.')
+				else if ( (monster_owner(code) = system_id) 
+				    and (not manager_priv) ) then
+				    writeln('That is a system''s monster.')
+				else if ( (monster_owner(code) <> disowned_id) 
+				    and (not owner_priv) ) then 
+				    writeln('That monster has an owner.')
+				else begin
+					set_owner(code,0,userid);
+					tmp := here.people[mslot].name;
+					log_event(myslot,E_OBJCLAIM,0,0,tmp);
+					writeln('You are now the owner of ',tmp,'.');
+				end;
+			end else writeln ('That isn''t a monster.');			
+                end else writeln ('That monster isn''t here.');
+	end else if lookup_spell(n,s) then begin
+	    if ( (spell_owner(n) = public_id) and (not owner_priv) ) then 
+				    writeln('That is a public spell.')
+	    else if ( (spell_owner(n) = system_id) and (not manager_priv) ) then
+				    writeln('That is a system''s spell.')
+	    else if ( (spell_owner(n) <> disowned_id) and (not owner_priv) ) then 
+				    writeln('That spell has an owner.')
+	    else begin
+					getint(N_SPELL);
+					freeint;
+					code := anint.int[n];
+					set_owner(code,0,userid);
+					tmp := spell_name.idents[n];
+					log_event(myslot,E_OBJCLAIM,0,0,tmp);
+					writeln('You are now the owner of ',tmp,'.');
+	    end;
+	end else writeln('There is nothing here by that name to claim.');
 end;
 
 procedure do_disown(s: string);
 var
-	n: integer;
+	n,mslot,code,oldowner: integer;
 	tmp: string;
-
 begin
+
 	if length(s) = 0 then begin	{ claim this room }
 		getroom;
-		if (here.owner = userid) or (privd) then begin
+		if not exact_user(oldowner,here.owner) then oldowner := 0;
+		if (here.owner = userid) or 
+		    (owner_priv and (here.owner <> system_id)) or
+		    manager_priv then begin { minor change by leino@finuha }
 			getroom;
-			here.owner := '*';
+			here.owner := disowned_id;
 			putroom;
+			change_owner(oldowner,0);
+			if here.hook > 0 then set_owner(here.hook,0,disowned_id);
 			getown;
-			own.idents[location] := '*';
+			own.idents[location] := disowned_id;
 			putown;
 			log_event(myslot,E_DISOWN,0,0);
 			writeln('You have disowned this room.');
 		end else begin
 			freeroom;
-			writeln('You are not the owner of this room.');
+			if here.owner = system_id then
+			    writeln('Owner of this room is system.')
+			else writeln('You are not the owner of this room.');
 		end;
 	end else begin	{ disown an object }
 		if lookup_obj(n,s) then begin
@@ -6719,17 +7400,54 @@ begin
 			tmp := obj.oname;
 
 			getobjown;
-			if objown.idents[n] = userid then begin
-				objown.idents[n] := '*';
+			if (objown.idents[n] = userid) or 
+			    (owner_priv and ( objown.idents[n] <> system_id))
+			    or manager_priv then begin
+				objown.idents[n] := disowned_id;
 				putobjown;
+				if obj.actindx > 0 then
+					set_owner(obj.actindx,0,disowned_id);
 				log_event(myslot,E_OBJDISOWN,0,0,tmp);
 				writeln('You are no longer the owner of the ',tmp,'.');
 			end else begin
 				freeobjown;
-				writeln('You are not the owner of any such thing.');
+				if objown.idents[n] = system_id then
+				    writeln('System is owner of this.')
+				else writeln('You are not the owner of any such thing.');
 			end;
-		end else
-			writeln('You are not the owner of any such thing.');
+		end else if lookup_pers(n,s) then begin
+			if parse_pers(mslot,s) then begin   { parse_pers make gethere }		  
+				if here.people[mslot].kind = P_MONSTER then begin
+				    code := here.people[mslot].parm;
+				    if (monster_owner(code) = system_id)
+					and not manager_priv then
+					    writeln('The owner of this monster is system.') 	
+				    else if  (monster_owner(code) <> userid) 
+					and not owner_priv then 
+					    writeln('You are not the owner of this monster')
+				    else begin
+					set_owner(code,0,disowned_id);
+					tmp := here.people[mslot].name;
+					log_event(myslot,E_OBJDISOWN,0,0,tmp);
+					writeln('You are no longer the owner of the ',tmp,'.');
+				    end;
+				end else writeln ('That isn''t monster.');
+                	end else writeln ('Here isn''t that monster.');
+		end else if lookup_spell(n,s) then begin
+		    if (spell_owner(n) = system_id) and not manager_priv then
+			writeln('The owner of this spell is system.') 	
+		    else if (spell_owner(n) <> userid) and not owner_priv then 
+			writeln('You are not the owner of this spell')
+		    else begin
+			getint(N_SPELL);
+			freeint;
+			code := anint.int[n];
+			set_owner(code,0,disowned_id);
+			tmp := spell_name.idents[n];
+			log_event(myslot,E_OBJDISOWN,0,0,tmp);
+			writeln('You are no longer the owner of the ',tmp,'.');
+		    end;
+		end else writeln('You are not the owner of any such thing.');
 	end;
 end;
 
@@ -6738,47 +7456,64 @@ procedure do_public(s: string);
 var
 	ok: boolean;
 	tmp: string;
-	n: integer;
+	n,mslot,code,oldowner: integer;
+	pub: shortstring;
 
 begin
-	if privd then begin
+
+	if manager_priv then begin { minor change by leino@finuha }
 		if length(s) = 0 then begin
 			getroom;
-			here.owner := '';
+			if not exact_user(oldowner,here.owner) then oldowner := 0;
+			here.owner := public_id;
 			putroom;
+			change_owner(oldowner,0);
+			if here.hook > 0 then set_owner(here.hook,0,public_id);
 			getown;
-			own.idents[location] := '';
+			own.idents[location] := public_id;
 			putown;
+			writeln('This room is now public.');
+
 		end else if lookup_obj(n,s) then begin
-			getobjown;
-			freeobjown;
-			if objown.idents[n] = '' then
-				writeln('That is already public.')
+			getobj(n);
+			freeobj;
+			if obj.numexist = 0 then ok := true
 			else begin
-				getobj(n);
-				freeobj;
-				if obj.numexist = 0 then
-					ok := true
-				else begin
-					if obj_hold(n) or obj_here(n) then
-						ok := true
-					else
-						ok := false;
-				end;
-
-				if ok then begin
-					getobjown;
-					objown.idents[n] := '';
-					putobjown;
-
-					tmp := obj.oname;
-					log_event(myslot,E_OBJPUBLIC,0,0,tmp);
-					writeln('The ',tmp,' is now public.');
-				end else
-					writeln('You must have one to claim it.');
+			    if obj_hold(n) or obj_here(n) then ok := true
+			    else ok := false;
 			end;
-		end else
-			writeln('There is nothing here by that name to claim.');
+
+			if ok then begin
+			    getobjown;
+			    objown.idents[n] := public_id;
+			    putobjown;
+			    if obj.actindx > 0 then
+				set_owner(obj.actindx,0,public_id);
+
+			    tmp := obj.oname;
+			    log_event(myslot,E_OBJPUBLIC,0,0,tmp);
+			    writeln('The ',tmp,' is now public.');
+			end else
+				    writeln('You must have one to claim it.');
+		end else if lookup_pers(n,s) then begin
+			if parse_pers(mslot,s) then begin   { parse_pers make gethere }		  
+				if here.people[mslot].kind = P_MONSTER then begin
+				    code := here.people[mslot].parm;
+				    set_owner(code,0,public_id);
+				    tmp := here.people[mslot].name;
+				    log_event(myslot,E_OBJPUBLIC,0,0,tmp);
+				    writeln('The ',tmp,' is now public.');
+				end else writeln ('That isn''t monster.');
+                	end else writeln ('Here isn''t that monster.');
+		end else if lookup_spell(n,s) then begin
+		    getint(N_SPELL);
+		    freeint;
+		    code := anint.int[n];
+		    set_owner(code,0,public_id);
+		    tmp := spell_name.idents[n];
+		    log_event(myslot,E_OBJPUBLIC,0,0,tmp);
+		    writeln('The ',tmp,' is now public.');
+		end else writeln('There is nothing here by that name to make public.');
 	end else
 		writeln('Only the Monster Manager may make things public.');
 end;
@@ -6820,15 +7555,24 @@ end;
 
 
 procedure do_zap(s: string);
+label exit_label;
 var
 	loc: integer;
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
 begin
+	if s = '' then grab_line('Room? ',s,eof_handler := leave);
+
 	gethere;
 	if checkhide then begin
-	if lookup_room(loc,s) then begin
+	if lookup_room(loc,s,true) then begin
 		gethere(loc);
-		if (here.owner = userid) or (privd) then begin
+		if (here.owner = userid) or (owner_priv) then begin { minor change by leino@finuha }
 			clear_people(loc);
 			if find_numpeople = 0 then begin
 				if find_numexits = 0 then begin
@@ -6846,793 +7590,13 @@ begin
 	end else
 		writeln('There is no room named ',s,'.');
 	end;
+    exit_label:
 end;
 
+{ custom_room moved to module CUSTOM }
 
-function room_nameinuse(num: integer; newname: string): boolean;
-var
-	dummy: integer;
 
-begin
-	if exact_obj(dummy,newname) then begin
-		if dummy = num then
-			room_nameinuse := false
-		else
-			room_nameinuse := true;
-	end else
-		room_nameinuse := false;
-end;
-
-
-
-procedure do_rename;
-var
-	dummy: integer;
-	newname: string;
-	s: string;
-
-begin
-	gethere;
-	writeln('This room is named ',here.nicename);
-	writeln;
-	grab_line('New name: ',newname);
-	if (newname = '') or (newname = '**') then
-		writeln('No changes.')
-	else if length(newname) > shortlen then
-		writeln('Please limit your room name to ',shortlen:1,' characters.')
-	else if room_nameinuse(location,newname) then
-		writeln(newname,' is not a unique room name.')
-	else begin
-		getroom;
-		here.nicename := newname;
-		putroom;
-
-		getnam;
-		nam.idents[location] := lowcase(newname);
-		putnam;
-		writeln('Room name updated.');
-	end;
-end;
-
-
-function obj_nameinuse(objnum: integer; newname: string): boolean;
-var
-	dummy: integer;
-
-begin
-	if exact_obj(dummy,newname) then begin
-		if dummy = objnum then
-			obj_nameinuse := false
-		else
-			obj_nameinuse := true;
-	end else
-		obj_nameinuse := false;
-end;
-
-
-procedure do_objrename(objnum: integer);
-var
-	newname: string;
-	s: string;
-
-begin
-	getobj(objnum);
-	freeobj;
-
-	writeln('This object is named ',obj.oname);
-	writeln;
-	grab_line('New name: ',newname);
-	if (newname = '') or (newname = '**') then
-		writeln('No changes.')
-	else if length(newname) > shortlen then
-		writeln('Please limit your object name to ',shortlen:1,' characters.')
-	else if obj_nameinuse(objnum,newname) then
-		writeln(newname,' is not a unique object name.')
-	else begin
-		getobj(objnum);
-		obj.oname := newname;
-		putobj;
-
-		getobjnam;
-		objnam.idents[objnum] := lowcase(newname);
-		putobjnam;
-		writeln('Object name updated.');
-	end;
-end;
-
-
-
-procedure view_room;
-var
-	s: string;
-	i: integer;
-
-begin
-	writeln;
-	getnam;
-	freenam;
-	getobjnam;
-	freeobjnam;
-
-	with here do begin
-		writeln('Room:        ',nicename);
-		case nameprint of
-			0: writeln('Room name not printed');
-			1: writeln('"You''re in" precedes room name');
-			2: writeln('"You''re at" precedes room name');
-			otherwise writeln('Room name printing is damaged.');
-		end;
-
-		write('Room owner:    ');
-		if owner = '' then
-			writeln('<public>')
-		else if owner = '*' then
-			writeln('<disowned>')
-		else
-			writeln(owner);
-
-		if primary = 0 then
-			writeln('There is no primary description')
-		else
-			writeln('There is a primary description');
-
-		if secondary = 0 then
-			writeln('There is no secondary description')
-		else
-			writeln('There is a secondary description');
-
-		case which of
-			0: writeln('Only the primary description will print');
-			1: writeln('Only the secondary description will print');
-			2: writeln('Both the primary and secondary descriptions will print');
-			3: begin
-				writeln('The primary description will print, followed by the seconary description');
-				writeln('if the player is holding the magic object');
-			   end;
-			4: begin
-				writeln('If the player is holding the magic object, the secondary description will print');
-				writeln('Otherwise, the primary description will print');
-			   end;
-			otherwise writeln('The way the room description prints is damaged');
-		end;
-
-		writeln;
-		if magicobj = 0 then
-			writeln('There is no magic object for this room')
-		else
-			writeln('The magic object for this room is the ',objnam.idents[magicobj],'.');
-
-		if objdrop = 0 then
-			writeln('Dropped objects remain here')
-		else begin
-			writeln('Dropped objects go to ',nam.idents[objdrop],'.');
-			if objdesc = 0 then
-				writeln('Dropped.')
-			else
-				print_line(objdesc);
-			if objdest = 0 then
-				writeln('Nothing is printed when object "bounces in" to target room')
-			else
-				print_line(objdest);
-		end;
-		writeln;
-		if trapto = 0 then
-			writeln('There is no trapdoor set')
-		else
-			writeln('The trapdoor sends players ',direct[trapto],
-				' with a chance factor of ',trapchance:1,'%');
-
-		for i := 1 to maxdetail do begin
-			if length(detail[i]) > 0 then begin
-				write('Detail "',detail[i],'" ');
-				if detaildesc[i] > 0 then
-					writeln('has a description')
-				else
-					writeln('has no description');
-			end;
-		end;
-		writeln;
-	end;
-end;
-
-
-procedure room_help;
-
-begin
-	writeln;
-	writeln('D	Alter the way the room description prints');
-	writeln('N	Change how the room Name prints');
-	writeln('P	Edit the Primary room description [the default one] (same as desc)');
-	writeln('S	Edit the Secondary room description');
-	writeln('X	Define a mystery message');
-	writeln;
-	writeln('G	Set the location that a dropped object really Goes to');
-	writeln('O	Edit the object drop description (for drop effects)');
-	writeln('B	Edit the target room (G) "bounced in" description');
-	writeln;
-	writeln('T	Set the direction that the Trapdoor goes to');
-	writeln('C	Set the Chance of the trapdoor functioning');
-	writeln;
-	writeln('M	Define the magic object for this room');
-	writeln('R	Rename the room');
-	writeln;
-	writeln('V	View settings on this room');
-	writeln('E	Exit (same as quit)');
-	writeln('Q	Quit (same as exit)');
-	writeln('?	This list');
-	writeln;
-end;
-
-
-
-procedure custom_room;
-var
-	done: boolean;
-	prompt: string;
-	n: integer;
-	s: string;
-	newdsc: integer;
-	bool: boolean;
-
-begin
-	log_action(e_custroom,0);
-	writeln;
-	writeln('Customizing this room');
-	writeln('If you would rather be customizing an exit, type CUSTOM <direction of exit>');
-	writeln('If you would rather be customizing an object, type CUSTOM <object name>');
-	writeln;
-	done := false;
-	prompt := 'Custom> ';
-
-	repeat
-		repeat
-			grab_line(prompt,s);
-			s := slead(s);
-		until length(s) > 0;
-		s := lowcase(s);
-		case s[1] of
-
-			'e','q': done := true;
-			'?','h': room_help;
-			'r': do_rename;
-			'v': view_room;
-{dir trapdoor goes}	't': begin
-				grab_line('What direction does the trapdoor exit through? ',s);
-				if length(s) > 0 then begin
-					if lookup_dir(n,s) then begin
-						getroom;
-						here.trapto := n;
-						putroom;
-						writeln('Room updated.');
-					end else
-						writeln('No such direction.');
-				end else
-					writeln('No changes.');
-			     end;
-{chance}		'c': begin
-				writeln('Enter the chance that in any given minute the player will fall through');
-				writeln('the trapdoor (0-100) :');
-				writeln;
-				grab_line('? ',s);
-				if isnum(s) then begin
-					n := number(s);
-					if n in [0..100] then begin
-						getroom;
-						here.trapchance := n;
-						putroom;
-					end else
-						writeln('Out of range.');
-				end else
-					writeln('No changes.');
-			     end;
-			's': begin
-				newdsc := here.secondary;
-				writeln('[ Editing the secondary room description ]');
-				if edit_desc(newdsc) then begin
-					getroom;
-					here.secondary := newdsc;
-					putroom;
-				end;
-			     end;
-			'p': begin
-{ same as desc }		newdsc := here.primary;
-				writeln('[ Editing the primary room description ]');
-				if edit_desc(newdsc) then begin
-					getroom;
-					here.primary := newdsc;
-					putroom;
-				end;
-			     end;
-			'o': begin
-				writeln('Enter the line that will be printed when someone drops an object here:');
-				writeln('If dropped objects do not stay here, you may use a # for the object name.');
-				writeln('Right now it says:');
-				if here.objdesc = 0 then
-					writeln('Dropped. [default]')
-				else
-					print_line(here.objdesc);
-
-				n := here.objdesc;
-				make_line(n);
-				getroom;
-				here.objdesc := n;
-				putroom;
-			     end;
-			'x': begin
-				writeln('Enter a line that will be randomly shown.');
-				writeln('Right now it says:');
-				if here.objdesc = 0 then
-					writeln('[none defined]')
-				else
-					print_line(here.rndmsg);
-
-				n := here.rndmsg;
-				make_line(n);
-				getroom;
-				here.rndmsg := n;
-				putroom;
-			     end;
-{bounced in desc}	'b': begin
-				writeln('Enter the line that will be displayed in the room where an object really');
-				writeln('goes when an object dropped here "bounces" there:');
-				writeln('Place a # where the object name should go.');
-				writeln;
-				writeln('Right now it says:');
-				if here.objdest = 0 then
-					writeln('Something has bounced into the room.')
-				else
-					print_line(here.objdest);
-
-				n := here.objdest;
-				make_line(n);
-				getroom;
-				here.objdest := n;
-				putroom;
-			     end;
-			'm': begin
-				getobjnam;
-				freeobjnam;
-				if here.magicobj = 0 then
-					writeln('There is currently no magic object for this room.')
-				else
-					writeln(objnam.idents[here.magicobj],
-						' is currently the magic object for this room.');
-				writeln;
-				grab_line('New magic object? ',s);
-				if s = '' then
-					writeln('No changes.')
-				else if lookup_obj(n,s) then begin
-					getroom;
-					here.magicobj := n;
-					putroom;
-					writeln('Room updated.');
-				end else
-					writeln('No such object found.');
-			     end;
-			'g': begin
-				getnam;
-				freenam;
-				if here.objdrop = 0 then
-					writeln('Objects dropped fall here.')
-				else
-					writeln('Objects dropped fall in ',nam.idents[here.objdrop],'.');
-				writeln;
-				writeln('Enter * for [this room]:');
-				grab_line('Room dropped objects go to? ',s);
-				if s = '' then
-					writeln('No changes.')
-				else if s = '*' then begin
-					getroom;
-					here.objdrop := 0;
-					putroom;
-					writeln('Room updated.');
-				end else if lookup_room(n,s) then begin
-					getroom;
-					here.objdrop := n;
-					putroom;
-					writeln('Room updated.');
-				end else
-					writeln('No such room found.');
-			     end;
-			'd': begin
-				writeln('Print room descriptions how?');
-				writeln;
-				writeln('0)  Print primary (main) description only [default]');
-				writeln('1)  Print only secondary description.');
-				writeln('2)  Print both primary and secondary descriptions togther.');
-				writeln('3)  Print primary description first; then print secondary description only if');
-				writeln('    the player is holding the magic object for this room.');
-				writeln('4)  Print secondary if holding the magic obj; print primary otherwise');
-				writeln;
-				grab_line('? ',s);
-				if isnum(s) then begin
-					n := number(s);
-					if n in [0..4] then begin
-						getroom;
-						here.which := n;
-						putroom;
-						writeln('Room updated.');
-					end else
-						writeln('Out of range.');
-				end else
-					writeln('No changes.');
-
-			     end;
-			'n': begin
-				writeln('How would you like the room name to print?');
-				writeln;
-				writeln('0) No room name is shown');
-				writeln('1) "You''re in ..."');
-				writeln('2) "You''re at ..."');
-				writeln;
-				grab_line('? ',s);
-				if isnum(s) then begin
-					n := number(s);
-					if n in [0..2] then begin
-						getroom;
-						here.nameprint := n;
-						putroom;
-					end else
-						writeln('Out of range.');
-				end else
-					writeln('No changes.');
-			     end;
-			otherwise writeln('Bad command, type ? for a list');
-		end;
-	until done;
-	log_event(myslot,E_ROOMDONE,0,0);
-end;
-
-procedure analyze_exit(dir: integer);
-var
-	s: string;
-
-begin
-	writeln;
-	getnam;
-	freenam;
-	getobjnam;
-	freeobjnam;
-	with here.exits[dir] do begin
-		s := alias;
-		if s = '' then
-			s := '(no alias)'
-		else
-			s := '(alias ' + s + ')';
-		if here.exits[dir].reqalias then
-			s := s + ' (required)'
-		else
-			s := s + ' (not required)';
-
-		if toloc <> 0 then
-			writeln('The ',direct[dir],' exit ',s,' goes to ',nam.idents[toloc])
-		else
-			writeln('The ',direct[dir],' exit goes nowhere.');
-		if hidden <> 0 then
-			writeln('Concealed.');
-		write('Exit type: ');
-		case kind of
-			0: writeln('no exit.');
-			1: writeln('Open passage.');
-			2: writeln('Door, object required to pass.');
-			3: writeln('No passage if holding object.');
-			4: writeln('Randomly fails');
-			5: writeln('Potential exit.');
-			6: writeln('Only exists while holding the required object.');
-			7: writeln('Timed exit');
-		end;
-		if objreq = 0 then
-			writeln('No required object.')
-		else
-			writeln('Required object is: ',objnam.idents[objreq]);
-
-
-		writeln;
-		if exitdesc = DEFAULT_LINE then
-			exit_default(dir,kind)
-		else
-			print_line(exitdesc);
-
-		if success = 0 then
-			writeln('(no success message)')
-		else
-			print_desc(success);
-
-		if fail = DEFAULT_LINE then begin
-			if kind = 5 then
-				writeln('There isn'' an exit there yet.')
-			else
-				writeln('You can''t go that way.');
-		end else
-			print_desc(fail);
-
-		if comeout = DEFAULT_LINE then
-			writeln('# has come into the room from: ',direct[dir])
-		else
-			print_desc(comeout);
-		if goin = DEFAULT_LINE then
-			writeln('# has gone ',direct[dir])
-		else
-			print_desc(goin);
-
-		writeln;
-		if autolook then
-			writeln('LOOK automatically done after exit used')
-		else
-			writeln('LOOK supressed on exit use');
-		if reqverb then
-			writeln('The alias is required to be a verb for exit use')
-		else
-			writeln('The exit can be used with GO or as a verb');
-	end;
-	writeln;
-end;
-
-procedure custom_help;
-
-begin
-	writeln;
-	writeln('A	Set an Alias for the exit');
-	writeln('C	Conceal an exit');
-	writeln('D	Edit the exit''s main Description');
-	writeln('E	EXIT custom (saves changes)');
-	writeln('F	Edit the exit''s failure line');
-	writeln('I	Edit the line that others see when a player goes Into an exit');
-	writeln('K	Set the object that is the Key to this exit');
-	writeln('L	Automatically look [default] / don''t look on exit');
-	writeln('O	Edit the line that people see when a player comes Out of an exit');
-	writeln('Q	QUIT Custom (saves changes)');
-	writeln('R	Require/don''t require alias for exit; ignore direction');
-	writeln('S	Edit the success line');
-	writeln('T	Alter Type of exit (passage, door, etc)');
-	writeln('V	View exit information');
-	writeln('X	Require/don''t require exit name to be a verb');
-	writeln('?	This list');
-	writeln;
-end;
-
-
-procedure get_key(dir: integer);
-var
-	s: string;
-	n: integer;
-
-begin
-	getobjnam;
-	freeobjnam;
-	if here.exits[dir].objreq = 0 then
-		writeln('Currently there is no key set for this exit.')
-	else
-		writeln(objnam.idents[here.exits[dir].objreq],' is the current key for this exit.');
-	writeln('Enter * for [no key]');
-	writeln;
-
-	grab_line('What object is the door key? ',s);
-	if length(s) > 0 then begin
-		if s = '*' then begin
-			getroom;
-			here.exits[dir].objreq := 0;
-			putroom;
-			writeln('Exit updated.');
-		end else if lookup_obj(n,s) then begin
-			getroom;
-			here.exits[dir].objreq := n;
-			putroom;
-			writeln('Exit updated.');
-		end else
-			writeln('There is no object by that name.');
-	end else
-		writeln('No changes.');
-end;
-
-
-procedure do_custom(dirnam: string);
-var
-	prompt: string;
-	done : boolean;
-	s: string;
-	dir: integer;
-	n: integer;
-
-begin
-	gethere;
-	if checkhide then begin
-	if length(dirnam) = 0 then begin
-		if is_owner(location,TRUE) then
-			custom_room
-		else begin
-			writeln('You are not the owner of this room; you cannot customize it.');
-			writeln('However, you may be able to customize some of the exits.  To customize an');
-			writeln('exit, type CUSTOM <direction of exit>');
-		end;
-	end else if lookup_dir(dir,dirnam) then begin
-	   if can_alter(dir) then begin
-		log_action(c_custom,0);
-
-		writeln('Customizing ',direct[dir],' exit');
-		writeln('If you would rather be customizing this room, type CUSTOM with no arguments');
-		writeln('If you would rather be customizing an object, type CUSTOM <object name>');
-		writeln;
-		writeln('Type ** for any line to leave it unchanged.');
-		writeln('Type return for any line to select the default.');
-		writeln;
-		writev(prompt,'Custom ',direct[dir],'> ');
-		done := false;
-		repeat
-			repeat
-				grab_line(prompt,s);
-				s := slead(s);
-			until length(s) > 0;
-			s := lowcase(s);
-			case s[1] of
-				'?','h': custom_help;
-				'q','e': done := true;
-				'k': get_key(dir);
-				'c': begin
-					writeln('Type the description that a player will see when the exit is found.');
-					writeln('Make no text for description to unconceal the exit.');
-					writeln;
-					writeln('[ Editing the "hidden exit found" description ]');
-					n := here.exits[dir].hidden;
-					if edit_desc(n) then begin
-						getroom;
-						here.exits[dir].hidden := n;
-						putroom;
-					end;
-				     end;
-{req alias}			'r': begin
-					getroom;
-					here.exits[dir].reqalias :=
-						not(here.exits[dir].reqalias);
-					putroom;
-
-					if here.exits[dir].reqalias then
-						writeln('The alias for this exit will be required to reference it.')
-					else
-						writeln('The alias will not be required to reference this exit.');
-				     end;
-{req verb}			'x': begin
-					getroom;
-					here.exits[dir].reqverb :=
-						not(here.exits[dir].reqverb);
-					putroom;
-
-					if here.exits[dir].reqverb then
-						writeln('The exit name will be required to be used as a verb to use the exit')
-					else
-						writeln('The exit name may be used with GO or as a verb to use the exit');
-				     end;
-{autolook}			'l': begin
-					getroom;
-					here.exits[dir].autolook :=
-						not(here.exits[dir].autolook);
-					putroom;
-
-					if here.exits[dir].autolook then
-						writeln('A LOOK will be done after the player travels through this exit.')
-					else
-						writeln('The automatic LOOK will not be done when a player uses this exit.');
-				     end;
-				'a': begin
-					grab_line('Alternate name for the exit? ',s);
-					if length(s) > veryshortlen then
-						writeln('Your alias must be less than ',veryshortlen:1,' characters.')
-					else begin
-						getroom;
-						here.exits[dir].alias := lowcase(s);
-						putroom;
-					end;
-				     end;
-				'v': analyze_exit(dir);
-				't': begin
-					writeln;
-					writeln('Select the type of your exit:');
-					writeln;
-					writeln('0) No exit');
-					writeln('1) Open passage');
-					writeln('2) Door (object required to pass)');
-					writeln('3) No passage if holding key');
-					if privd then
-						writeln('4) exit randomly fails');
-					writeln('6) Exit exists only when holding object');
-					if privd then
-						writeln('7) exit opens/closes invisibly every minute');
-					writeln;
-					grab_line('Which type? ',s);
-					if isnum(s) then begin
-						n := number(s);
-						if n in [0..4,6..7] then begin
-							getroom;
-							here.exits[dir].kind := n;
-							putroom;
-							writeln('Exit type updated.');
-							writeln;
-							if n in [2,6] then
-								get_key(dir);
-						end else
-							writeln('Bad exit type.');
-					end else
-						writeln('Exit type not changed.');
-				     end;
-				'f': begin
-					writeln('The failure description will print if the player attempts to go through the');
-					writeln('the exit but cannot for any reason.');
-					writeln;
-					writeln('[ Editing the exit failure description ]');
-
-					n := here.exits[dir].fail;
-					if edit_desc(n) then begin
-						getroom;
-						here.exits[dir].fail := n;
-						putroom;
-					end;
-				     end;
-				'i': begin
-					writeln('Edit the description that other players see when someone goes into');
-					writeln('the exit.  Place a # where the player''s name should appear.');
-					writeln;
-					writeln('[ Editing the exit "go in" description ]');
-					n := here.exits[dir].goin;
-					if edit_desc(n) then begin
-						getroom;
-						here.exits[dir].goin := n;
-						putroom;
-					end;
-				     end;
-				'o': begin
-					writeln('Edit the description that other players see when someone comes out of');
-					writeln('the exit.  Place a # where the player''s name should appear.');
-					writeln;
-					writeln('[ Editing the exit "come out of" description ]');
-					n := here.exits[dir].comeout;
-					if edit_desc(n) then begin
-						getroom;
-						here.exits[dir].comeout := n;
-						putroom;
-					end;
-				     end;
-{ main exit desc }		'd': begin
-					writeln('Enter a one line description of the exit.');
-					writeln;
-					n := here.exits[dir].exitdesc;
-					make_line(n);
-					getroom;
-					here.exits[dir].exitdesc := n;
-					putroom;
-				     end;
-				's': begin
-					writeln('The success description will print when the player goes through the exit.');
-					writeln;
-					writeln('[ Editing the exit success description ]');
-
-					n := here.exits[dir].success;
-					if edit_desc(n) then begin
-						getroom;
-						here.exits[dir].success := n;
-						putroom;
-					end;
-				     end;
-				otherwise writeln('-- Bad command, type ? for a list');
-			end;
-		until done;
-
-
-		log_event(myslot,E_CUSTDONE,0,0);
-	   end else
-		writeln('You are not allowed to alter that exit.');
-	end else if lookup_obj(n,dirnam) then
-{ if lookup_obj returns TRUE then dirnam is name of object to custom }
-				do_program(dirnam)	{ customize the object }
-			else begin
-		writeln('To customize this room, type CUSTOM');
-		writeln('To customize an exits, type CUSTOM <direction>');
-		writeln('To customize an object, type CUSTOM <object name>');
-	end;
-{	clear_command;	}
-	end;
-end;
-
-
+{ procedure do_custom moved to module CUSTOM }
 
 procedure reveal_people(var three: boolean);
 var
@@ -7662,24 +7626,31 @@ procedure reveal_objects(var two: boolean);
 var
 	tmp: string;
 	i: integer;
+	modified: boolean;
 
 begin
-	if debug then
-		writeln('%revealing objects');
-	two := false;
-	for i := 1 to maxobjs do begin
-		if here.objs[i] <> 0 then	{ if there is an object here }
-			if (here.objhide[i] <> 0) then begin
-				two := true;
+    if debug then
+	writeln('%revealing objects');
+    two := false;
+    modified := false;
+    getroom;
+    for i := 1 to maxobjs do begin
+	if here.objs[i] <> 0 then	{ if there is an object here }
+	    if (here.objhide[i] <> 0) then begin
+		two := true;
 
-				if here.objhide[i] = DEFAULT_LINE then
-					writeln('You''ve found ',obj_part(here.objs[i]),'.')
-				else begin
-					print_desc(here.objhide[i]);
-					delete_block(here.objhide[i]);
-				end;
-			end;
-	end;
+		if here.objhide[i] = DEFAULT_LINE then 
+		    writeln('You''ve found ',obj_part(here.objs[i]),'.')
+		else begin
+		    print_desc(here.objhide[i]);
+		    delete_block(here.objhide[i]);
+		end;
+		here.objhide[i] := 0; { mark them unhidden }
+		{ delete_block make this also - but writeln not ! }
+		modified := true;   { mark: must write to database }
+	    end;
+    end;
+    if modified then putroom else freeroom;
 end;
 
 
@@ -7757,10 +7728,52 @@ end;
 
 
 procedure do_hide(s: string);
+label 0; { for panic }
 var
-	slot,n: integer;
+	slot,n,oldloc: integer;
 	founddsc: integer;
 	tmp: string;
+
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	if obj_here(n) then begin
+	    writeln('Enter the description the player will see when the ',s,' is found:');
+	    writeln('(if no description is given a default will be supplied)');
+	    writeln;
+	    writeln('[ Editing the "object found" description ]');
+
+	    founddsc := 0;
+	    if edit_desc(founddsc) then ;
+	    if founddsc = 0 then
+		founddsc := DEFAULT_LINE;
+   
+	    if oldloc <> location then begin
+		delete_block(founddsc);
+		goto 0; { panic }
+	    end;
+
+	    getroom;
+	    slot := find_obj(n);
+	    here.objhide[slot] := founddsc;
+	    putroom;
+
+	    tmp := obj_part(n);
+	    log_event(myslot,E_HIDOBJ,0,0,tmp);
+	    writeln('You have hidden ',tmp,'.');
+	    action := true;
+	end else if obj_hold(n) then begin
+	    writeln('You''ll have to put ',s,' down before it can be hidden.');
+	    action := true;
+	end else action := false;
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end; { action }
+
+    function restriction (n: integer): boolean;
+	begin
+	    restriction := obj_here(n,false) or obj_hold(n);
+	    { false = found also hidden objects }
+	end;
 
 begin
 	gethere;
@@ -7802,412 +7815,72 @@ begin
 				writeln('You could not find a good hiding place.');
 		end;
 	end else begin	{ Hide an object }
-		if parse_obj(n,s) then begin
-			if obj_here(n) then begin
-				writeln('Enter the description the player will see when the object is found:');
-				writeln('(if no description is given a default will be supplied)');
-				writeln;
-				writeln('[ Editing the "object found" description ]');
-				founddsc := 0;
-				if edit_desc(founddsc) then ;
-				if founddsc = 0 then
-					founddsc := DEFAULT_LINE;
-
-				getroom;
-				slot := find_obj(n);
-				here.objhide[slot] := founddsc;
-				putroom;
-
-				tmp := obj_part(n);
-				log_event(myslot,E_HIDOBJ,0,0,tmp);
-				writeln('You have hidden ',tmp,'.');
-			end else if obj_hold(n) then begin
-				writeln('You''ll have to put it down before it can be hidden.');
-			end else
-				writeln('I see no such object here.');
+		oldloc := location;
+		if scan_obj(action,s,,restriction) then begin
 		end else
 			writeln('I see no such object here.');
 	end;
+	0:  { for panic }
 end;
 
 
 procedure do_punch(s: string);
+label exit_label;
 var
 	sock,n: integer;
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+
 begin
-	if s <> '' then begin
+	if s = '' then grab_line('Victim? ',s,eof_handler := leave);
+
+	if not read_global_flag(GF_WARTIME) then
+	    writeln('Don''t you dare disturb the Pax Monstruosa!')
+	else if s <> '' then begin
 		if parse_pers(n,s) then begin
-			if n = myslot then
+	  		if n = myslot then
 				writeln('Self-abuse will not be tolerated in the Monster universe.')
 			else if protected(n) then begin
 				log_event(myslot,E_TRYPUNCH,n,0);
 				writeln('A mystic shield of force prevents you from attacking.');
-			end else if here.people[n].username = MM_userid then begin
+			end else if (here.people[n].experience >= protect_exp) { and protected_MM } then begin
 				log_event(myslot,E_TRYPUNCH,n,0);
-				writeln('You can''t punch the Monster Manager.');
-			end else begin
+				writeln('You can''t punch that person.');
+	  		end else begin
 				if hiding then begin
 					hiding := false;
 
-					getroom;
+	  				getroom;
 					here.people[myslot].hiding := 0;
 					putroom;
-
+                                 
 					log_event(myslot,E_HIDEPUNCH,n,0);
-					writeln('You pounce unexpectedly on ',here.people[n].name,'!');
+	  				writeln('You pounce unexpectedly on ',here.people[n].name,'!');
+                                        if here.people[n].kind = P_MONSTER then attack_monster(n,2);
 				end else begin
-					sock := (rnd100 mod numpunches)+1;
+					if myexperience < (rnd100 div 3) then
+                                          sock := (rnd100 mod numpunches)+1
+                                        else sock := BAD_PUNCH;
+
 					log_event(myslot,E_PUNCH,n,sock);
 					put_punch(sock,here.people[n].name);
-				end;
+                                        if here.people[n].kind = P_MONSTER then attack_monster(n,punch_force(sock));
+	  			end;
 				wait(1+random*3);	{ Ha ha ha }
 			end;
 		end else
 			writeln('That person cannot be seen in this room.');
 	end else
 		writeln('To punch somebody, type PUNCH <personal name>.');
+    exit_label:
 end;
 
-
-{ support for do_program (custom an object)
-  Give the player a list of kinds of object he's allowed to make his object
-  and update it }
-
-procedure prog_kind(objnum: integer);
-var
-	n: integer;
-	s: string;
-
-begin
-	writeln('Select the type of your object:');
-	writeln;
-	writeln('0	Ordinary object (good for door keys)');
-	writeln('1	Weapon');
-	writeln('2	Armor');
-	writeln('3	Exit thruster');
-
-	if privd then begin
-	writeln;
-	writeln('100	Bag');
-	writeln('101	Crystal Ball');
-	writeln('102	Wand of Power');
-	writeln('103	Hand of Glory');
-	end;
-	writeln;
-	grab_line('Which kind? ',s);
-
-	if isnum(s) then begin
-		n := number(s);
-		if (n > 100) and (privd) then
-			writeln('Out of range.')
-		else if n in [0..3,100..103] then begin
-			getobj(objnum);
-			obj.kind := n;
-			putobj;
-			writeln('Object updated.');
-		end else
-			writeln('Out of range.');
-	end;
-end;
-
-
-
-{ support for do_program (custom an object)
-  Based on the kind it is allow the
-  user to set the various parameters for the effects associated with that
-  kind }
-
-procedure prog_obj(objnum: integer);
-
-begin
-end;
-
-
-procedure show_kind(p: integer);
-
-begin
-	case p of
-		0: writeln('Ordinary object');
-		1: writeln('Weapon');
-		2: writeln('Armor');
-		100: writeln('Bag');
-		101: writeln('Crystal Ball');
-		102: writeln('Wand of Power');
-		103: writeln('Hand of Glory');
-		otherwise writeln('Bad object type');
-	end;
-end;
-
-
-procedure obj_view(objnum: integer);
-
-begin
-	writeln;
-	getobj(objnum);
-	freeobj;
-	getobjown;
-	freeobjown;
-	writeln('Object name:    ',obj.oname);
-	writeln('Owner:          ',objown.idents[objnum]);
-	writeln;
-	show_kind(obj.kind);
-	writeln;
-
-	if obj.linedesc = 0 then
-		writeln('There is a(n) # here')
-	else
-		print_line(obj.linedesc);
-
-	if obj.examine = 0 then
-		writeln('No inspection description set')
-	else
-		print_desc(obj.examine);
-
-{	writeln('Worth (in points) of this object: ',obj.worth:1);	}
-	writeln('Number in existence: ',obj.numexist:1);
-	writeln;
-end;
-
-
-procedure program_help;
-
-begin
-	writeln;
-	writeln('A	"a", "an", "some", etc.');
-	writeln('D	Edit a Description of the object');
-	writeln('F	Edit the GET failure message');
-	writeln('G	Set the object required to pick up this object');
-	writeln('1	Set the get success message');
-	writeln('K	Set the Kind of object this is');
-	writeln('L	Edit the label description ("There is a ... here.")');
-	writeln('P	Program the object based on the kind it is');
-	writeln('R	Rename the object');
-	writeln('S	Toggle the sticky bit');
-	writeln;
-	writeln('U	Set the object required for use');
-	writeln('2	Set the place required for use');
-	writeln('3	Edit the use failure description');
-	writeln('4	Edit the use success description');
-	writeln('V	View attributes of this object');
-	writeln;
-	writeln('X	Edit the extra description');
-	writeln('5	Edit extra desc #2');
-	writeln('E	Exit (same as Quit)');
-	writeln('Q	Quit (same as Exit)');
-	writeln('?	This list');
-	writeln;
-end;
-
-
-procedure do_program;	{ (objnam: string);  declared forward }
-var
-	prompt: string;
-	done : boolean;
-	s: string;
-	objnum: integer;
-	n: integer;
-	newdsc: integer;
-
-begin
-	gethere;
-	if checkhide then begin
-	if length(objnam) = 0 then begin
-		writeln('To program an object, type PROGRAM <object name>.');
-	end else if lookup_obj(objnum,objnam) then begin
-	if not is_owner(location,TRUE) then begin
-		writeln('You may only work on your objects when you are in one of your own rooms.');
-	end else if obj_owner(objnum) then begin
-		log_action(e_program,0);
-		writeln;
-		writeln('Customizing object');
-		writeln('If you would rather be customizing an EXIT, type CUSTOM <direction of exit>');
-		writeln('If you would rather be customizing this room, type CUSTOM');
-		writeln;
-		getobj(objnum);
-		freeobj;
-		prompt := 'Custom object> ';
-		done := false;
-		repeat
-			repeat
-				grab_line(prompt,s);
-				s := slead(s);
-			until length(s) > 0;
-			s := lowcase(s);
-			case s[1] of
-				'?','h': program_help;
-				'q','e': done := true;
-				'v': obj_view(objnum);
-				'r': do_objrename(objnum);
-				'g': begin
-					writeln('Enter * for no object');
-					grab_line('Object required for GET? ',s);
-					if s = '*' then begin
-						getobj(objnum);
-						obj.getobjreq := 0;
-						putobj;
-					end else if lookup_obj(n,s) then begin
-						getobj(objnum);
-						obj.getobjreq := n;
-						putobj;
-						writeln('Object modified.');
-					end else
-						writeln('No such object.');
-				     end;
-				'u': begin
-					writeln('Enter * for no object');
-					grab_line('Object required for USE? ',s);
-					if s = '*' then begin
-						getobj(objnum);
-						obj.useobjreq := 0;
-						putobj;
-					end else if lookup_obj(n,s) then begin
-						getobj(objnum);
-						obj.useobjreq := n;
-						putobj;
-						writeln('Object modified.');
-					end else
-						writeln('No such object.');
-				     end;
-				'2': begin
-					writeln('Enter * for no special place');
-					grab_line('Place required for USE? ',s);
-					if s = '*' then begin
-						getobj(objnum);
-						obj.uselocreq := 0;
-						putobj;
-					end else if lookup_room(n,s) then begin
-						getobj(objnum);
-						obj.uselocreq := n;
-						putobj;
-						writeln('Object modified.');
-					end else
-						writeln('No such object.');
-				     end;
-				's': begin
-					getobj(objnum);
-					obj.sticky := not(obj.sticky);
-					putobj;
-					if obj.sticky then
-						writeln('The object will not be takeable.')
-					else
-						writeln('The object will be takeable.');
-				     end;
-				'a': begin
-					writeln;
-					writeln('Select the article for your object:');
-					writeln;
-					writeln('0)	None                ex: " You have taken Excalibur "');
-					writeln('1)	"a"                 ex: " You have taken a small box "');
-					writeln('2)	"an"                ex: " You have taken an empty bottle "');
-					writeln('3)	"some"              ex: " You have picked up some jelly beans "');
-					writeln('4)     "the"               ex: " You have picked up the Scepter of Power"');
-					writeln;
-					grab_line('? ',s);
-					if isnum(s) then begin
-						n := number(s);
-						if n in [0..4] then begin
-							getobj(objnum);
-							obj.particle := n;
-							putobj;
-						end else
-							writeln('Out of range.');
-					end else
-						writeln('No changes.');
-				     end;
-				'k': begin
-					prog_kind(objnum);
-				     end;
-				'p': begin
-					prog_obj(objnum);
-				     end;
-				'd': begin
-					newdsc := obj.examine;
-					writeln('[ Editing the description of the object ]');
-					if edit_desc(newdsc) then begin
-						getobj(objnum);
-						obj.examine := newdsc;
-						putobj;
-					end;
-				     end;
-				'x': begin
-					newdsc := obj.d1;
-					writeln('[ Editing extra description #1 ]');
-					if edit_desc(newdsc) then begin
-						getobj(objnum);
-						obj.d1 := newdsc;
-						putobj;
-					end;
-				     end;
-				'5': begin
-					newdsc := obj.d2;
-					writeln('[ Editing extra description #2 ]');
-					if edit_desc(newdsc) then begin
-						getobj(objnum);
-						obj.d2 := newdsc;
-						putobj;
-					end;
-				     end;
-				'f': begin
-					newdsc := obj.getfail;
-					writeln('[ Editing the get failure description ]');
-					if edit_desc(newdsc) then begin
-						getobj(objnum);
-						obj.getfail := newdsc;
-						putobj;
-					end;
-				     end;
-				'1': begin
-					newdsc := obj.getsuccess;
-					writeln('[ Editing the get success description ]');
-					if edit_desc(newdsc) then begin
-						getobj(objnum);
-						obj.getsuccess := newdsc;
-						putobj;
-					end;
-				     end;
-				'3': begin
-					newdsc := obj.usefail;
-					writeln('[ Editing the use failure description ]');
-					if edit_desc(newdsc) then begin
-						getobj(objnum);
-						obj.usefail := newdsc;
-						putobj;
-					end;
-				     end;
-				'4': begin
-					newdsc := obj.usesuccess;
-					writeln('[ Editing the use success description ]');
-					if edit_desc(newdsc) then begin
-						getobj(objnum);
-						obj.usesuccess := newdsc;
-						putobj;
-					end;
-				     end;
-				'l': begin
-					writeln('Enter a one line description of what the object will look like in any room.');
-					writeln('Example: "There is an as unyet described object here."');
-					writeln;
-					getobj(objnum);
-					freeobj;
-					n := obj.linedesc;
-					make_line(n);
-					getobj(objnum);
-					obj.linedesc := n;
-					putobj;
-				     end;
-				otherwise writeln('-- Bad command, type ? for a list');
-			end;
-		until done;
-		log_event(myslot,E_OBJDONE,objnum,0);
-
-	end else
-		writeln('You are not allowed to program that object.');
-	end else
-		writeln('There is no object by that name.');
-	end;
-end;
-
+{ procedure do_program moved to module CUSTOM }
 
 { returns TRUE if anything was actually dropped }
 function drop_everything;
@@ -8228,14 +7901,27 @@ begin
 
 	mywield := 0;
 	mywear := 0;
+	mydisguise := 0;
 
 	for i := 1 to maxhold do begin
 		if here.people[pslot].holding[i] <> 0 then begin
 			didone := true;
 			theobj := here.people[pslot].holding[i];
-			slot := find_hold(theobj,pslot);
+			slot := i;
 			if place_obj(theobj,TRUE) then begin
-				drop_obj(slot,pslot);
+			    
+			    drop_obj(slot,pslot);
+			    
+			    getobj(theobj);
+			    freeobj;
+
+			    if obj.actindx > 0 then begin
+				run_monster('',obj.actindx,'drop you','','',
+				    sysdate+' '+systime);
+
+				gethere;	{ necessary after run_monster }
+			    end;
+
 			end else begin	{ no place to put it, it's lost .... }
 				getobj(theobj);
 				obj.numexist := obj.numexist - 1;
@@ -8332,76 +8018,94 @@ var
 	retry: integer;
 	id: string;
 	idname: string;
+        kind: integer;
 
 begin
 	ping_player := false;
 
 	id := here.people[n].username;
 	idname := here.people[n].name;
+        kind := here.people[n].kind;
 
-	retry := 0;
-	ping_answered := false;
+	if kind = P_PLAYER then begin
+		retry := 0;
+		ping_answered := false;
 
-	repeat
-		retry := retry + 1;
-		if not(silent) then
-			writeln('Sending ping # ',retry:1,' to ',idname,' . . .');
+		repeat
+			retry := retry + 1;
+			if not(silent) then
+	    			writeln('Sending ping # ',retry:1,' to ',idname,' . . .');
+        
+			log_event(myslot,E_PING,n,0,myname);
+			{ leaving here myname, not replace it with log_name }
 
-		log_event(myslot,E_PING,n,0,myname);
-		wait(1);
-		checkevents(TRUE);
+			wait(1);
+			checkevents(TRUE);
 				{ TRUE = don't reprint prompt }
 
-		if not(ping_answered) then
-			if check_person(n,id) then begin
-				wait(1);
-				checkevents(TRUE);
-			end else
-				ping_answered := true;
+			if not(ping_answered) then
+				if check_person(n,id) then begin
+					wait(1);
+					checkevents(TRUE);
+				end else
+					ping_answered := true;
 
-		if not(ping_answered) then
-			if check_person(n,id) then begin
-				wait(1);
-				checkevents(TRUE);
-			end else
-				ping_answered := true;
+			if not(ping_answered) then
+				if check_person(n,id) then begin
+					wait(1);
+					checkevents(TRUE);
+				end else
+					ping_answered := true;
 
-	until (retry >= 3) or ping_answered;
+		until (retry >= MAX_PING) or ping_answered;
 
-	if not(ping_answered) then begin
-		if not(silent) then
-			writeln('That person is not responding to your pings . . .');
-
-		if nuke_person(n,id) then begin
-			ping_player := true;
+		if not(ping_answered) then begin
 			if not(silent) then
-				writeln(idname,' shimmers and vanishes from sight.');
-			log_event(myslot,E_PINGONE,n,0,idname);
+
+				writeln('That person is not responding to your pings . . .');
+         
+			if nuke_person(n,id) then begin
+				ping_player := true;
+				if not(silent) then
+					writeln(idname,' shimmers and vanishes from sight.');
+				log_event(myslot,E_PINGONE,n,0,idname);
+			end else
+				if not(silent) then
+					writeln('That person is not a zombie after all.');
 		end else
 			if not(silent) then
-				writeln('That person is not a zombie after all.');
-	end else
-		if not(silent) then
-			writeln('That person is alive and well.');
+				writeln('That person is alive and well.');
+	end else if not(silent) then
+		writeln ('This isn''t player. You can only ping player.')
 end;
 
 
 procedure do_ping(s: string);
+label exit_label;
 var
 	n: integer;
 	dummy: boolean;
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+
 begin
+	if s = '' then grab_line('Player? ',s,eof_handler := leave);
+
 	if s <> '' then begin
 		if parse_pers(n,s) then begin
 			if n = myslot then
 				writeln('Don''t ping yourself.')
-			else
-				dummy := ping_player(n);
+			else dummy := ping_player(n);
 		end else
 			writeln('You see no person here by that name.');
 	end else
 		writeln('To see if someone is really alive, type PING <personal name>.');
+    exit_label:
 end;
 
 procedure list_get;
@@ -8434,7 +8138,7 @@ procedure p_getsucc(n: integer);
 begin
 	{ we assume getobj has already been done }
 	if (obj.getsuccess = 0) or (obj.getsuccess = DEFAULT_LINE) then
-		writeln('Taken.')
+		writeln('Taken ',obj_part(n,FALSE),'.')
 	else
 		print_desc(obj.getsuccess);
 end;
@@ -8451,7 +8155,7 @@ begin
 			if take_obj(n,slot) then begin
 				hold_obj(n);
 				log_event(myslot,E_GET,0,0,
-{ >>> }		myname + ' has picked up ' + obj_part(n) + '.');
+{ >>> }		log_name + ' has picked up ' + obj_part(n) + '.');
 				p_getsucc(n);
 			end else
 				writeln('Someone got to it before you did.');
@@ -8461,166 +8165,326 @@ begin
 		writeln('You''re already holding that item.')
 	else
 		writeln('That item isn''t in an obvious place.');
-end;
+end;      
 
 
 procedure do_get(s: string);
+label 0;    { for panic }
 var
-	n: integer;
-	ok: boolean;
+	n,oldloc: integer;
+	ok: boolean;                                      
 
-begin
-	if s = '' then begin
-		list_get;
-	end else if parse_obj(n,s,TRUE) then begin
-		getobj(n);
-		freeobj;
-		ok := true;
+	procedure trapget;
+	begin
+        	log_event(myslot,E_TRAP,,obj.d1,obj.oname);
+		if (obj.getfail=0) or (obj.getfail=DEFAULT_LINE) then
+			writeln('You try get ',obj.oname,' but it bites you.')
+	  	else print_desc(obj.getfail);
+		take_hit(obj.ap);
+	end;
 
-		if obj.sticky then begin
-			ok := false;
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	if obj_here(n) then begin
+	    getobj(n);
+	    freeobj;
+	    ok := true;
+
+	    if obj.sticky then begin
+		ok := false;   
+		if obj.kind = O_TRAP then trapget
+		else begin
+		    log_event(myslot,E_FAILGET,n,0);
+		    if (obj.getfail = 0) or (obj.getfail = DEFAULT_LINE) then
+			writeln('You can''t take ',obj_part(n,FALSE),'.')
+		    else
+			print_desc(obj.getfail);
+		end;
+		if obj.actindx > 0 then
+		    run_monster('',obj.actindx,
+			'get fail','','',
+			sysdate+' '+systime);
+	    end else if obj.getobjreq > 0 then begin
+		if not(obj_hold(obj.getobjreq)) then begin
+		    ok := false;
+		    if obj.kind = O_TRAP then trapget
+		    else begin
 			log_event(myslot,E_FAILGET,n,0);
 			if (obj.getfail = 0) or (obj.getfail = DEFAULT_LINE) then
-				writeln('You can''t take ',obj_part(n,FALSE),'.')
+			    writeln('You''ll need something first to get the ',obj_part(n,FALSE),'.')
 			else
-				print_desc(obj.getfail);
-		end else if obj.getobjreq > 0 then begin
-			if not(obj_hold(obj.getobjreq)) then begin
-				ok := false;
-				log_event(myslot,E_FAILGET,n,0);
-				if (obj.getfail = 0) or (obj.getfail = DEFAULT_LINE) then
-					writeln('You''ll need something first to get the ',obj_part(n,FALSE),'.')
-				else
-					print_desc(obj.getfail);
-			end;
-		end;
+			    print_desc(obj.getfail);
+		    end;
+		    if obj.actindx > 0 then
+			run_monster('',obj.actindx,
+			    'get fail','','',
+			    sysdate+' '+systime);
+		    end;
+	    end;	{ obj sticky }
 
-		if ok then
-			do_meta_get(n);		{ get the object }
+	    if ok then begin
+		do_meta_get(n);		{ get the object }
+		if obj.actindx > 0 then
+		    run_monster('',obj.actindx,
+			'get succeed','','',
+		    sysdate+' '+systime);
+	    end;
+	    action := true;
+	end { else if obj_hold(n) then begin
+	    writeln('You have already ',obj_part(n),'.');
+	    action := true;
+	end } else action := false;
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end; { action }
+	   
+    function restriction (n: integer): boolean;
+	begin
+	    restriction := obj_here(n,true) or obj_hold(n);
+	    { true = not found hidden objects }
+	end;
 
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto 0;
+    end;
+
+
+
+begin
+	if s = '' then begin                              
+		list_get;
+		writeln;
+		grab_line('Object? ',s,eof_handler := leave);
+	end;
+	oldloc := location;
+
+	if scan_obj(action,s,,restriction) then begin
+	    { functin action make all }
 	end else if lookup_detail(n,s) then begin
 			writeln('That detail of this room is here for the enjoyment of all Monster players,');
 			writeln('and may not be taken.');
 	end else
 		writeln('There is no object here by that name.');
+	0:  { panic }
 end;
 
 
 procedure do_drop(s: string);
+label	0;  { for panic }
 var
-	slot,n: integer;
+	slot,n,oldloc: integer;
+
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	if obj_hold(n) then begin
+	    getobj(n);
+	    freeobj;
+	    if obj.sticky then
+		writeln(obj_part(n),': You can''t drop sticky objects.')
+	    else if can_drop then begin
+		slot := find_hold(n);
+		if place_obj(n) then begin
+		    drop_obj(slot);
+		    log_event(myslot,E_DROP,0,n,
+			log_name + ' has dropped '+obj_part(n) + '.');
+
+		    if mywield = n then x_unwield;
+		    if mywear = n then x_unwear;
+		    if obj.actindx > 0 then
+			run_monster('',obj.actindx,
+			    'drop succeed','','',
+			    sysdate+' '+systime);
+
+		end else
+		    writeln('Someone took the spot where your were going to drop ',obj_part(n),'.');
+	    end else
+		writeln('It is too cluttered here.  Find somewhere else to drop your things.');
+	    action := true;
+	end else begin
+	    action := false;
+	end;
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end; { action }
+
+    function restriction (n: integer): boolean;
+	begin
+		restriction := obj_hold(n);
+	end;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto 0;
+    end;
+
+
 
 begin
-	if s = '' then begin
-		writeln('To drop an object, type DROP <object name>.');
-		writeln('To see what you are carrying, type INV (inventory).');
-	end else if parse_obj(n,s) then begin
-		if obj_hold(n) then begin
-			getobj(n);
-			freeobj;
-			if obj.sticky then
-				writeln('You can''t drop sticky objects.')
-			else if can_drop then begin
-				slot := find_hold(n);
-				if place_obj(n) then begin
-					drop_obj(slot);
-					log_event(myslot,E_DROP,0,n,
-						myname + ' has dropped '+obj_part(n) + '.');
-
-					if mywield = n then begin
-						mywield := 0;
-						getroom;
-						here.people[myslot].wielding := 0;
-						putroom;
-					end;
-					if mywear = n then begin
-						mywear := 0;
-						getroom;
-						here.people[myslot].wearing := 0;
-						putroom;
-					end;
-				end else
-					writeln('Someone took the spot where your were going to drop it.');
-			end else
-				writeln('It is too cluttered here.  Find somewhere else to drop your things.');
-		end else begin
-			writeln('You''re not holding that item.  To see what you''re holding, type INV.');
-		end;
-	end else
-		writeln('You''re not holding that item.  To see what you''re holding, type INVENTORY.');
+    if s = '' then grab_line('Object? ',s,eof_handler := leave);
+    oldloc := location;
+    if s = '' then begin
+	writeln('To drop an object, type DROP <object name>.');
+	writeln('To see what you are carrying, type INV (inventory).');
+    end else if scan_obj(action,s,,restriction) then begin
+    end else
+	writeln('You''re not holding that item.  To see what you''re holding, type INVENTORY.');
+    0:	{ for panic }
 end;
 
 
 procedure do_inv(s: string);
+label 0; { for panic }
 var
 	first: boolean;
 	i,n: integer;
-	objnum: integer;
+	objnum,oldloc: integer;
+
+	function restriction(slot: integer): boolean;
+	begin
+	    restriction := here.people[slot].hiding = 0;
+	    { can't se people when he is hiding }
+	end;
+
+	function action(s: shortstring; n: integer): boolean;
+	begin
+	    first := true;
+	    log_event(myslot,E_LOOKYOU,n,0);
+	    for i := 1 to maxhold do begin
+		objnum := here.people[n].holding[i];
+		if objnum <> 0 then begin
+		    if first then begin
+			writeln(here.people[n].name,' is holding:');
+			first := false;
+		    end;
+		    write('   ',obj_part(objnum));
+		    if objnum = here.people[n].wielding then write(' wielded');
+		    if objnum = here.people[n].wearing then write(' worn');
+		    writeln;
+		end;
+	    end;
+	    if first then
+		writeln(here.people[n].name,' is empty handed.');
+	    action := true;
+	    checkevents(TRUE);
+	    if oldloc <> location then goto 0; { panic }
+	end;
 
 begin
 	gethere;
+	oldloc := location;
 	if s = '' then begin
 		noisehide(50);
 		first := true;
 		log_event(myslot,E_INVENT,0,0);
 		for i := 1 to maxhold do begin
-			objnum := here.people[myslot].holding[i];
-			if objnum <> 0 then begin
-				if first then begin
-					writeln('You are holding:');
-					first := false;
-				end;
-				writeln('   ',obj_part(objnum));
+		    objnum := here.people[myslot].holding[i];
+		    if objnum <> 0 then begin
+			if first then begin
+			    writeln('You are holding:');
+			    first := false;
 			end;
+			write('   ',obj_part(objnum));
+			if objnum = mywield then write(' wielded');
+			if objnum = mywear then write(' worn');
+			writeln;
+		    end;
 		end;
 		if first then
-			writeln('You are empty handed.');
-	end else if parse_pers(n,s) then begin
-		first := true;
-		log_event(myslot,E_LOOKYOU,n,0);
-		for i := 1 to maxhold do begin
-			objnum := here.people[n].holding[i];
-			if objnum <> 0 then begin
-				if first then begin
-					writeln(here.people[n].name,' is holding:');
-					first := false;
-				end;
-				writeln('   ',objnam.idents[ objnum ]);
-			end;
-		end;
-		if first then
-			writeln(here.people[n].name,' is empty handed.');
+	  		writeln('You are empty handed.');
+	end else if scan_pers_slot(action,s,,restriction) then begin
 	end else
 		writeln('To see what someone else is carrying, type INV <personal name>.');
+	0: { for panic }
 end;
 
 
 { translate a personal name into a real userid on request }
 
 procedure do_whois(s: string);
+label exit_label;
 var
 	n: integer;
 
-begin
-	if lookup_pers(n,s) then begin
-		getuser;
-		freeuser;
-{		getpers;
-		freepers;	! Already done in lookup_pers !		}
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	if user.idents[n] = '' then 
+	    writeln (s,' no have userid.')
+	else if user.idents[n][1] = ':' then
+	    writeln(s,' isn''t player, it is a monster.')
+	else writeln(s,' is ',user.idents[n],'.');
+	action := true;
+    end; { action }
 
-		writeln(pers.idents[n],' is ',user.idents[n],'.');
+    function restriction (n: integer): boolean;
+	begin
+		restriction := true;
+	end;
+
+    procedure leave;
+    begin
+	writeln('EXIT - no changes.');
+	goto exit_label;
+    end;
+
+begin
+	if s = '' then grab_line('Player? ',s,eof_handler := leave);
+
+	getuser;
+	freeuser;
+
+	if scan_pers(action,s,,restriction) then begin
+                
 	end else
 		writeln('There is no one playing with that personal name.');
+    exit_label:
 end;
 
 
-procedure do_players(s: string);
+procedure do_players(param: string);
+label 1,2; { for quit }
 var
 	i,j: integer;
 	tmpasleep: indexrec;
 	where_they_are: intrec;
+	ok: boolean;
+	c : char;
+	code : integer;
+	count: integer;
+	s1: string;
+	str: shortstring;
+	type_monsters,type_players,write_this: boolean;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 2;
+    end;
+
+var short_line: boolean;
 
 begin
+
+    short_line :=  terminal_line_len < 80;
+    
+    param := lowcase(param);
+    if param = '' then param := 'players';
+
+    type_monsters := index(param,'mon') > 0;
+    type_players  := index(param,'pla') > 0;
+    if param = 'all' then begin
+	type_monsters := true;
+	type_players := true;
+    end;
+    if param = '?' then begin
+	command_help('players');
+    end else if not type_monsters and not type_players then
+	writeln ('Type PLAYERS ? for help.')
+    else begin
+
+	count := 0;
 	log_event(myslot,E_PLAYERS,0,0);
 	getindex(I_ASLEEP);	{ Rec of bool; False if playing now }
 	freeindex;
@@ -8638,57 +8502,139 @@ begin
 	getdate;		{ date of last play }
 	freedate;
 
-	if privd then begin
-		getint(N_LOCATION);
-		freeint;
-		where_they_are := anint;
+	getint(N_LOCATION);
+	freeint;
+	where_they_are := anint;
 
-		getnam;
-		freenam;
-	end;
+	getnam;			{ room names }
+	freenam;
+
+	getown;			{ room owners }
+	freeown;
 
 	getint(N_SELF);
 	freeint;
 
 	writeln;
-	writeln('Userid          Personal Name              Last Play');
+	if not short_line then write ('Userid          ');
+	write ('Personal Name          ');
+	if not short_line then write ('    Last Play     ');
+	writeln ('   Where');
 	for i := 1 to maxplayers do begin
 		if not(indx.free[i]) then begin
-			write(user.idents[i]);
-			for j := length(user.idents[i]) to 15 do
-				write(' ');
-			write(pers.idents[i]);
-			for j := length(pers.idents[i]) to 21 do
+			write_this := true;
+                        if user.idents[i] = '' then begin
+			    if not short_line then write('<unknown>       ')
+                        end else if user.idents[i][1] <> ':' then begin
+			   if not type_players then write_this := false
+			   else if not short_line then begin
+			       write(user.idents[i]);
+			       for j := length(user.idents[i]) to 15 do
+				    write(' ');
+			   end;
+                        end else begin
+			   if not type_monsters then write_this := false
+			   else if not short_line then begin
+			       readv(user.idents[i],c,code);
+			       str := class_out(monster_owner(code));
+			       write('<',str,'>');
+			       for j := length(str) to 13 do write(' ');
+			   end;
+                        end;
+
+			if write_this then begin
+			    write(pers.idents[i]);
+			    for j := length(pers.idents[i]) to 21 do
 				write(' ');
 
-			if tmpasleep.free[i] then begin
-				write(adate.idents[i]);
-				if length(adate.idents[i]) < 19 then
+			    if not short_line then begin
+				if tmpasleep.free[i] then begin
+				    write(adate.idents[i]);
+				    if length(adate.idents[i]) < 19 then
 					for j := length(adate.idents[i]) to 18 do
-						write(' ');
-			end else
-				write('   -playing now-   ');
+					    write(' ');
+				end else
+					write('   -playing now-   ');
+			    end;
 
-			if (anint.int[i] <> 0) and (anint.int[i] <> DEFAULT_LINE) then
+			    if (anint.int[i] <> 0) and (anint.int[i] <> DEFAULT_LINE) then
 				write(' * ')
-			else
+			    else
 				write('   ');
 
-			if privd then begin
-				write(nam.idents[ where_they_are.int[i] ]);
+{ let people see, who have quitted in their rooms }
+			    if (own.idents[where_they_are.int[i]] =
+				    public_id) or
+			       (own.idents[where_they_are.int[i]] =
+				    disowned_id) or
+			       (own.idents[where_they_are.int[i]] =
+				    userid) then
+				    ok := true
+			    else
+				ok := false;
+
+
+{ let the Monster wizards see ev'rything.. }
+			    if manager_priv or 
+			       ( (poof_priv or owner_priv) 
+				and (here.owner <> system_id)) then 
+				{ minor change by leino@finuha }
+				{ and hurtta@finuh }
+				ok := true;
+
+
+			    if ok then begin
+				    write(nam.idents[ where_they_are.int[i] ]);
+			    end else
+				    write('n/a');
+
+
+			    writeln;
+			    count := count +1;
+			    if count mod (terminal_page_len -2) = 0 then begin
+				grab_line('-more-',s1,erase := true,
+				    eof_handler := leave);
+				if s1 > '' then goto 1;
+			    end;
 			end;
-			writeln;
 		end;
 	end;
 	writeln;
+	1:
+    end;
+    2:
 end;
 
 
 procedure do_self(s: string);
+label 0; { for panic }
 var
-	n: integer;
+	n,oldloc: integer;
+
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	writeln(s,':');
+	getint(N_SELF);
+	freeint;
+	if (anint.int[n] = 0) or (anint.int[n] = DEFAULT_LINE) then
+	    writeln('That person has not made a self-description.')
+	else begin
+	    print_desc(anint.int[n]);
+	    log_event(myslot,E_VIEWSELF,0,0,pers.idents[n]);
+	end;
+	action := true;
+	checkevents(true);
+	if oldloc <> location then goto 0; { panic }
+    end; { action }
+
+    function restriction (n: integer): boolean;
+	begin
+		restriction := true;
+	end;
+
 
 begin
+	oldloc := location;
 	if length(s) = 0 then begin
 		log_action(c_self,0);
 		writeln('[ Editing your self description ]');
@@ -8701,35 +8647,34 @@ begin
 			putint;
 			log_event(myslot,E_SELFDONE,0,0);
 		end;
-	end else if lookup_pers(n,s) then begin
-		getint(N_SELF);
-		freeint;
-		if (anint.int[n] = 0) or (anint.int[n] = DEFAULT_LINE) then
-			writeln('That person has not made a self-description.')
-		else begin
-			print_desc(anint.int[n]);
-			log_event(myslot,E_VIEWSELF,0,0,pers.idents[n]);
-		end;
+	end else if scan_pers(action,s,,restriction) then begin
 	end else
 		writeln('There is no person by that name.');
+	0: { for panic }
 end;
 
 
 procedure do_health(s: string);
-
+var lev,rel: integer;
 begin
+	lev := level(myexperience);
+	rel := myhealth * 10 div leveltable[lev].health;
+
+	writeln('Your health rate is ',myhealth:1,'/',
+	    leveltable[lev].health:1,'.');
+	if rel > 9 then rel := 9;
 	write('You ');
-	case myhealth of
+        if  myhealth = 0 then writeln('are dead.')
+	else case rel of
 		9: writeln('are in exceptional health.');
 		8: writeln('are in better than average condition.');
 		7: writeln('are in perfect health.');
 		6: writeln('feel a little bit dazed.');
 		5: writeln('have some minor cuts and abrasions.');
 		4: writeln('have some wounds, but are still fairly strong.');
-		3: writeln('are suffering from some serious wounds.'); 
+		3: writeln('are suffering from some serious wounds.');
 		2: writeln('are very badly wounded.');
-		1: writeln('have many serious wounds, and are near death.');
-		0: writeln('are dead.');
+		1,0: writeln('have many serious wounds, and are near death.');
 		otherwise writeln('don''t seem to be in any condition at all.');
 	end;
 end;
@@ -8785,6 +8730,7 @@ end;
 
 
 procedure use_crystal(objnum: integer);
+label exit_label;
 var
 	done: boolean;
 	s: string;
@@ -8792,6 +8738,17 @@ var
 	done_msg,chill_msg: integer;
 	tmp: string;
 	i: integer;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	gethere;
+	log_event(myslot,E_DONECRYSTALUSE,0,0);
+	print_desc(done_msg);
+	goto exit_label;
+    end;
+
+
 
 begin
 	if obj_hold(objnum) then begin
@@ -8801,7 +8758,7 @@ begin
 		done_msg := obj.d1;
 		chill_msg := obj.d2;
 
-		grab_line('',s);
+		grab_line('',s,eof_handler := leave);
 		if lookup_room(n,s) then begin
 			gethere(n);
 			crystal_look(chill_msg);
@@ -8810,7 +8767,7 @@ begin
 			done := true;
 
 		while not(done) do begin
-			grab_line('',s);
+			grab_line('',s,eof_handler := leave);
 			if lookup_dir(n,s) then begin
 				if here.exits[n].toloc > 0 then begin
 					gethere(here.exits[n].toloc);
@@ -8833,11 +8790,12 @@ begin
 			end;
 		end;
 
-		gethere;
+	  	gethere;
 		log_event(myslot,E_DONECRYSTALUSE,0,0);
 		print_desc(done_msg);
 	end else
 		writeln('You must be holding it first.');
+    exit_label:
 end;
 
 
@@ -8847,7 +8805,7 @@ procedure p_usefail(n: integer);
 begin
 	{ we assume getobj has already been done }
 	if (obj.usefail = 0) or (obj.usefail = DEFAULT_LINE) then
-		writeln('It doesn''t work for some reason.')
+   		writeln('It doesn''t work for some reason.')
 	else
 		print_desc(obj.usefail);
 end;
@@ -8858,17 +8816,131 @@ procedure p_usesucc(n: integer);
 begin
 	{ we assume getobj has already been done }
 	if (obj.usesuccess = 0) or (obj.usesuccess = DEFAULT_LINE) then
-		writeln('It seems to work, but nothing appears to happen.')
+	  	writeln('It seems to work, but nothing appears to happen.')
 	else
 		print_desc(obj.usesuccess);
+end;                   
+
+procedure p_attack (n,victim: integer);                                  
+Var vs: string;
+begin
+	{ we assume getroom has already been done }
+        getobj (n);	{    can we remove this ? }
+	freeobj; 	{ -> (what happen in grab_line) }
+        vs := here.people[victim].name;
+	if (obj.usesuccess = 0) or (obj.usesuccess = DEFAULT_LINE) then
+		writeln('You attack ',vs)
+	else
+		block_subs(obj.usesuccess,vs);
+end;                                                               
+
+
+procedure use_weapon (n: integer);
+label exit_label;
+var done: boolean;
+    victim,factor: integer;
+    s,last: string;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto exit_label;
+    end;
+
+begin
+   factor := leveltable[level(myexperience)].factor;
+   Writeln ('Use weapon - Whom do you attack ?');
+   done := False; last := '<unknown>';
+   repeat
+     
+     if not read_global_flag(GF_WARTIME) then begin
+	writeln('Don''t you dare disturb the Pax Monstruosa!');
+	done := true
+     end else if mywield <> n then begin
+	writeln ('You are no longer wielding that weapon.');
+	done := true;
+     end else begin
+	grab_line ('Victim? ',s,eof_handler := leave); 
+	if s = '.' then s := last;
+	last := s;
+
+	if s = '' then done := true
+	else if not parse_pers(victim,s) then begin
+	    Writeln (s,' isn''t here.');
+	    victim := 0
+	end;
+     end;
+
+     if not done and (victim > 0) then
+       if victim = myslot Then Writeln ('Suicide is not allowed.')
+       else if protected (victim) or (rnd100 > factor) then begin { Ha Ha }
+		log_event(myslot,E_FAILUSE,n,0);
+		p_usefail(n);
+       end else if (here.people[victim].experience >= protect_exp) 
+       {	and protected_MM } then begin
+		log_event(myslot,E_FAILUSE,n,0);
+		writeln('You can''t attack that person.');
+       end else begin
+		if hiding then begin
+			hiding := false;
+
+			getroom;   
+			here.people[myslot].hiding := 0;
+			putroom;
+                                 
+                        log_event(myslot,E_HATTACK,victim,n);
+                        Writeln ('You step out from shadows and ...');
+                        p_attack (n,victim);
+		       	if here.people[victim].kind = P_MONSTER then begin
+				getobj(n);
+				freeobj;
+				attack_monster(victim,obj.ap);
+			end; 
+		end else begin
+       	      		log_event(myslot,E_ATTACK,victim,n);
+			p_attack (n,victim);
+		       	if here.people[victim].kind = P_MONSTER then begin
+				getobj(n);
+				freeobj;
+				attack_monster(victim,obj.ap);
+			end; 
+		end;
+		wait (1+random*4); { Ha Ha Ha }
+	end;
+   until done;
+   exit_label:
 end;
 
+procedure use_book(n: integer);
+var p: integer;
+begin
+    p := obj.parms[OP_SPELL];
+    if p > 0 then begin
+	getint(N_SPELL);
+	freeint;
+	getspell_name;
+	freespell_name;
+	run_monster('',anint.int[p],'learn', 
+	    'book name',objnam.idents[n],
+	    sysdate + ' ' + systime,
+	    spell_name.idents[p],myname);
+    end;
+end; { use_book }
 
 procedure do_use(s: string);
+label exit_label;
 var
 	n: integer;
 
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto exit_label;
+    end;
+
 begin
+	if s = '' then grab_line('Object? ',s,eof_handler := leave);
+
 	if length(s) = 0 then
 		writeln('To use an object, type USE <object name>')
 	else if parse_obj(n,s) then begin
@@ -8881,39 +8953,120 @@ begin
 		end else if (obj.uselocreq > 0) and (location <> obj.uselocreq) then begin
 			log_event(myslot,E_FAILUSE,n,0);
 			p_usefail(n);
-		end else begin
-			p_usesucc(n);
+		end else if (obj.kind = O_WEAPON) and 
+                            ((obj.exreq > myexperience) or
+                            (n <> mywield)) then begin  { Ha Ha Ha }
+			log_event(myslot,E_FAILUSE,n,0);
+			p_usefail(n);
+		end else if (obj.kind = O_BOOK) and 
+                            ((obj.exreq > myexperience)) then begin
+			log_event(myslot,E_FAILUSE,n,0);
+			p_usefail(n);
+                end else begin
 			case obj.kind of
-				O_BLAND:;
-				O_CRYSTAL: use_crystal(n);
-				otherwise ;
+				O_BLAND: p_usesucc(n);
+				O_CRYSTAL: begin
+                                             p_usesucc(n);
+			                     use_crystal(n);
+                                           end;
+                                O_WEAPON: use_weapon (n);
+				O_BOOK:	  begin
+					    p_usesucc(n);
+					    use_book(n);
+					  end;
+				otherwise p_usesucc(n);
 			end;
+			if obj.actindx > 0 then
+				run_monster('',obj.actindx,
+					'use succeed','','',
+					sysdate+' '+systime);
+
 		end;
 	end else
 		writeln('There is no such object here.');
+    exit_label:
 end;
 
 
 procedure do_whisper(s: string);
+label exit_label;
 var
 	n: integer;
 
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto exit_label;
+    end;
+
 begin
+	if s = '' then grab_line('Player? ',s,eof_handler := leave);
+
 	if length(s) = 0 then begin
 		writeln('To whisper to someone, type WHISPER <personal name>.');
 	end else if parse_pers(n,s) then begin
 		if n = myslot then
-			writeln('You can''t whisper to yourself.')
+		    writeln('You can''t whisper to yourself.')
 		else begin
-			grab_line('>> ',s);
-			if length(s) > 0 then begin
-				nice_say(s);
-				log_event(myslot,E_WHISPER,n,0,s);
-			end else
-				writeln('Nothing whispered.');
+		    grab_line('>> ',s,eof_handler := leave);
+		    if length(s) > 0 then begin
+			nice_say(s);
+			log_event(myslot,E_WHISPER,n,0,s);
+			if here.people[n].kind = P_MONSTER then
+			    if here.people[n].health > 0 then begin
+				run_monster (here.people[n].name,
+				    here.people[n].parm,
+				    'say','speech',s,
+				    sysdate+' '+systime);
+			    end;
+		    end else
+			    writeln('Nothing whispered.');
 		end;
 	end else
 		writeln('No such person can be seen here.');
+
+    exit_label:
+end;
+
+procedure health_player; { hurtta@finuh }
+var tmp: intrec;
+    lev: integer;
+begin
+  if rnd100 > 70 then begin
+     lev := level(myexperience);
+     myhealth := myhealth + leveltable[lev].health div 3;
+     if myhealth > leveltable[lev].health then 
+        myhealth := leveltable[lev].health;
+
+     getroom;
+     here.people[myslot].health := myhealth;
+     putroom;
+
+     tmp := anint;
+     getint(N_HEALTH);
+     anint.int[mylog] := myhealth;
+     putint;
+     anint := tmp;
+
+  end;
+end;
+
+procedure x_unwield;
+var tmp: shortstring;
+begin
+    getobj(mywield);
+    freeobj;
+    tmp := obj.oname;
+    if obj.kind = O_MAGIC_RING then reset_queue;
+    { action queue must reset, because it not in }
+    { runnning when use MAGIC RING }
+    log_event(myslot,E_UNWIELD,0,0,tmp);
+    writeln('You are no longer wielding the ',tmp,'.');
+
+    mywield := 0;
+    getroom;
+    here.people[myslot].wielding := 0;
+    putroom;
 end;
 
 
@@ -8927,16 +9080,7 @@ begin
 		if mywield = 0 then
 			writeln('You are not wielding anything.')
 		else begin
-			getobj(mywield);
-			freeobj;
-			tmp := obj.oname;
-			log_event(myslot,E_UNWIELD,0,0,tmp);
-			writeln('You are no longer wielding the ',tmp,'.');
-
-			mywield := 0;
-			getroom;
-			here.people[mylog].wielding := 0;
-			putroom;
+		    x_unwield;
 		end;
 	end else if parse_obj(n,s) then begin
 		if mywield <> 0 then begin
@@ -8945,12 +9089,16 @@ begin
 			getobj(n);
 			freeobj;
 			tmp := obj.oname;
-			if obj.kind = O_WEAPON then begin
+			if obj.kind in [O_WEAPON,O_MAGIC_RING,
+				O_TELEPORT_RING,O_HEALTH_RING] then begin
 				if obj_hold(n) then begin
 					mywield := n;
 					getroom;
 					here.people[myslot].wielding := n;
 					putroom;
+
+					if (obj.kind = O_HEALTH_RING) then
+						health_player;
 
 					log_event(myslot,E_WIELD,0,0,tmp);
 					writeln('You are now wielding the ',tmp,'.');
@@ -8963,6 +9111,22 @@ begin
 		writeln('No such weapon can be seen here.');
 end;
 
+procedure x_unwear;
+var tmp: shortstring;
+begin
+    getobj(mywear);
+    freeobj;
+    tmp := obj.oname;
+    log_event(myslot,E_UNWEAR,0,0,tmp);
+    writeln('You are no longer wearing the ',tmp,'.');
+
+    mywear := 0;
+    mydisguise := 0;
+    getroom;
+    here.people[myslot].wearing := 0;
+    putroom;
+end;
+
 
 procedure do_wear(s: string);
 var
@@ -8970,51 +9134,47 @@ var
 	slot,n: integer;
 
 begin
-	if length(s) = 0 then begin	{ no parms means unwield }
+	if length(s) = 0 then begin	{ no parms means unwear }
 		if mywear = 0 then
-			writeln('You are not wearing anything.')
+	  		writeln('You are not wearing anything.')
 		else begin
-			getobj(mywear);
-			freeobj;
-			tmp := obj.oname;
-			log_event(myslot,E_UNWEAR,0,0,tmp);
-			writeln('You are no longer wearing the ',tmp,'.');
-
-			mywear := 0;
-			getroom;
-			here.people[mylog].wearing := 0;
-			putroom;
+		    x_unwear;
 		end;
 	end else if parse_obj(n,s) then begin
-		getobj(n);
-		freeobj;
-		tmp := obj.oname;
-		if (obj.kind = O_ARMOR) or (obj.kind = O_CLOAK) then begin
+		if mywear > 0 then begin
+		    getobj(mywear);
+		    freeobj;
+		    writeln('You are already wearing the ',obj.oname,'.');
+		end else begin
+		    getobj(n);
+		    freeobj;
+		    tmp := obj.oname;
+		    if (obj.kind in [O_ARMOR, O_DISGUISE] ) then begin
 			if obj_hold(n) then begin
 				mywear := n;
+				if obj.kind = O_DISGUISE then
+					mydisguise := n;
 				getroom;
-				here.people[mylog].wearing := n;
+				here.people[myslot].wearing := n;
 				putroom;
 
 				log_event(myslot,E_WEAR,0,0,tmp);
 				writeln('You are now wearing the ',tmp,'.');
 			end else
 				writeln('You must be holding it first.');
-		end else
+		    end else
 			writeln('That cannot be worn.');
+		end;
 	end else
 		writeln('No such thing can be seen here.');
 end;
 
 
 procedure do_brief;
-
 begin
 	brief := not(brief);
-	if brief then
-		writeln('Brief descriptions.')
-	else
-		writeln('Verbose descriptions.');
+	if brief then writeln('Brief descriptions.')
+	else writeln('Verbose descriptions.');
 end;
 
 
@@ -9078,7 +9238,6 @@ begin
 	end;
 end;
 
-
 procedure do_s_exits;
 var
 	i: integer;
@@ -9113,45 +9272,152 @@ begin
 end;
 
 
-procedure do_s_object(s: string);
+{ Return object owner as value (I hope)		jlaiho@finuh }
+function tell_owner(n: integer):shortstring;
 var
-	n: integer;
-	x: objectrec;
+ 	s: string;
 
 begin
-	if length(s) = 0 then begin
-		grab_line('Object? ',s);
+	getobjown;
+	freeobjown;
+	s := objown.idents[n];
+	s := class_out(s);	
+	if substr(s,1,1)<>'<' then begin
+		if lookup_user(n,objown.idents[n]) then begin
+			getpers;
+			freepers;
+			tell_owner := pers.idents[n];
+		end else
+			tell_owner := '<Unknown>';
+	end else if s.length>shortlen then begin
+		tell_owner := substr(s,1,shortlen);
+	end else
+		tell_owner := substr(s,1,s.length);
+end;
+
+
+procedure do_s_object(s: string);
+label 0;    { for panic }
+var
+	n,oldloc: integer;
+	x: objectrec;
+
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	write(obj_part(n),': ');
+	if objown.idents[n] = public_id then write('public')
+	else if objown.idents[n] = disowned_id then write('disowned')
+	else write(class_out(objown.idents[n]),' is owner');
+
+	if obj_owner(n,TRUE) then begin
+	    write(', ');
+	    show_kind(obj.kind,false);
+	    x := obj;
+
+	    if x.sticky then
+		write(', sticky');
+	    if x.getobjreq > 0 then
+		write(', ',obj_part(x.getobjreq),' required to get');
+	    if x.useobjreq > 0 then
+		write(', ',obj_part(x.useobjreq),' required to use');
+	    if x.uselocreq > 0 then begin
+		getnam;
+		freenam;
+		write(', used only in ',nam.idents[x.uselocreq]);
+	    end;
+	    if x.usealias <> '' then begin
+		write(', use="',x.usealias,'"');
+		if x.reqalias then
+		    write(' (required)');
+	    end;
+	end;
+	writeln;
+	action := true;
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end;    { action }
+
+    function restriction (n: integer): boolean;
+	begin
+		restriction := true;
 	end;
 
-	if lookup_obj(n,s) then begin
-		if obj_owner(n,TRUE) then begin
-			write(obj_part(n),': ');
-			write(objown.idents[n],' is owner');
-			x := obj;
+    procedure leave;
+    begin
+	writeln('EXIT - No changes.');
+	goto 0;
+    end;
 
-			if x.sticky then
-				write(', sticky');
-			if x.getobjreq > 0 then
-				write(', ',obj_part(x.getobjreq),' required to get');
-			if x.useobjreq > 0 then
-				write(', ',obj_part(x.useobjreq),' required to use');
-			if x.uselocreq > 0 then begin
-				getnam;
-				freenam;
-				write(', used only in ',nam.idents[x.uselocreq]);
-			end;
-			if x.usealias <> '' then begin
-				write(', use="',x.usealias,'"');
-				if x.reqalias then
-					write(' (required)');
-			end;
 
-			writeln;
-		end else
-			writeln('You are not allowed to see the internals of that object.');
+begin
+
+	if length(s) = 0 then begin
+		grab_line('Object? ',s,eof_handler := leave);
+	end;
+	getobjown;
+	freeobjown;
+
+	oldloc := location;
+	if scan_obj(action,s,,restriction) then begin
 	end else
 		writeln('There is no such object.');
+	0: { for panic }
 end;
+
+procedure do_s_monster(s: string);
+label 0; { for panic }
+var	n,code,oldloc: integer;
+	owner, coder,name,dis,pub: shortstring;
+
+    function restriction (n: integer): boolean;
+    begin
+	restriction := here.people[n].kind = P_MONSTER;
+	{ can see monster even it is hiding }
+    end; 
+
+    function action(s: shortstring; n: integer): boolean;
+    begin
+	name := here.people[n].name;
+	code := here.people[n].parm;
+	owner := monster_owner(code);
+	coder := monster_owner(code,1);
+	write (name,': ');
+	if owner = public_id then write('public')
+	else if owner = disowned_id then write('disowned')
+	else write (class_out(owner),' is owner');
+	if ((owner = userid) or
+	    (coder = userid) or 
+	    (owner_priv and (owner <> system_id)) or
+	    manager_priv)
+	    and (coder > '') then begin
+	    if coder = owner then write(' and writer')
+	    else write(', ',coder,' is writer');
+	end;
+	writeln('.');
+	action := true;
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { for panic }
+    end;
+
+    procedure leave;
+    begin
+	writeln('EXIT - No changes.');
+	goto 0;
+    end;
+
+begin
+
+	if length(s) = 0 then begin
+		grab_line('Monster? ',s,eof_handler := leave);
+	end;
+
+	oldloc := location;
+	if scan_pers_slot(action,s,,restriction) then begin
+	end else writeln ('There is no such monster.');
+	writeln;
+	0: { for panic }
+end;
+
 
 
 procedure do_s_details;
@@ -9174,16 +9440,172 @@ begin
 		writeln('There are no details of this room that you can inspect.');
 end;
 
-procedure do_s_help;
-
+procedure do_s_privs;
 begin
-	writeln;
-	writeln('Exits             Lists exits you can inspect here');
-	writeln('Object            Show internals of an object');
-	writeln('Details           Show details you can look at in this room');
-	writeln;
+	write ('Your authorized privileges: ');
+	    list_privileges(read_auth_priv);
+	write ('Your current privileges: ');
+	    list_privileges(read_cur_priv);
 end;
 
+procedure do_s_time;
+begin
+	writeln(sysdate,'  ',systime);
+end;
+
+procedure do_s_room(s: string);
+label 0;    { for panic }
+var	room,oldloc: integer;
+
+    function action(s: shortstring; room: integer): boolean;
+    begin
+	gethere(room);
+	if here.owner = public_id then writeln(s,' is public.')
+	else if here.owner = disowned_id then writeln(s,' is disowned.')
+	else writeln('Owner of ',s,' is ',class_out(here.owner));
+	checkevents(TRUE);
+	action := true;
+	if oldloc <> location then goto 0; { panic }
+    end; { action }
+
+    function restriction (n: integer): boolean;
+	begin
+		restriction := true;
+	end;
+
+begin
+
+	oldloc := location;
+	if s = '' then action('this room',location)
+	else if not scan_room(action,s,,restriction) then begin
+		writeln('No such room.');
+	end;
+	0: { for panic }
+end;
+
+procedure do_s_levels;
+label	1;
+var i,j,n,line: integer;
+	s: string;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 1;
+    end;
+    
+begin
+    line := 1;
+   write('  Name                 Score     '); { 34 }
+       {  123456789012345678901234567890123 }
+   if terminal_line_len > 50 then
+	write('Power MaxHealth '); { 50 }
+	    {  4567890123456789 }
+   if terminal_line_len >= 80 then
+	write('Privilege');
+   writeln;
+                     
+   for i := 1 to levels do with leveltable[i] do 
+	if not hidden or manager_priv then begin
+		if hidden then write('* ') else write('  ');
+		write(name);
+		for j := 1 to 17-length(name) do write(' ');
+		if exp > maxexperience then write('-':9,' ')
+		else write(exp:9,' ');
+		if terminal_line_len > 50 then begin
+		    write(maxpower:9,' ');
+		    write(health:9,' ');
+		end;
+		if (i < levels) and (terminal_line_len >= 80) then
+			list_privileges(uint(priv))
+		else writeln;
+		line := line + 1;
+		if line > terminal_page_len - 2 then begin
+		    line := 0;
+		    grab_line('-more-',s,erase := true,
+			eof_handler := leave); if s > '' then goto 1;
+		end;
+	end;
+    1:
+end; { do_s_levels }
+
+{ procedure type_paper moved to module CUSTOM }
+
+procedure do_s_quota;
+begin
+   writeln('Counters: ');
+   writeln('  Number of rooms:            ',get_counter(N_NUMROOMS,mylog):1);
+   writeln('  Room quota:                 ',get_counter(N_ALLOW,mylog):1);
+   writeln('  Number of accepts:          ',get_counter(N_ACCEPT,mylog):1);
+   writeln('Consts: ');
+   writeln('  Minimun rooms'' number:      ',min_room:1);
+   writeln('  Required amount of accepts: ',min_accept:1);
+   writeln('    (if more rooms than minimum rooms'' number)');
+   if manager_priv then
+      writeln('  Default room quota:         ',default_allow:1);
+end; { do_s_quota }
+
+procedure do_s_spell(name: string);
+label	1;
+var i,j,n,line: integer;
+	s: string;
+
+    myspell: spellrec;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 1;
+    end;
+var header: boolean;
+
+    procedure spell_data(sid: integer);
+    var j: integer;
+    begin
+	if not header then begin
+	    writeln('  Spell''s name     Level');
+	    {        1234567890123456  }
+	    header := true;
+	    line := line + 1;
+	end;
+	write('  ',spell_name.idents[sid]);
+	for j := 1 to 17-length(spell_name.idents[sid]) do write(' ');
+	writeln(myspell.level[sid]:5);
+	line := line + 1;
+	if line > terminal_page_len - 2 then begin
+	    line := 0;
+	    grab_line('-more-',s,erase := true,
+		eof_handler := leave); if s > '' then goto 1;
+	end;
+    end;
+
+    procedure list_spell;
+    var I :integer;
+	myindex: indexrec;
+    begin
+	getindex(I_SPELL);
+	freeindex;
+	myindex := indx;
+	for i := 1 to myindex.top do if not myindex.free[i] then
+	    if myspell.level[i] > 0 then spell_data(i);
+	if not header then writeln('You don''t know any spell.');
+    end;
+    
+begin
+    line := 0;
+    header := false;
+    getspell_name;
+    freespell_name;
+    getspell(mylog);
+    freespell;
+    myspell := spell;
+    name := lowcase(name);
+
+    if (name = '') or (name = '*') or (name = 'all') then list_spell
+    else if lookup_spell(i,name) then spell_data(i)
+    else writeln('Unkown spell.');
+    1:
+end;
 
 procedure s_show(n: integer;s: string);
 
@@ -9191,213 +9613,970 @@ begin
 	case n of
 		s_exits: do_s_exits;
 		s_object: do_s_object(s);
-		s_quest: do_s_help;
+		s_quest: command_help('*do s help*');
 		s_details: do_s_details;
+		s_monster: do_s_monster(s);
+		s_priv: do_s_privs;
+		s_time: do_s_time;
+		s_room: do_s_room(s);
+		s_paper: type_paper;
+		s_levels: do_s_levels;
+		s_quota:  do_s_quota;
+		s_spell:  do_s_spell (s);
 	end;
 end;
 
+{ procedures do_y_altmsg, do_group1 and do_group2 moved to module CUSTOM }
 
-procedure do_y_altmsg;
-var
-	newdsc: integer;
+procedure do_passwd;
+label exit_label;
+var oldpwd,pwd,pwd_check: shortstring;
+    s:  string;
+    ok: boolean;
+
+    procedure leave;
+    begin
+	writeln('EXIT - No changes');
+	goto exit_label;
+    end;
 
 begin
-	if is_owner then begin
-		gethere;
-		newdsc := here.xmsg2;
-		writeln('[ Editing the alternate mystery message for this room ]');
-		if edit_desc(newdsc) then begin
-			getroom;
-			here.xmsg2 := newdsc;
-			putroom;
+	grab_line ('Old password: ', s, false,eof_handler := leave);
+	if length(s) > shortlen then
+		oldpwd := substr(s,1,shortlen)
+	else oldpwd := s;
+	encrypt(oldpwd);
+	getpasswd;
+	freepasswd;
+	ok := passwd.idents [mylog] = oldpwd;
+
+	if ok then begin
+		grab_line ('New password: ', s, false,eof_handler := leave);
+		if length(s) > shortlen then
+			pwd := substr(s,1,shortlen)
+		else pwd := s;
+		while (pwd = '') and (userid[1] = '"') do begin
+			writeln ('Sorry, you must have a password for ', myname, '.');
+			grab_line ('New password: ', s, false,eof_handler := leave);
+			if length(s) > shortlen then
+				pwd := substr(s,1,shortlen)
+			else pwd := s;
 		end;
-	end;
-end;
+		grab_line ('Verification: ', s, false,eof_handler := leave);
+		if length(s) > shortlen then
+			pwd_check := substr(s,1,shortlen)
+		else pwd_check := s;
+		if pwd = pwd_check then begin
+			ok := true;
+			encrypt (pwd);
 
+			getpasswd;
+			passwd.idents [mylog] := pwd;
+			putpasswd;
 
-procedure do_y_help;
-
-begin
-	writeln;
-	writeln('Altmsg        Set the alternate mystery message block');
-	writeln;
-end;
-
-
-procedure do_group1;
-var
-	grpnam: string;
-	loc: integer;
-	tmp: string;
-	
-begin
-	if is_owner then begin
-		gethere;
-		if here.grploc1 = 0 then
-			writeln('No primary group location set')
-		else begin
-			getnam;
-			freenam;
-			writeln('The primary group location is ',nam.idents[here.grploc1],'.');
-			writeln('Descriptor string: [',here.grpnam1,']');
+			writeln('Database updated.');
+		end else begin
+			ok := false;
+			writeln ('You seem to have made a mistake. ');
+			writeln ('Password not changed.');
 		end;
-		writeln;
-		writeln('Type * to turn off the primary group location');
-		grab_line('Room name of primary group? ',grpnam);
-		if length(grpnam) = 0 then
-			writeln('No changes.')
-		else if grpnam = '*' then begin
-			getroom;
-			here.grploc1 := 0;
-			putroom;
-		end else if lookup_room(loc,grpnam) then begin
-			writeln('Enter the descriptive string.  It will be placed after player names.');
-			writeln('Example:  Monster Manager is [descriptive string, instead of "here."]');
-			writeln;
-			grab_line('Enter string? ',tmp);
-			if length(tmp) > shortlen then begin
-				writeln('Your string was truncated to ',shortlen:1,' characters.');
-				tmp := substr(tmp,1,shortlen);
-			end;
-			getroom;
-			here.grploc1 := loc;
-			here.grpnam1 := tmp;
-			putroom;
-		end else
-			writeln('No such room.');
+	end else begin
+			writeln ('Old password verification error.');
+			writeln ('Password not changed.');
 	end;
+    exit_label:
 end;
 
-
-
-procedure do_group2;
-var
-	grpnam: string;
-	loc: integer;
-	tmp: string;
-	
+procedure do_y_priv(s: string);
+type action = (activate, reset);
+var direction: action;
+    mask,prev: unsigned;
+    mask2: integer;
 begin
-	if is_owner then begin
-		gethere;
-		if here.grploc2 = 0 then
-			writeln('No secondary group location set')
-		else begin
-			getnam;
-			freenam;
-			writeln('The secondary group location is ',nam.idents[here.grploc1],'.');
-			writeln('Descriptor string: [',here.grpnam1,']');
-		end;
-		writeln;
-		writeln('Type * to turn off the secondary group location');
-		grab_line('Room name of secondary group? ',grpnam);
-		if length(grpnam) = 0 then
-			writeln('No changes.')
-		else if grpnam = '*' then begin
-			getroom;
-			here.grploc2 := 0;
-			putroom;
-		end else if lookup_room(loc,grpnam) then begin
-			writeln('Enter the descriptive string.  It will be placed after player names.');
-			writeln('Example:  Monster Manager is [descriptive string, instead of "here."]');
-			writeln;
-			grab_line('Enter string? ',tmp);
-			if length(tmp) > shortlen then begin
-				writeln('Your string was truncated to ',shortlen:1,' characters.');
-				tmp := substr(tmp,1,shortlen);
-			end;
-			getroom;
-			here.grploc2 := loc;
-			here.grpnam2 := tmp;
-			putroom;
-		end else
-			writeln('No such room.');
+    direction := activate;
+    s := slead(s);
+    if s = '' then begin
+	mask2 := int(read_cur_priv);
+	if custom_privileges(mask2,read_auth_priv) then begin
+	    set_cur_priv(uint(mask2));
+	    write('Setting follow privileges: ');
+	    list_privileges(read_cur_priv);
+	end else writeln('Not changed.');
+    end else if (s = '?') then begin
+	writeln('Use set privileges + <privilege> to set privilege');
+	writeln('Use set privileges - <privilege> to reset privilege');
+    end else begin
+	if s[1] = '+' then begin
+	    direction := activate;
+	    if length(s) > 1 then
+		s := slead(substr(s,2,length(s)-1));
+	end else if s[1] = '-' then begin
+	    direction := reset;
+	    if length(s) > 1 then
+		s := slead(substr(s,2,length(s)-1));
 	end;
-end;
 
+	mask := 0;
+	if (s = 'all') or (s = '*') then mask := all_privileges
+	else if not lookup_priv(mask,s,true) then begin
+	    mask := 0;
+	    writeln('Unknown privilege: ',s);
+	end;
+
+	if mask > 0 then begin
+	    prev := read_cur_priv;
+	    if direction = reset then begin
+		set_cur_priv(uand(prev,unot(mask)));
+		write('Resetting follow privileges: ');
+		    list_privileges(uand(prev,unot(read_cur_priv)));
+	    end else begin
+		set_cur_priv(uor(prev,mask));
+		write('Setting follow privileges: ');
+		    list_privileges(uand(read_cur_priv,unot(prev)));
+	    end;
+	end;
+    end;
+
+end;
 
 procedure s_set(n: integer;s: string);
 
 begin
 	case n of
-		y_quest: do_y_help;
-		y_altmsg: do_y_altmsg;
+		y_quest: command_help('*do y help*');
+
+{		y_altmsg: do_y_altmsg;
 		y_group1: do_group1;
-		y_group2: do_group2;
+		y_group2: do_group2;	}
+	
+		y_passwd: do_passwd;
+		y_peace: if not global_priv then 
+			writeln('There is too much hate in the world.')
+		    else if not read_global_flag(GF_WARTIME,TRUE) then
+			writeln('The war is over already.')
+		    else set_global_flag(GF_WARTIME,FALSE,
+		'...And on earth peace, good will toward men (and monsters).');
+		y_war: if not global_priv then 
+			writeln('You are not angry enough.')
+		    else if read_global_flag(GF_WARTIME,TRUE) then
+			writeln('You call this peace?')
+		    else set_global_flag(GF_WARTIME,TRUE,
+'Go your ways, and pour out the vials of the wrath of God upon the earth.');
+		y_priv: do_y_priv(s);
+		y_spell: custom_spell(s);
+		y_newplayer: custom_global_desc(GF_NEWPLAYER);
+		y_welcome: custom_global_desc(GF_STARTGAME);
 	end;
 end;
 
 
 procedure do_show(s: string);
+label exit_label;
 var
 	n: integer;
 	cmd: string;
 
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto exit_label;
+    end;
+
 begin
 	cmd := bite(s);
 	if length(cmd) = 0 then
-		grab_line('Show what attribute? (type ? for a list) ',cmd);
+		grab_line('Show what attribute? (type ? for a list) ',cmd,
+		    eof_handler := leave);
 
 	if length(cmd) = 0 then
-	else if lookup_show(n,cmd) then
+	else if lookup_show(n,cmd,true) then
 		s_show(n,s)
 	else
 		writeln('Invalid show option, type SHOW ? for a list.');
+    exit_label:
 end;
 
 
 procedure do_set(s: string);
+label exit_label;
 var
 	n: integer;
 	cmd: string;
+
+    procedure leave;
+    begin
+	writeln('EXIT - No changes.');
+	goto exit_label;
+    end;
 
 begin
 	cmd := bite(s);
 	if length(cmd) = 0 then
-		grab_line('Set what attribute? (type ? for a list) ',cmd);
-
+		grab_line('Set what attribute? (type ? for a list) ',cmd,
+		    eof_handler := leave);
+          
 	if length(cmd) = 0 then
-	else if lookup_set(n,cmd) then
+	else if lookup_set(n,cmd,true) then
 		s_set(n,s)
 	else
 		writeln('Invalid set option, type SET ? for a list.');
+
+    exit_label:
+end;   
+
+procedure go_dcl (s: string);
+Var changed: boolean;
+begin  
+  log_action (c_dcl,0);
+  do_dcl (s);   { Spawn subprocess .. }
+  log_event (myslot,E_DCLDONE,0,0,'');
+  
+  { check database }
+  getindex (I_ASLEEP);         
+  freeindex;
+  if indx.free [mylog] then { Oops ! I am in asleep ... }
+    begin
+      WriteLn ('You are throw out from Monster-universe during your stay on DCL-level.');
+	finish_interpreter;
+	halt;
+    end;
+          
+  { Because only my process update my situation, I can suppose that
+     datatabase and data in memory is valid - I hope so ...        }
+
+end;                                                                 
+          
+{ hurtta@finuh }       
+
+function x_where (player: shortstring; var pr: integer): integer;
+begin
+  if debug then writeln('%x_where: ',player);
+  if exact_pers(pr,player) then begin
+     getint(N_LOCATION);
+     freeint;
+     x_where := anint.int[pr]
+  end else x_where := 0
+end; { x_where }
+
+procedure x_add(var string: mega_string; adding: shortstring);
+begin
+  if debug then writeln('%x_add: ... <- ',adding);
+  if string = '' then string := adding
+  else if length(string) < MEGA_LENGTH - shortlen - 3 then
+    string := string + ', ' + adding
+end; { x_add }
+
+function x_slot (player: shortstring): integer;
+var i: integer;
+begin  
+  if debug then writeln('%x_slot: ',player);
+  player := lowcase(player);
+  x_slot := 0;
+  for i := 1 to maxpeople do 
+	if here.people[i].kind > 0 then 
+    		if lowcase(here.people[i].name) = player then x_slot := i
+end; { x_slot }
+
+function x_hold(n,slot: integer): boolean;
+var
+	i: integer;
+	found: boolean;
+
+begin
+   if debug then writeln('%x_hold');
+	if n = 0 then
+		x_hold := false
+	else begin
+		i := 1;
+		found := false;
+		while (i <= maxhold) and (not found) do begin
+			if here.people[slot].holding[i] = n then
+				found := true
+			else
+				i := i + 1;
+		end;
+		x_hold := found;
+	end;
+end;    
+
+function x_puttoken (from,mlog,mslot,room: integer; var aslot: integer;
+                   first_x_puttoken : boolean := false;
+                   a_kind: integer := P_MONSTER;
+                   a_name: shortstring := ''; 
+                   mcode : integer := 0): boolean;
+var
+	i,j: integer;
+	found: boolean;
+	savehold: array[1..maxhold] of integer;
+        var kind,parm,hiding,wearing,wielding,health,self,
+            experience: integer;
+            name: shortstring;
+            username: veryshortstring;
+begin
+   if debug then writeln('%x_puttoken');
+	if first_x_puttoken then begin
+		for i := 1 to maxhold do
+			savehold[i] := 0;
+                kind := a_kind;
+                parm := mcode;
+                hiding := 0;
+                wearing := 0;
+                wielding := 0;
+                health := GOODHEALTH;
+		experience := 0;
+                self := 0;
+                writev(username,':',mcode:1);
+                name := a_name;
+
+	end else begin
+		gethere (from);               
+		for i := 1 to maxhold do
+			savehold[i] := here.people[mslot].holding[i];
+                kind := here.people[mslot].kind;
+                parm := here.people[mslot].parm;
+                hiding := here.people[mslot].hiding;
+                wearing := here.people[mslot].wearing;
+                wielding := here.people[mslot].wielding;
+                health  := here.people[mslot].health;
+                self    := here.people[mslot].self;  
+                name    := here.people[mslot].name;  
+		experience := here.people[mslot].experience;
+                username := here.people[mslot].username; { what ? }
+
+	end;
+
+	getroom(room);
+	i := 1;
+	found := false;
+	while (i <= maxpeople) and (not found) do begin
+		if here.people[i].kind = 0 then	{ hurtta@finuh }
+			found := true
+		else
+			i := i + 1;
+	end;
+	if found and (kind <> 0) then begin
+		here.people[i].kind := kind;   { probably monster }
+		here.people[i].name := name;
+	  	here.people[i].username := username;
+		here.people[i].hiding := hiding;
+			{ hidelev is zero for most everyone
+			  unless you want to poof in and remain hidden }
+
+		here.people[i].wearing := wearing;
+		here.people[i].wielding := wielding;
+		here.people[i].health := health;
+		here.people[i].experience := experience;
+		here.people[i].self := self;
+		here.people[i].parm := parm;
+		here.people[i].act := 0;
+
+		for j := 1 to maxhold do
+			here.people[i].holding[j] := savehold[j];
+		putroom;
+
+		aslot := i;
+
+		{ note the user's new location in the logfile }
+		getint(N_LOCATION); 
+		anint.int[mlog] := room;
+		putint;              
+                x_puttoken := true;
+	end else begin
+		freeroom;
+		x_puttoken := false
+        end;
+end;     
+
+procedure do_monster(s: string);
+label exit_label;
+var mid,aslot,i,mcode: integer;
+    muserid: veryshortstring;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto exit_label;
+    end;
+
+begin
+   if s = '' then grab_line('Monster? ',s,eof_handler := leave);
+
+   gethere;
+   if checkhide then begin
+      if not is_owner(location,TRUE) then begin
+         writeln('You may only create monsters when you are in one of your own rooms.');
+      end else if s <> '' then begin
+         if length(s) > shortlen then
+            writeln('Please limit your monster names to ',shortlen:1,' characters.')
+         else if exact_pers(mid,s) then begin	{ monster already exits }
+            writeln('That monster or player already exits.')
+         end else begin
+            if debug then
+               writeln('%beggining to create monster');
+            if alloc_log(mid) then begin
+               if alloc_general(I_HEADER,mcode) then begin
+                  if x_puttoken (0,mid,0,location,aslot,true,2,s,mcode) then begin
+                     
+                     create_program (mcode,userid,sysdate+' '+systime);
+
+                     getuser;
+                     writev(user.idents[mid],':',mcode:1);
+                     putuser;   
+                             
+                     getpers;
+                     pers.idents[mid] := s;
+                     putpers;
+          
+                     getdate;
+                     adate.idents[mid] := sysdate + ' ' + systime;
+                     putdate;
+
+                     getindex(I_ASLEEP);
+                     indx.free[mid] := true; { Yes. Monster isn't active now }
+                     putindex;
+                                                                   
+                     getint(N_EXPERIENCE);
+                     anint.int[mid] := 0;
+                     putint;
+		  
+                     getint(N_PRIVILEGES); { leino@finuha } 
+                     anint.int[mid] := 0;  { this is ridiculous }
+                     putint;
+
+                     getint(N_SELF);
+                     anint.int[mid] := 0;
+                     putint;
+
+                     getint(N_HEALTH);
+                     anint.int[mid] := GOODHEALTH;
+                     putint;
+
+                     { initialize the record containing the
+                       level of each spell they have to start;
+                       all start at zero; since the spellfile is
+                       directly parallel with mylog, we can hack
+                       init it here without dealing with SYSTEM }
+
+                     locate(spellfile,mid);
+                     for i := 1 to maxspells do
+                        spellfile^.level[i] := 0;
+                     spellfile^.recnum := mid;
+                     put(spellfile);
+
+                     log_event(myslot,E_MADEOBJ,0,0,log_name + ' has created a monster here.');
+                     writeln('Monster created.');
+                  end else begin
+                     writeln('This place is too crowded to create any more monsters.  Try somewhere else.');
+                     delete_log (mid);
+                     delete_general (I_HEADER,mcode);
+                  end;
+               end else begin
+                   writeln ('There is no place for any more monsters in this universe.');
+                   delete_log (mid);
+               end;
+	    end else writeln ('There is no place for any more monsters or players in this universe.') 
+         end
+      end else writeln('To create a monster, type BEAR <monster name>.');
+   end;
+   exit_label:
+end; { do_monster }
+
+procedure do_erase(s: string);
+label exit_label;
+var mslot,mid: integer;
+    mname: shortstring;
+    reply: string;
+    ok,dropped: boolean;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto exit_label;
+    end;
+
+begin
+  if s = '' then grab_line('Monster? ',s,eof_handler := leave);
+
+  if length(s) = 0 then	
+     writeln('To destroy a monster you own, type ERASE <monster name>.')
+  else if not is_owner(location,TRUE) then { is_owner make gethere }
+     writeln('You must be in one of your own rooms to destroy a monster.')
+  else if parse_pers(mslot,s) then begin
+     mname := here.people[mslot].name;
+     if exact_pers(mid,mname) then begin    
+        if here.people[mslot].kind = P_MONSTER then begin
+           if (monster_owner(here.people[mslot].parm) = userid) 
+              or owner_priv then begin
+              getindex(I_ASLEEP);
+              freeindex;
+              if indx.free[mid] then ok := true
+              else begin
+                 writeln ('Monster is active now (or there is some problem)');
+                 grab_line ('Enter [C]ontinue or [A]bort: ',reply,
+		    eof_handler := leave);
+                 if (reply = 'c') or (reply = 'C') then ok := true
+                 else ok := false
+              end;
+              if ok then begin
+                 dropped := drop_everything(mslot);
+		 delete_program(here.people[mslot].parm);
+                 delete_general(I_HEADER,
+                    here.people[mslot].parm);  { release header  }
+		 delete_block(here.people[mslot].self); { release       }
+                                                      { selfdescription }
+                 getint(N_SELF);
+                 anint.int[mid] := 0;                   { also in here  }
+                 putint;
+
+                 take_token(mslot,location);
+                 delete_log(mid);                                     
+                 writeln ('Monster deleted.');
+              end
+           end else writeln ('You are not the owner of this monster.');
+        end else writeln ('You can only erase monsters.');
+     end else writeln ('%serious error in do_erase. Notify monster manager.');
+  end else writeln ('Here isn''t that monster.');
+  exit_label:
 end;
 
+{ procedure custom_monster moved to module CUSTOM }
+
+{ procedure custom_hook moved to module CUSTOM }
+
+procedure do_atmosphere(s: string);
+begin
+    if length(myname) + length(s) > string_len-2 then
+	writeln('Too long atmosphere text.')
+    else if s > '' then log_event(0,E_ATMOSPHERE,,,myname+' '+s);
+end;
+
+procedure do_scan(s: string);
+label 0; { for panic }
+var	oid: integer;
+	room,i,j,num,pcarry,mcarry,oldloc: integer;
+	found: Boolean;
+
+    function action(s: shortstring; oid: integer): boolean;
+    begin
+	getobjown;
+	freeobjown;
+
+	if not obj_owner(oid,true) then 
+	    writeln('You aren''t the owner of ',s,'.')
+	else begin
+	    log_event(myslot,E_SCAN);
+	    getindex(I_ROOM);
+	    freeindex;
+	    found := false;
+	    pcarry := 0;
+	    mcarry := 0;
+	    for room := 1 to indx.top do if not indx.free[room] then begin
+		gethere(room);
+				
+		num := 0;
+		for i := 1 to maxobjs do
+		    if here.objs[i] = oid then num := num +1;
+
+		for i := 1 to maxpeople do
+		    case here.people[i].kind of 
+			P_PLAYER: for j := 1 to maxhold do
+			    if here.people[i].holding[j] = oid then
+				pcarry := pcarry +1;
+		
+			P_MONSTER: for j := 1 to maxhold do
+			    if here.people[i].holding[j] = oid then
+				mcarry := mcarry +1;
+
+			otherwise;
+		    end; {case} 
+	
+		if num > 0 then begin
+		    if not found then writeln (s,' found from the following rooms:');
+		    found := true;
+	
+		    if not manager_priv and
+			(((here.owner <> userid) and 
+			(here.owner <> public_id) and 
+			(not owner_priv)) or
+			(here.owner = system_id)) then
+			writeln(num:3,' n/a')
+		    else writeln (num:3,' ',here.nicename);
+		end;
+	    end;
+	    if (pcarry > 0) or (mcarry > 0) then begin
+		if not found then
+		    writeln(s,' found from someone:');
+		if pcarry > 0 then
+		    writeln(pcarry:3,' carrying by some player(s).');
+		if mcarry > 0 then
+		    writeln(mcarry:3,' carrying by some monster(s).');
+		found := true;
+	    end;
+	    if not found then writeln (s,' not found.');
+	end;	
+	action := true;
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end; { action }
+
+    function restriction (n: integer): boolean;
+	begin
+		restriction := true;
+	end;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 0;
+    end;
+
+begin
+
+	if s = '' then grab_line('Object? ',s,eof_handler := leave);
+
+	oldloc := location;
+	if not is_owner(location,TRUE) then begin
+		writeln('You may only work on your objects when you are in one of your own rooms.');
+	end else if scan_obj(action,s,,restriction) then begin
+	end else writeln ('To search object use SCAN <object name>');
+	0:  { for panic }
+end;
+
+function reset_object(oid: integer): boolean; { put object to it home }
+var found: boolean;
+    num,room,i,j: integer;
+    error: boolean;
+    owner: veryshortstring;
+begin
+    getindex(I_ROOM);	    
+    freeindex;		    { not full safety - but I don't want
+				lock index to whole time }
+
+    getobj(oid);	    { lock obj -record ************************* }
+
+    found := false;
+    if obj.home = 0 then begin
+	{ no home !!! }
+	freeobj;	    { free obj }
+    end else begin
+	num := 0;
+	for room := 1 to indx.top do if not indx.free[room] then begin
+	    getroom(room);			    { lock room }
+				
+	    if not manager_priv and
+			(((here.owner <> userid) and 
+			(here.owner <> public_id) and 
+			(not owner_priv)) or
+			(here.owner = system_id)) then
+			{ NO ACTION }
+	    else for i := 1 to maxobjs do
+		    if here.objs[i] = oid then begin
+			num := num +1;
+			here.objs[i] := 0;		    { RESET }
+			here.objhide[i] := 0;
+		    end;
+
+		    for i := 1 to maxpeople do
+			case here.people[i].kind of 
+		    
+			    P_MONSTER: begin
+				owner := monster_owner(here.people[i].parm);
+				if not manager_priv and
+				    (((owner <> userid) and 
+				    (owner <> public_id) and 
+				    (not owner_priv)) or
+				    (owner = system_id)) then
+				    { NO ACTION }
+				else for j := 1 to maxhold do
+				    if here.people[i].holding[j] = oid then begin
+					num := num +1;
+					here.people[i].holding[j] := 0; { RESET }
+				    end;
+			    end;
+			    otherwise;
+			end; {case} 
+	    putroom;				    { free room }
+	end; { for room }
+	error := false;
+	found := num > 0;
+
+	if found then begin
+
+	    getroom(obj.home);			    { lock room }
+	    i := 1;
+	    found := false;
+	    while (i <= maxobjs) and (not found) do begin
+		if here.objs[i] = 0 then
+			found := true
+		else
+			i := i + 1;
+	    end;
+	    if found then begin
+		here.objs[i] := oid;
+		here.objhide[i] := 0;
+		num := num -1;
+	    end;
+	    putroom;		{ free room location }
+
+	end;
+
+	obj.numexist := obj.numexist -num;
+	if obj.numexist < 0 then begin
+	    obj.numexist := 0;
+	    error := true;
+	end;
+
+	putobj;					    { free obj }
+
+	if error then begin
+	    writeln('%Database invalid. Object count of ',
+		obj.oname,' is wrong.');
+	    writeln('%Notify Monster Manager.');
+	end;
+    end;
+    reset_object := found;
+end;
+
+procedure do_reset(s: string);
+label 0; { for panic }
+var	oid: integer;
+	room,i,oldloc: integer;
+	found: Boolean;
+
+    function action(s: shortstring; oid: integer): boolean;
+    begin
+	getobjown;
+	freeobjown;
+
+	if not obj_owner(oid,true) then 
+	    writeln('You aren''t the owner of ',s,'.')
+	else begin
+	    log_event(myslot,E_RESET,s := s);
+
+	    if reset_object(oid) then writeln(s,' moved to home position.')
+	    else writeln('Failing to reset ',s);
+
+	end;
+	action := true;
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end; { action }
+
+    function restriction (n: integer): boolean;
+	begin
+		restriction := true;
+	end;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto 0;
+    end;
+
+begin
+
+	if s = '' then grab_line('Object? ',s,eof_handler := leave);
+
+	oldloc := location;
+	if not is_owner(location,TRUE) then begin
+		writeln('You may only work on your objects when you are in one of your own rooms.');
+	end else if scan_obj(action,s,,restriction) then begin
+	end else writeln ('To move object to home position use RESET <object name>');
+	0:  { for panic }
+end; { do_reset }
+
+{ alaises }
+
+procedure alias_list(s: string);
+label 0;
+    procedure leave;
+    begin
+	writeln('QUIT');
+	goto 0;
+    end;
+var what: shortstring;
+    g: o_type;
+
+begin
+    if s = '' then grab_line('List what? ',s,eof_handler := leave);
+    if s > '' then begin
+	what := bite(s);
+	if lookup_type(g,what,true,true) then case g of
+	    t_room:	do_rooms(s);
+	    t_object:	do_objects(s);
+	    t_monster:	do_monsters(s);
+	    t_spell:	do_spells(s);
+	    t_player:   do_players(s);
+	end { case }
+	else writeln('You can''t do that.');
+    end else writeln('You can''t do that.');
+    0: 
+end;
+
+procedure alias_create(s: string);
+label 0;
+    procedure leave;
+    begin
+	writeln('QUIT');
+	goto 0;
+    end;
+var what : shortstring;
+    g: o_type;
+begin
+    if s = '' then grab_line('Create what? ',s,eof_handler := leave);
+    if s > '' then begin
+	what := bite(s);
+	if lookup_type(g,what,false,true) then case g of
+	    t_room:	do_form(s);
+	    t_object:	do_makeobj(s);
+	    t_monster:	do_monster(s);
+	    t_spell:	writeln('You can''t do that.');
+	    t_player:	writeln('You can''t do that.');
+	end { case }
+	else writeln('You can''t do that.');
+    end else writeln('You can''t do that.');
+    0: 
+end;
+
+procedure alias_delete(s: string);
+label 0;
+    procedure leave;
+    begin
+	writeln('QUIT');
+	goto 0;
+    end;
+var what : shortstring;
+    g: o_type;
+begin
+    if s = '' then grab_line('Delete what? ',s,eof_handler := leave);
+    if s > '' then begin
+	what := bite(s);
+	if lookup_type(g,what,false,true) then case g of
+	    t_room:	do_zap(s);
+	    t_object:	do_destroy(s);
+	    t_monster:	do_erase(s);
+	    t_spell:	writeln('You can''t do that.');
+	    t_player:	writeln('You can''t do that.');
+	end { case }
+	else writeln('You can''t do that.');
+    end else writeln('You can''t do that.');
+    0: 
+end;
+
+{ -------- }
+
+
+procedure do_error(cmd,param: string);
+label 0; { for panic }
+var error: boolean;
+    n,oldloc: integer;
+
+    function action_obj(s: shortstring; n: integer): boolean;
+    begin
+	    getobj(n);
+	    freeobj;
+	    if obj.actindx = 0 then action_obj := false
+	    else action_obj := run_monster('',obj.actindx,'command','command',
+		cmd,sysdate+' '+systime);
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end; { action_obj }
+
+    function restriction (n: integer): boolean;
+    begin
+	restriction := obj_here(n,false) or obj_hold(n);
+	{ false = found also hidden objects }
+    end;
+
+    function res_monster (n: integer): boolean;
+    begin
+	res_monster := here.people[n].kind = P_MONSTER;
+	{ can found also hiding monster's }
+    end;
+
+    function action_monster(s: shortstring; n: integer): boolean;
+    begin
+       if here.people[n].parm = 0 then action_monster := false
+       else action_monster := run_monster(here.people[n].name,
+          here.people[n].parm,'command','command',cmd,sysdate+' '+systime);
+	checkevents(TRUE);
+	if oldloc <> location then goto 0; { panic }
+    end;
+
+begin
+   error := false;
+   oldloc := location;
+   cmd := lowcase(cmd);
+   if length(param) > shortlen then error := true
+   else if param = '' then begin
+      gethere;
+      if here.hook = 0 then error := true
+      else error := not run_monster('',here.hook,'command','command',
+         cmd,sysdate+' '+systime);
+   end else if scan_obj(action_obj,param,true,restriction) or
+	      scan_pers_slot(action_monster,param,true,res_monster) then begin
+   end else error := true;
+   if error then writeln('You can''t do that.');
+   0: { for panic }
+end; 
 
 procedure parser;
+label 9999;
 var
 	s: string;
 	cmd: string;
-	n: integer;
+	n,i: integer;
 	dummybool: boolean;
 
+        procedure leave;
+	begin
+	    writeln('QUIT');
+	    in_main_prompt := false;
+	    done := true;
+	    goto 9999;
+	end;
+
+       
 begin
+   in_main_prompt := true;
    repeat
-	grab_line('> ',s);
+	if hiding then grab_line('(>) ',s,eof_handler := leave)
+	else grab_line('> ',s,eof_handler := leave);
 	s := slead(s);
    until length(s) > 0;
+   in_main_prompt := false;
+
 
 	if s = '.' then
 		s := oldcmd
 	else
-		oldcmd := s;
-
+	  	oldcmd := s;
+          
 	if (s[1]='''') and (length(s) > 1) then
 		do_say(substr(s,2,length(s)-1))
-	else begin
+	else if (s[1]=':') and (length(s) > 1) then
+		do_atmosphere(substr(s,2,length(s)-1))
+	else if (lookup_alias(n,s)) or
+	        (lookup_dir(n,s)) then begin
+		do_go(s);
+	end else begin
 		cmd := bite(s);
-		case lookup_cmd(cmd) of
-{ try exit alias }	error:begin
-				if (lookup_alias(n,cmd)) or
-				   (lookup_dir(n,cmd)) then begin
-					do_go(cmd);
-				end else
-					writeln('Bad command, type ? for a list.');
-			end;
 
+		{ for help: }
+		if s = '?' then begin
+
+		    i := lookup_cmd(cmd);
+		    if i = error then command_help(cmd)
+		    else command_help(cmds[i]);
+
+		end else case lookup_cmd(cmd) of
+			error: do_error(cmd,s);
 			setnam: do_setname(s);
-			help,quest: show_help;
+	  		help,quest: command_help('*show help*');
 			quit: done := true;
 			c_l,look: do_look(s);
+			c_atmosphere: do_atmosphere(s);
+			c_summon: do_summon(s);
 			go: do_go(s,FALSE);	{ FALSE = dir not a verb }
 			form: do_form(s);
 			link: do_link(s);
@@ -9405,6 +10584,7 @@ begin
 			poof: do_poof(s);
 			desc: do_describe(s);
 			say: do_say(s);
+			c_scan: do_scan(s);
 			c_rooms: do_rooms(s);
 			c_claim: do_claim(s);
 			c_disown: do_disown(s);
@@ -9420,7 +10600,7 @@ begin
 			c_up,c_u,
 			c_down,c_d: do_go(cmd);
 
-			c_who: do_who;
+			c_who: do_who (s);
 			c_custom: do_custom(s);
 			c_search: do_search(s);
 			c_system: do_system(s);
@@ -9436,8 +10616,10 @@ begin
 			c_players: do_players(s);
 			c_health: do_health(s);
 			c_duplicate: do_duplicate(s);
+			c_score: do_score(s);
 			c_version: do_version(s);
-			c_objects: do_objects;
+			c_objects: do_objects (s);
+			c_spells: do_spells(s);
 			c_self: do_self(s);
 			c_use: do_use(s);
 			c_whisper: do_whisper(s);
@@ -9449,109 +10631,109 @@ begin
 			c_unmake: do_unmake(s);
 			c_show: do_show(s);
 			c_set: do_set(s);
+                                          
+			c_monster: do_monster(s);
+			c_monsters: do_monsters(s);
+                        c_erase: do_erase(s);
+			c_reset: do_reset(s);
+
+			A_list:   alias_list(s);
+			A_delete: alias_delete(s);
+			A_create: alias_create(s);
 
 			dbg: begin
-				debug := not(debug);
-				if debug then
-					writeln('Debugging is on.')
-				else
-					writeln('Debugging is off.');
-			     end;
+				if debug then begin
+					debug := false;
+					writeln('Debugging is off.')
+				end else begin
+					if manager_priv or gen_debug then begin
+						debug := true;
+						writeln('Debugging is on.');
+					end else writeln ('DEBUG isn''t for you.');
+			        end;
+                             end;
+                        
+                        c_dcl: go_dcl (s);
+
 			otherwise begin
-				writeln('%Parser error, bad return from lookup');
+	  			writeln('%Parser error, bad return from lookup');
 			end;
 		end;
 		clear_command;
 	end;
+	9999:
 end;
 
-
-
-procedure init;
-var
-	i: integer;
-
+procedure very_init;
 begin
+
 	rndcycle := 0;
 	location := 1;		{ Great Hall }
-        
+
 	mywield := 0;		{ not initially wearing or weilding any weapon }
 	mywear := 0;
-	myhealth := 7;		{ how healthy they are to start }
+	mydisguise := 0;
+	myhealth := GOODHEALTH;	{ how healthy they are to start }
 	healthcycle := 0;	{ pretty much meaningless at the start }
+        myexperience := 0;
+        userid := lowcase(get_userid);
 
-	userid := lowcase(get_userid);
+	real_userid := userid;
+	{*** Some minor changes below. jlaiho@finuh ***}
+{	privd := false;  }
 	if (userid = MM_userid) then begin
 		myname := 'Monster Manager';
-		privd := true;
-	end else if (userid = MVM_userid) then begin
-		privd := true;
-		myname := 'Vice Manager';
-	end else if (userid = FAUST_userid) then begin
-		privd := true;
-	end else begin
-		myname := lowcase(userid);
-		myname[1] := chr( ord('A') + (ord(myname[1]) - ord('a'))   );
-		privd := false;
+		wizard := true;
+ 	end else begin
+ 		myname := lowcase(userid);
+ 		if myname[1] >= 'a' then 
+			myname[1] := chr( ord('A') + 
+			    (ord(myname[1]) - ord('a')));
 	end;
+end;
 
-	numcmds:= 66;
+function init: boolean;
+var
+	i: integer;
+	s: string;
+
+begin
+	{ MOVED to very_init }
+
+	{*** End of changed area. jlaiho@finuh ***}
+	numcmds:= 76; { minor change by hurtta@finuh }
 
 	show[s_exits] := 'exits';
 	show[s_object] := 'object';
 	show[s_quest] := '?';
 	show[s_details] := 'details';
-	numshow := 4;
+	show[s_monster] := 'monster';
+	show[s_priv] := 'privileges';
+	show[s_time] := 'time';
+	show[s_room] := 'room';
+	show[s_paper] := 'commands.paper';
+	show[s_levels] := 'levels';
+	show[s_quota] := 'quota';
+	show[s_spell] := 'spells';
+	
+	numshow := 12;
 
 	setkey[y_quest] := '?';
-	setkey[y_altmsg] := 'altmsg';
+
+{	setkey[y_altmsg] := 'altmsg';
 	setkey[y_group1] := 'group1';
-	setkey[y_group2] := 'group2';
-	numset := 4;
+	setkey[y_group2] := 'group2';	}
+       
+	setkey[y_passwd] := 'password';
+	setkey[y_peace]  := 'peace';
+	setkey[y_war]	 := 'war';
+	setkey[y_priv]   := 'privileges';
+	setkey[y_spell]  := 'spell';
+	setkey[y_newplayer] := 'newplayer';
+	setkey[y_welcome] := 'welcome';
+	numset := 8;
 
-	numspells := 0;
-
-	open(roomfile,root+'ROOMS.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-	open(namfile,root+'NAMS.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-	open(eventfile,root+'EVENTS.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-	open(descfile,root+'DESC.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-	open(indexfile,root+'INDEX.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-	open(linefile,root+'LINE.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-	open(intfile,root+'INTFILE.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-	open(objfile,root+'OBJECTS.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-	open(spellfile,root+'SPELLS.MON',access_method := direct,
-		sharing := readwrite,
-		history := unknown);
-end;
-
-
-procedure prestart;
-var
-	s: string;
-
-begin
-	write('Welcome to Monster!  Hit return to start: ');
-	readln(s);
-	writeln;
-	writeln;
-	if length(s) > 0 then
-		special(lowcase(s));
+	init := open_database;
 end;
 
 
@@ -9600,6 +10782,10 @@ var
 	found: boolean;
 
 begin
+	if debug then begin
+	    writeln('%loc_ping: location = ',location:1);
+	    writeln('%          myname   = ',myname);
+	end;
 	inmem := false;
 	gethere;
 
@@ -9608,10 +10794,12 @@ begin
 
 		{ first get the slot that the supposed "zombie" is in }
 	while (not found) and (i <= maxpeople) do begin
-		if here.people[i].name = myname then
-			found := true
-		else
-			i := i + 1;
+		if here.people[i].kind = P_PLAYER then { hurtta@finuh }
+			if here.people[i].name = myname then
+				found := true
+			else
+				i := i + 1
+		else i := i + 1;
 	end;
 
 	myslot := 0;	{ setup for ping_player }
@@ -9655,70 +10843,173 @@ function revive_player(var mylog: integer): boolean;
 var
 	ok: boolean;
 	i,n: integer;
+	s: string;
+	pwd, pwd_check: shortstring;
+	privs, lev: integer;
+
+        procedure panic;
+	begin
+	    writeln('--- NO ---');
+	    halt;
+	end;
+
 
 begin
 	if exact_user(mylog,userid) then begin	{ player has played before }
-		getint(N_LOCATION);
-		freeint;
-		location := anint.int[mylog];	{ Retrieve their old loc }
-
-		getpers;
-		freepers;
-		myname := pers.idents[mylog];	{ Retrieve old personal name }
-
-		getint(N_EXPERIENCE);
-		freeint;
-		myexperience := anint.int[mylog];
-
-		getint(N_SELF);
-		freeint;
-		myself := anint.int[mylog];
-
-		getindex(I_ASLEEP);
-		freeindex;
-
-		if indx.free[mylog] then begin
-				{ if player is asleep, all is well }
+		if userid[1] = '"' then begin
+			if wizard then begin
+				wizard := false;
+				ok := true;
+			end else begin
+			{	starting := true; }
+				myslot := 0;
+				setevent;    { for  grab_line }
+				i := 0;
+				ok := false;
+				getpasswd;
+				freepasswd;
+				repeat
+					grab_line ('Password: ', s, FALSE,
+					    eof_handler := panic);
+					if length(s) > shortlen then
+						pwd := substr(s,1,shortlen)
+					else pwd := s;
+					encrypt (pwd);
+					if pwd = passwd.idents [mylog] then
+						ok := true;
+					i := i + 1;
+				until (ok) or (i > 2);
+			{	starting := false;   }
+			end
+		end else
 			ok := true;
-		end else begin
-				{ otherwise, there is one of two possibilities:
-					1) someone on the same account is
-					   playing Monster
-					2) his last play terminated abnormally
-				}
-			ok := fix_player;
+		if ok then begin
+			getint(N_LOCATION);
+			freeint;
+			location := anint.int[mylog];	{ Retrieve their old loc }
+	
+			{ make unique userid - that is fast bug fixing }
+			getuser;
+			freeuser;
+			userid := user.idents[mylog];
+
+			getpers;
+			freepers;
+			myname := pers.idents[mylog];	{ Retrieve old personal name }
+	
+			getint(N_EXPERIENCE);
+			freeint;
+			myexperience := anint.int[mylog];
+	
+			getint(N_SELF);
+			freeint;
+			myself := anint.int[mylog];
+	
+			getint(N_HEALTH);		{ hurtta@finuh }
+			freeint;
+			myhealth := anint.int[mylog];
+
+			getindex(I_ASLEEP);
+			freeindex;
+	
+			getint(N_PRIVILEGES);
+			freeint;
+			privs := anint.int(.mylog.);
+			set_auth_priv(uint(privs)); { here is call ready }
+			set_cur_priv(uint(privs));
+
+			if indx.free[mylog] then begin
+					{ if player is asleep, all is well }
+				ok := true;
+			end else begin
+					{ otherwise, there is one of two possibilities:
+						1) someone on the same account is
+						   playing Monster
+						2) his last play terminated abnormally
+					}
+				ok := fix_player;
+			end;
+	
+			if ok then
+				welcome_back(mylog);
 		end;
 
-		if ok then
-			welcome_back(mylog);
-
 	end else begin	{ must allocate a log block for the player }
+
+	 
 		if alloc_log(mylog) then begin
 
+
+			gethere (START_LOCATION);
+
 			writeln('Welcome to Monster, ',myname,'!');
-			writeln('You will start in the Great Hall.');
+			writeln('You will start in the ',here.nicename,'.');
 			writeln;
+
 
 			{ Store their userid }
 			getuser;
 			user.idents[mylog] := lowcase(userid);
 			putuser;
 
+			{ Store their userid }
+			getreal_user;
+			real_user.idents[mylog] := lowcase(real_userid);
+			putreal_user;
+
+			{ Store their names }
+			getpers;
+			pers.idents[mylog] := myname;
+			putpers;
+
+
 			{ Set their initial location }
 			getint(N_LOCATION);
-			anint.int[mylog] := 1;	{ Start out in Great Hall }
+			anint.int[mylog] := START_LOCATION;	
+				    { Start out in Great Hall }
 			putint;
-			location := 1;
+			location := START_LOCATION;
 
-			getint(N_EXPERIENCE);
-			anint.int[mylog] := 0;
+			if (userid = MM_userid) then 
+				myexperience := MaxInt
+			else myexperience := 0;
+	 		getint(N_EXPERIENCE);
+	 		anint.int[mylog] := myexperience;
 			putint;
 			myexperience := 0;
+
+	 		getint(N_PRIVILEGES); { leino@finuha }
+			if userid = MM_userid then
+				anint.int[mylog] := all_privileges
+			else
+				anint.int[mylog] := 0;
+			putint;
+
+			set_auth_priv(uint(anint.int[mylog])); { here is call ready }
+			set_cur_priv(uint(anint.int[mylog]));
+
 
 			getint(N_SELF);
 			anint.int[mylog] := 0;
 			putint;
 			myself := 0;
+
+			{ quotas hurtta@finuh }
+			getint(N_NUMROOMS);
+			anint.int[mylog] := 0;
+			putint;
+			getint(N_ALLOW);
+			anint.int[mylog] := default_allow;
+			putint;
+			getint(N_ACCEPT);
+			anint.int[mylog] := 0;
+			putint;
+
+			lev := level(myexperience);
+			myhealth := leveltable[lev].health * 7 div 10;
+			getint(N_HEALTH);
+			anint.int[mylog] := myhealth;
+			putint;
 
 				{ initialize the record containing the
 				  level of each spell they have to start;
@@ -9731,6 +11022,46 @@ begin
 				spellfile^.level[i] := 0;
 			spellfile^.recnum := mylog;
 			put(spellfile);
+
+			if userid[1] = '"' then begin
+				{starting := true;  }
+				setevent;
+				myslot := 0; { for grab_line }
+				wizard := false;
+				repeat
+					grab_line ('New password: ', s, false,
+					    eof_handler := panic);
+					if length(s) > shortlen then
+						pwd := substr(s,1,shortlen)
+					else pwd := s;
+					while pwd = '' do begin
+						writeln ('Sorry, you must have a password for ', myname, '.');
+						grab_line ('New password: ', s
+						    , false,eof_handler := panic);
+						if length(s) > shortlen then
+							pwd := substr(s,1,shortlen)
+						else pwd := s;
+					end;
+					grab_line ('Verification: ', s, false,
+					    eof_handler := panic);
+					if length(s) > shortlen then
+						pwd_check := substr(s,1,shortlen)
+					else pwd_check := s;
+					if pwd = pwd_check then begin
+						ok := true;
+						encrypt (pwd);
+					end else begin
+						ok := false;
+						writeln ('You seem to have made a mistake. Please try again.');
+					end;
+				until ok;
+			{	starting := false;  }
+			end else pwd := '';
+
+			{ Store their password }
+			getpasswd;
+			passwd.idents [mylog] := pwd;
+			putpasswd;
 
 			ok := true;
 		end else
@@ -9757,14 +11088,14 @@ end;
 function enter_universe:boolean;
 var
 	orignam: string;
-	dummy,i: integer;
+	dummy,i,old_loc: integer;
 	ok: boolean;
 
 begin
 
 
 		{ take MYNAME given to us by init or revive_player and make
-		  sure it's unique.  If it isn't tack _1, _2, etc onto it 
+		  sure it's unique.  If it isn't tack _1, _2, etc onto it
 		  until it is.  Code must come before alloc_log, or there
 		  will be an invalid pers record in there cause we aren't in yet
 		}
@@ -9783,22 +11114,56 @@ begin
 				end;
 		until ok;
 
-
-
 	if revive_player(mylog) then begin
-	if put_token(location,myslot) then begin
-		getpers;
-		pers.idents[mylog] := myname;
-		putpers;
 
+	    if not play_allow then begin	{ don't play work time }
+
+		write_message;
+
+		{ mark player not play yet }
+		getindex(I_ASLEEP);
+		indx.free[mylog] := TRUE;	{ I'm asleep now }
+		putindex;
+
+		enter_universe := false;
+
+	    end else if not read_global_flag(GF_ACTIVE) 
+		and not manager_priv then begin
+		    writeln('Monster is shutdown.');
+		    writeln('Notify Monster Manager.');
+		    Enter_universe := False;
+
+		    { mark player not play yet }
+		    getindex(I_ASLEEP);
+		    indx.free[mylog] := TRUE;	{ I'm asleep now }
+		    putindex;
+	    end else if put_token(location,myslot) then begin
 		enter_universe := true;
 		log_begin(location);
 		setevent;
+		old_loc := location;
+
+		if (location = START_LOCATION) and
+		   (myexperience = 0) then 
+		       print_global(GF_NEWPLAYER,FALSE)
+		else print_global(GF_STARTGAME,FALSE);
+		    
 		do_look;
-	end else begin
+		exec_global(GF_CODE,FORCE_READ := TRUE,LABEL_NAME := 'start');
+		if (old_loc = location) and (here.hook > 0) then
+			run_monster('',here.hook,'start',
+				'','',
+       				sysdate+' '+systime);
+		if old_loc = location then meta_run('enter','','');
+		if old_loc = location then meta_run_2('start','','');
+
+		if not read_global_flag(GF_ACTIVE) then
+		    writeln('WARNING: Monster is shutdown!');
+
+	    end else begin
 		writeln('put_token failed.');
 		enter_universe := false;
-	end;
+	    end;
 	end else begin
 		writeln('revive_player failed.');
 		enter_universe := false;
@@ -9808,11 +11173,16 @@ end;
 procedure leave_universe;
 var
 	diddrop: boolean;
+	temp: integer;
 
 begin
+	meta_run('leave','target','');
+	exec_global(GF_CODE,LABEL_NAME := 'quit');
+	temp := mydisguise;
 	diddrop := drop_everything;
-	take_token(myslot,location);
+	mydisguise := temp;	{ this is wrong information but necessary }
 	log_quit(location,diddrop);
+	take_token(myslot,location);
 	do_endplay(mylog);
 
 	writeln('You vanish in a brilliant burst of multicolored light.');
@@ -9821,23 +11191,1131 @@ begin
 end;
 
 
-begin
-	done := false;
-	setup_guts;
-	init;
-	prestart;
-	if not(done) then begin
-		if enter_universe then begin
-			repeat
-				parser;
-			until done;
-			leave_universe;
-		end else
-			writeln('You attempt to enter the Monster universe, but a strange force repels you.');
-	end;
-	finish_guts;
-end.
+{ global procedures for module interpreter } { hurtta@finuh }
 
+{ int_lookup_player moved to PARSER.PAS }
+
+{ int_lookup_object moved to PARSER.PAS }
+
+{ int_lookup_room moved to PARSER.PAS }
+ 
+[global]
+function int_heal(player: shortstring; amount: integer): boolean;
+var room,pid,lev,top,mslot,health: integer;
+begin
+   if debug then begin
+      writeln('%int_heal: ',player);
+      writeln('%                 : ',amount);
+   end;
+   int_heal := false;
+   if player > '' then begin
+      room := x_where(player,pid);
+      if room > 0 then begin
+         getroom(room);			{ locking }
+         mslot := x_slot(player);
+         if mslot = 0 then freeroom 	{ unlocking }
+         else if here.people[mslot].kind = P_MONSTER then begin
+            lev := level(here.people[mslot].experience);
+            top := leveltable[lev].health;
+            health := here.people[mslot].health;
+            health := health + amount;
+            if health > top then health := top;
+            here.people[mslot].health := health;
+            int_heal := true;
+            putroom;			{ writing }
+            getint(N_HEALTH);
+            anint.int[pid] := health;
+            putint;
+         end else if pid = mylog then begin 
+           if (myexperience >= protect_exp) { and protected_MM } then 
+              freeroom			{ unlocking }
+           else begin                         
+              lev := level(myexperience);
+              top := leveltable[lev].health;
+              myhealth := myhealth + amount;
+              if myhealth > top then myhealth := top;
+              here.people[mslot].health := myhealth;
+              int_heal := true;
+              putroom;			{ writing }
+              getint(N_HEALTH);
+              anint.int[pid] := myhealth;
+              putint;
+           end;
+         end else begin
+           freeroom; 			{ unlocking }
+           writeln('%serious error in int_heal. Notify Monster Manager.');
+         end;
+      end;
+   end;
+end; { int_heal }
+
+
+[global]
+function int_ask_privilege(player,privilege: shortstring): boolean;
+var room,pid,priv: integer;
+    mask: unsigned;
+begin
+   if debug then begin
+      writeln('%int_ask_privilege: ',player);
+      writeln('%                 : ',privilege);
+   end;
+   int_ask_privilege := false;
+   room := x_where(player,pid);
+   if room > 0 then begin
+      getint(N_PRIVILEGES);
+      freeint;
+      priv := anint.int[pid];
+      if lookup_priv(mask,privilege) then
+	int_ask_privilege := uand(mask,uint(priv)) > 0
+      else if privilege = 'wizard' then begin  { pseudo privilege : Monster Manager }
+         getuser;
+         freeuser;
+         int_ask_privilege := user.idents[pid] = MM_userid;
+      end; 
+   end;
+end; { int_ask_privilege }
+
+[global]
+function int_set_experience(player: shortstring; amount: integer): boolean;
+var pid,pslot,room,adding: integer;
+begin
+   if debug then begin
+      writeln('%int_set_experience: ',player);
+      writeln('%                  : ',amount:1);
+   end;
+   if player = '' then int_set_experience := false
+   else begin
+      room := x_where(player,pid);
+      if room = 0 then int_set_experience := false
+      else begin
+         gethere(room);
+         pslot := x_slot(player);
+         if pslot = 0 then int_set_experience := false
+         else if (here.people[pslot].kind <> P_MONSTER) and (pid <> mylog) then begin
+            writeln('%serious error in int_set_experience.');
+            writeln('%notify Monster Manager.');
+         end else begin
+            if pid = mylog then begin
+               if amount > myexperience then 
+                  add_experience(amount - myexperience)
+               else
+                  low_experience(myexperience - amount);
+            end else begin
+               getroom(room);   { locking }
+               if lowcase(here.people[pslot].username) <> lowcase(player) then freeroom
+               else begin
+                  here.people[pslot].experience := amount;
+                  putroom;
+               end;
+               getint(N_EXPERIENCE);
+               anint.int[pid] := amount;
+               putint;
+               int_set_experience := true;
+            end;
+         end;
+      end;
+   end;
+end; { int_set_experience }
+
+[global]
+function int_get_experience(player: shortstring): integer; { = -1 not found }
+var pid: integer;
+begin
+   if debug then writeln('%int_get_experience: ',player);
+   if exact_pers(pid,player) then begin
+     getint(N_EXPERIENCE);
+     freeint;
+     int_get_experience := anint.int[pid];
+   end else int_get_experience := -1;
+end; { int_get_experience }
+
+[global]
+function int_get_health(player: shortstring): integer; { = -1 not found }
+var pid,room: integer;
+begin
+   if debug then writeln('%int_get_health: ',player);
+   if exact_pers(pid,player) then begin
+     getint(N_HEALTH);
+     freeint;
+     int_get_health := anint.int[pid];
+   end else int_get_health := -1;
+end; { int_get_health }
+
+[global]
+function int_userid(player: shortstring): shortstring; { = "" not found }
+var pid: integer;
+begin
+   if debug then writeln('%int_get_health: ',player);
+   if exact_pers(pid,player) then begin
+       getuser;
+       freeuser;
+       int_userid := user.idents[pid];
+   end else int_userid := '';
+end; { int_get_health }
+      
+[global]  
+function int_inv (player: shortstring): mega_string;
+var result: mega_string;
+    room,i,pid,oid,slot: integer;     
+begin 
+   if debug then writeln('%int_inv: ',player);
+   getobjnam;
+   freeobjnam;
+   result := '';
+   if player > '' then begin
+      room := x_where (player,pid);
+      if room > 0 then begin
+         gethere(room);
+         slot := x_slot(player);
+         if slot > 0 then
+            for i := 1 to maxhold do begin
+               oid := here.people[slot].holding[i];
+               if oid > 0 then x_add(result,objnam.idents[oid])
+            end;
+      end;
+   end;
+   int_inv := result
+end; { int_inv }
+
+[global]
+function int_get_code(player: shortstring): integer; { = 0 not found }
+var pid,room,slot: integer;
+begin
+   if debug then writeln('%int_get_code: ',player);
+   room := x_where(player,pid);
+   if room = 0 then int_get_code := 0
+   else begin
+      gethere(room);
+      slot := x_slot(player);
+      if slot > 0 then int_get_code := here.people[slot].parm
+      else int_get_code := 0;
+   end;
+end; { int_get_code}
+
+[global]  
+function int_objects (player: shortstring): mega_string;
+var result: mega_string;
+    room,i,pid,oid,slot: integer;     
+begin 
+   if debug then writeln('%int_objects: ',player);
+   getobjnam;
+   freeobjnam;
+   result := '';
+   if player > '' then begin
+      room := x_where (player,pid);
+      if room > 0 then begin
+         gethere(room);
+         slot := x_slot(player);
+         if slot > 0 then
+            for i := 1 to maxobjs do begin
+               oid := here.objs[i];
+               if oid > 0 then x_add(result,objnam.idents[oid])
+            end;
+      end;
+   end;
+   int_objects := result
+end; { int_objects }
+
+[global]       
+function int_l_object: mega_string;
+var result: mega_string;
+    i: integer;
+begin
+   if debug then writeln('%int_l_object');
+   getindex(I_OBJECT);
+   freeindex;
+   getobjnam;
+   freeobjnam;
+   result := '';
+   for i := 1 to indx.top do if not indx.free[i] then
+     x_add(result,objnam.idents[i]);
+   int_l_object := result;
+end;
+
+[global]
+function int_l_player: mega_string;
+var result: mega_string;
+    i: integer;
+begin
+   if debug then writeln('%int_l_player');
+   getindex(I_PLAYER);
+   freeindex;
+   getpers;
+   freepers;
+   result := '';
+   for i := 1 to indx.top do if not indx.free[i] then
+     x_add(result,pers.idents[i]);
+   int_l_player := result;
+end; 
+
+[global]
+function int_l_room: mega_string;
+var result: mega_string;
+    i: integer;
+begin
+   if debug then writeln('%int_list_room');
+   getindex(I_ROOM);
+   freeindex;
+   getnam;
+   freenam;
+   result := '';
+   for i := 1 to indx.top do if not indx.free[i] then
+     x_add(result,nam.idents[i]);
+   int_l_room := result;
+end; 
+
+
+[global] 
+procedure int_broadcast(player: shortstring; s: string; to_other: boolean);
+var room,i,pid,oid,code: integer;     
+begin
+   if debug then begin 
+      writeln('%int_broadcast: ',player);
+      writeln('%             : ',s);
+      writeln('%             : ',to_other);
+   end;
+   if player = '' then room := location
+   else room := x_where (player,pid);
+   code := 0;
+   if to_other then code := myslot;
+   if room > 0 then log_event(code,E_BROADCAST,,,s,room);
+   checkevents(true);
+end; { int_broadcast }                      
+
+[global]
+function int_players(player: shortstring): mega_string;
+var result: mega_string;
+    room,i,pid: integer;
+    name: shortstring;     
+begin               
+   if debug then writeln('%int_players: ',player);
+   result := '';
+   if player = '' then room := location
+   else room := x_where (player,pid);
+   if room > 0 then
+      gethere(room);
+      for i := 1 to maxpeople do begin
+          name := here.people[i].name; 
+          if here.people[i].kind <> P_PLAYER then name := '';
+                             { don't get monsters }
+          if name > '' then x_add(result,name)
+      end;
+  int_players := result
+end; { int_players }                      
+
+[global] 
+function int_remote_players (room: shortstring): mega_string;
+var result: mega_string;
+    n,i: integer;
+    name: shortstring;     
+begin               
+   if debug then writeln('%int_remote_players: ',room);
+   result := '';
+   if exact_room(n,room) then begin
+      gethere(n);
+      for i := 1 to maxpeople do begin
+          name := here.people[i].name; 
+          if here.people[i].kind <> P_PLAYER then name := '';
+                             { don't get monsters }
+          if name > '' then x_add(result,name)
+      end;
+   end;
+   int_remote_players := result;
+end; { int_remote_players }
+
+[global] 
+function int_remote_objects (room: shortstring): mega_string;
+var result: mega_string;
+    n,i,oid: integer;
+    name: shortstring;     
+begin               
+   if debug then writeln('%int_remote_objects: ',room);
+   getobjnam;
+   freeobjnam;
+   result := '';
+   if exact_room(n,room) then begin
+      gethere(n);
+      for i := 1 to maxobjs do begin
+         oid := here.objs[i];
+         if oid > 0 then x_add(result,objnam.idents[oid])
+      end;
+   end;
+   int_remote_objects := result;
+end; { int_remote_objects }
+
+[global]
+function int_duplicate(player,object,owner: shortstring;
+                       privileged: boolean): boolean;
+var room,i,pid,oid,slot,mslot: integer;     
+    found : boolean;
+begin                                     
+   if debug then begin
+      writeln('%int_duplicate: ',player);
+      writeln('%             : ',object);
+      writeln('%             : ',owner);
+      writeln('%             : ',privileged);
+   end;                            
+   if player > '' then begin
+      room := x_where (player,pid);         
+      if room > 0 then begin
+         gethere(room); 
+         if exact_obj (oid,object) then begin
+            getobjown;
+            freeobjown;
+            if (objown.idents[oid] <> owner) and not privileged then oid := 0;
+         end else oid := 0;
+
+         mslot := x_slot(player);          { monster slot }
+         if mslot = 0 then int_duplicate := false
+         else if here.people[mslot].kind = P_MONSTER then begin { monster }
+            if oid > 0 then begin
+               if mslot > 0 then begin
+	          getroom(room);                    { locking }
+                  i := 1;
+	          found := false;
+	          while (i <= maxhold) and (not found) do begin
+		     if here.people[mslot].holding[i] = 0 then
+			found := true
+		     else
+			i := i + 1;
+	          end;
+	          if found then begin
+	       	     here.people[mslot].holding[i] := oid;
+	       	     putroom;        
+                     getobj(oid);
+                     obj.numexist := obj.numexist +1;
+                     putobj;
+                     int_duplicate := true;
+	          end else begin
+		     freeroom;
+                     int_duplicate := false
+                  end
+               end
+            end else int_duplicate := false    { someone is moving monster ? }
+         end else if pid = mylog then begin { player }
+            if oid > 0 then begin
+               if hold_obj(oid) then begin
+                     getobj(oid);
+                     obj.numexist := obj.numexist +1;
+                     putobj;
+                     int_duplicate := true;
+               end else int_duplicate := false;
+            end else int_duplicate := false
+         end else begin          
+            writeln ('%serious error in int_duplicate. Notify Monster Manager.');
+            int_duplicate := false;
+         end
+      end else int_duplicate := false;
+   end else int_duplicate := false;
+end;
+
+[global]
+function int_destroy(player,object,owner: shortstring;
+	 privileged: boolean): boolean;
+var room,i,pid,oid,slot,mslot: integer;     
+    found : boolean;
+begin
+   if debug then begin
+      writeln('%int_destroy: ',player);
+      writeln('%           : ',object);
+      writeln('%           : ',owner);
+      writeln('%           : ',privileged);
+   end;
+   if player > '' then begin
+      room := x_where (player,pid);
+      if room > 0 then begin
+         gethere(room);  
+         mslot := x_slot(player);  
+         if mslot = 0 then oid := 0    { is  monster moving ? }
+         else if exact_obj (oid,object) then begin
+            getobjown;
+            freeobjown;
+            if (objown.idents[oid] <> owner) and not privileged then oid := 0
+            else if not x_hold (oid,mslot) then oid := 0
+         end else oid := 0;
+     
+         if mslot = 0 then int_destroy := false
+         else if here.people[mslot].kind = P_MONSTER then begin { monster }
+            if oid > 0 then begin
+               slot := find_hold(oid,mslot);     { object current slot }
+	       if slot > 0 then begin            { is object here yet ? }
+                  getroom(room);                    { locking }
+	          if here.people[mslot].holding[slot] = oid then begin
+	       	     here.people[mslot].holding[slot] := 0;
+                     if here.people[mslot].wielding = oid then
+                        here.people[mslot].wielding := 0;
+                     if here.people[mslot].wearing = oid then
+                        here.people[mslot].wearing := 0;
+	       	     putroom;           
+                     getobj(oid);
+                     obj.numexist := obj.numexist -1;
+                     putobj;
+                     int_destroy := true;
+	          end else begin            
+		     freeroom;
+                     int_destroy := false
+                  end
+               end
+            end else int_destroy := false { someone is droping object ? }
+                                       { two user must run same monster }
+         end else if pid = mylog then begin { player }
+            if oid > 0 then begin
+               slot := find_hold(oid);
+               if slot > 0 then begin
+                  drop_obj(slot); 
+                  getobj(oid);
+                  obj.numexist := obj.numexist -1;
+                  putobj;
+                  int_destroy := true;
+                  if mywield = oid then x_unwield;
+                  if mywear = oid then x_unwear;
+               end else int_destroy := false
+            end else int_destroy := false
+         end else begin          
+            writeln ('%serious error in int_destroy. Notify Monster manager');
+            int_destroy := false;
+         end
+      end else int_destroy := false;
+   end else int_destroy := false;
+end; { int_destroy }
+
+[global]                   
+function int_get(player,object: shortstring): boolean;
+var room,i,pid,oid,slot,mslot: integer;     
+    found : boolean;
+begin                                     
+   if debug then begin
+      writeln('%int_get: ',player);
+      writeln('%       : ',object);
+   end;                            
+   if player > '' then begin
+      room := x_where (player,pid);         
+      if room > 0 then begin
+         gethere(room); 
+         if exact_obj (oid,object) then begin
+            if not obj_here (oid) then oid := 0
+         end else oid := 0;
+
+         mslot := x_slot(player);          { monster slot }
+         if mslot = 0 then int_get := false
+         else if here.people[mslot].kind = P_MONSTER then begin { monster }
+            if oid > 0 then begin
+               slot := find_obj(oid);            { object current slot }
+               if mslot > 0 then begin
+	          getroom(room);                    { locking }
+                  i := 1;
+	          found := false;
+	          while (i <= maxhold) and (not found) do begin
+		     if here.people[mslot].holding[i] = 0 then
+			found := true
+		     else
+			i := i + 1;
+	          end;
+	          if found and (here.objs[slot] = oid) then begin
+	       	     here.people[mslot].holding[i] := oid;
+                     here.objs[slot] := 0;
+                     here.objhide[slot] := 0;
+	       	     putroom;           
+                     int_get := true;
+	          end else begin
+		     freeroom;
+                     int_get := false
+                  end
+               end
+            end else int_get := false        { someone is moving monster ? }
+         end else if pid = mylog then begin { player }
+            if oid > 0 then begin
+               if can_hold then begin
+                  slot := find_obj(oid);
+                  if take_obj(oid,slot) then begin
+                     hold_obj(oid); 
+                     int_get := true
+                  end else int_get := false
+               end else int_get := false
+            end else int_get := false
+         end else begin          
+            writeln ('%serious error in int_get. Notify Monster Manager.');
+            int_get := false;
+         end
+      end else int_get := false;
+   end else int_get := false;
+end;
+
+[global]
+function int_drop(player,object: shortstring): boolean;
+var room,i,pid,oid,slot,mslot: integer;     
+    found : boolean;
+begin
+   if debug then begin
+      writeln('%int_drop: ',player);
+      writeln('%        : ',object);
+   end;
+   if player > '' then begin
+      room := x_where (player,pid);
+      if room > 0 then begin
+         gethere(room);  
+         mslot := x_slot(player);  
+         if mslot = 0 then oid := 0    { is  monster moving ? }
+         else if exact_obj (oid,object) then begin
+            if not x_hold (oid,mslot) then oid := 0
+         end else oid := 0;
+     
+         if mslot = 0 then int_drop := false
+         else if here.people[mslot].kind = P_MONSTER then begin { monster }
+            if oid > 0 then begin
+               slot := find_hold(oid,mslot);     { object current slot }
+	       if slot > 0 then begin            { is object here yet ? }
+                  getroom(room);                    { locking }
+                  i := 1;
+	          found := false;
+	          while (i <= maxobjs) and (not found) do begin
+		     if here.objs[i] = 0 then
+			found := true
+		     else
+			i := i + 1;
+	          end;
+	          if found and (here.people[mslot].holding[slot] = oid) then begin
+	       	     here.people[mslot].holding[slot] := 0;
+                     if here.people[mslot].wielding = oid then
+                        here.people[mslot].wielding := 0;
+                     if here.people[mslot].wearing = oid then
+                        here.people[mslot].wearing := 0;
+                     here.objs[i] := oid;
+                     here.objhide[i] := 0;
+	       	     putroom;           
+                     int_drop := true;
+	          end else begin            
+		     freeroom;
+                     int_drop := false
+                  end
+               end
+            end else int_drop := false { someone is droping object ? }
+                                       { two user must run same monster }
+         end else if pid = mylog then begin { player }
+            if oid > 0 then begin
+               if can_drop then begin
+                  slot := find_hold(oid);
+                  if place_obj(oid,TRUE) then begin
+                     drop_obj(slot); 
+                     int_drop := true;
+                     if mywield = oid then x_unwield;
+                     if mywear = oid then x_unwear;
+                  end else int_drop := false
+               end else int_drop := false
+            end else int_drop := false
+         end else begin          
+            writeln ('%serious error in int_drop. Notify Monster manager');
+            int_drop := false;
+         end
+      end else int_drop := false;
+   end else int_drop := false;
+end;
+
+[global]
+function int_poof (player,room,owner: shortstring; 
+                   general,own: boolean): boolean;
+var pid,cur,loc,targslot,code,apu,mslot: integer;
+    pub,dis: shortstring;
+begin
+  if debug then begin
+     writeln('%int_poof: ',player);
+     writeln('%        : ',room);
+     writeln('%        : ',owner);
+     writeln('%        : ',general); { poof privilegio }
+     writeln('%        : ',own);     { privileged code }
+  end;
+
+  if player > '' then begin
+     cur := x_where(player,pid);
+     if cur > 0 then begin
+        gethere(cur);
+        mslot := x_slot(player);
+        if (mslot >0) then begin
+           if exact_room(loc,room) then begin
+              if cur = loc then int_poof := true
+              else if here.people[mslot].kind = P_MONSTER then begin { monster }
+                  code := here.people[mslot].parm;
+                  gethere(loc);                         { target room }
+                  if (owner = here.owner) or 
+                     (here.owner = disowned_id) or 
+		     (here.owner = public_id) or general then begin
+                     if x_puttoken (cur,pid,mslot,loc,targslot) then begin
+                        take_token(mslot,cur);
+                        int_poof := true
+                     end else int_poof := false
+                  end else int_poof := false
+              end else if pid = mylog then begin       { player }
+                 if own then begin                     
+                    gethere(loc);                      { target room }
+                    if (owner = here.owner) or 
+			(here.owner = disowned_id) or
+			(here.owner = public_id) or
+                       general then begin
+                       if put_token (loc,targslot,0) then begin
+                          take_token(mslot,cur);
+                          myslot := targslot;
+                          location := loc;
+                          setevent;
+                          do_look;
+                          int_poof := true 
+                       end else int_poof := false;
+                    end else int_poof := false;
+                 end else int_poof := false;
+              end else begin
+                 writeln ('%seriuos error in int_poof. Notify Monster Manager.');
+                 int_poof := false;
+              end;
+           end else int_poof := false
+        end else int_poof := false
+      end else int_poof := false
+   end else int_poof := false
+end; { int_poof }
+         
+[global]
+function int_login (player: shortstring; force: boolean): integer;
+{ 0 = no such player name }
+{ 1 = login ok }
+{ 2 = monster is already logged in }    
+{ 3 = miscelagous failure }
+var room,pid,mslot: integer;
+begin
+  if debug then begin
+     writeln('%int_login: ',player);
+     writeln('%         : ',force);
+  end;   
+  if player = '' then int_login := 1		{ pseudo login }
+  else begin
+     room := x_where(player,pid);
+     if room = 0 then int_login := 0
+     else begin
+        gethere(room);
+        mslot := x_slot(player);
+        if mslot = 0 then int_login := 3
+        else if here.people[mslot].kind < P_MONSTER then begin
+           writeln('%serious error in int_login. Notify Monster Manager.');
+           int_login := 3;
+        end else begin
+           getindex(I_ASLEEP);         { locking }
+           if indx.free[pid] or force then begin     { ok }
+              indx.free[pid] := false;
+              putindex;
+              int_login := 1
+           end else begin
+              freeindex;               
+              int_login := 2
+           end
+       end
+     end  
+   end
+end; { int_login }
+
+[global]
+procedure int_logout (player: shortstring);
+var pid,room,mslot: integer;
+begin
+  if debug then writeln('%int_logout: ',player);
+  if player > '' then begin 
+     room := x_where(player,pid);
+     if room > 0 then begin
+        gethere(room);
+        mslot := x_slot(player);
+        if mslot > 0 then 
+           if here.people[mslot].kind < P_MONSTER then begin
+              writeln('%serious error in int_logout. Notify Monster Manager.');
+           end else do_endplay (pid)               
+     end
+   end
+end; { int_logout }
+
+[global]
+function int_attack(player: shortstring; power: integer): boolean;
+var cur,pid,mslot,health,lev: integer;
+begin
+  if debug then begin
+     writeln('%int_attack: ',player);
+     writeln('%          : ',power:1);
+  end;
+  if not read_global_flag(GF_WARTIME) then int_attack := false
+  else if player > '' then begin
+     cur := x_where(player,pid);
+     if cur > 0 then gethere(cur);                       
+     mslot := x_slot(player);
+     if (cur > 0) and (mslot >0) then begin
+        if here.people[mslot].kind = P_MONSTER then begin { monster }
+           getroom;              
+           if here.people[mslot].kind <> P_MONSTER then begin { is this }
+              int_attack := false;                   { double cheking ? }
+              freeroom           
+           end else begin
+              health := here.people[mslot].health;
+              health := health - power;
+              if health < 0 then health := 0;      
+              here.people[mslot].health := health;
+              int_attack := true;
+              putroom;
+              getint(N_HEALTH);
+              anint.int[pid] := health;
+              putint;
+           end;
+        end else if pid = mylog then begin        { player }
+           if (myexperience >= protect_exp) { and protected_MM } then int_attack := false
+           else begin                         
+              take_hit(power);          
+              int_attack := true;
+           end
+        end else begin 
+           writeln ('%serious error in int_attack. Notify Monster Manager.');
+           int_attack := false;
+        end;
+      end else int_attack := false
+   end else int_attack := false
+end; { int_poof }
+         
+
+
+[global]
+function int_where(player: shortstring): shortstring;
+var room,pid: integer;
+begin
+  if debug then writeln('%int_where: ',player);
+  room := x_where(player,pid);
+  if room = 0 then int_where := ''
+  else begin
+    getnam;   { room names }
+    freenam;
+    int_where := nam.idents[room];
+  end
+end; { int_where }
+
+[global]
+function player_room(player: shortstring): integer;
+var unused: integer;
+begin
+  player_room := x_where(player,unused);
+end;
+
+procedure poof_monster { (n: integer; s: string) declared forward } ;
+var name: shortstring;
+    loc: integer;
+begin
+    name := here.people[n].name;
+    if lookup_room(loc,s) then begin
+	log_event(myslot,E_POOFYOU,n,loc);
+	writeln;
+	writeln('You extend your arms, muster some energy, and ',name,' is');
+	writeln('engulfed in a cloud of orange smoke.');
+	writeln;
+	wait(1);	{ try fixing event problem - yes - that isn't good }
+	int_poof(name,nam.idents[loc],'',true,true);
+	checkevents;
+    end else
+	writeln('There is no room named ',s,'.');
+end; { poof monster }
+
+procedure block_monster(s: string);
+var room,pid,mslot,parm: integer;
+begin       
+   if (s = '') or (length(s) > shortlen) then writeln('USAGE: A <monster>')
+   else if lookup_pers(pid,s,true) then begin
+      getint(N_LOCATION);
+      freeint;
+      room := anint.int[pid];
+      getpers;
+      freepers;
+      s := pers.idents[pid];
+      gethere(room);    
+      mslot := x_slot (s);
+      if mslot = 0 then writeln ('%error')
+      else if here.people[mslot].kind <> P_MONSTER then writeln ('No monster')
+      else begin
+         parm := here.people[mslot].parm;
+         if parm = 0 then writeln ('%error')
+         else begin
+            set_runnable(parm,false);
+            writeln('Blocked.');
+         end
+      end
+   end else writeln ('No such monster.');
+end;
+
+procedure block_spell(s: string);
+var n,parm: integer;
+begin       
+   if (s = '') or (length(s) > shortlen) then writeln('USAGE: G <spell>')
+   else if lookup_spell(n,s,true) then begin
+	getint(N_SPELL);
+	freeint;
+	parm := anint.int[n];
+	if parm = 0 then writeln ('%error')
+	else begin
+            set_runnable(parm,false);
+            writeln('Blocked.');
+	end
+   end else writeln ('No such spell.');
+end;
+
+procedure block_object(s: string);
+var room,pid,mslot,parm,oid: integer;
+begin       
+   if (s = '') or (length(s) > shortlen) then writeln('USAGE: B <object>')
+   else if lookup_obj(oid,s,true) then begin
+      getobj(oid);
+      freeobj;
+      if obj.actindx > 0 then begin
+         set_runnable(obj.actindx,false);
+         writeln('Blocked.');
+      end else writeln ('No hook defined.')
+   end else writeln('No such room.');
+end;
+
+procedure block_room (s: string);
+var room,pid,mslot,parm: integer;
+begin       
+   if (s = '') or (length(s) > shortlen) then writeln('USAGE: C <room>')
+   else if lookup_room(room,s,true) then begin
+      gethere(room);
+      if here.hook > 0 then begin
+         set_runnable(here.hook,false);
+         writeln('Blocked.');
+      end else writeln ('No hook defined.')
+   end else writeln ('No such room.')
+end;
+
+procedure system_claim_room(s: string);
+var room,pid,mslot,parm,oldowner: integer;
+begin       
+    if (s = '') or (length(s) > shortlen) then writeln('USAGE: R <room>')
+    else if lookup_room(room,s,true) then begin
+	getroom(room);
+	if not exact_user(oldowner,here.owner) then oldowner := 0;
+	here.owner := system_id;
+	putroom;
+	getown;
+	own.idents[room] := system_id;
+	putown;
+	change_owner(oldowner,0);
+	if here.hook > 0 then set_owner(here.hook,,system_id);
+	writeln('System is now owner of ',here.nicename,'.');
+    end else writeln('No such room.');
+end;
+
+procedure system_claim_object(s: string);
+var pid,mslot,parm,oid: integer;
+begin       
+   if (s = '') or (length(s) > shortlen) then writeln('USAGE: O <object>')
+   else if lookup_obj(oid,s,true) then begin
+      getobj(oid);
+      putobj;
+      getobjown;
+      objown.idents[oid] := system_id;
+      putobjown;
+      if obj.actindx > 0 then set_owner(obj.actindx,,system_id);
+      writeln('System is now owner of ',obj.oname,'.');
+    end else writeln('No such object.');
+end;
+
+procedure system_claim_monster(s: shortstring);
+var room,pid,mslot,parm: integer;
+begin       
+   if (s = '') or (length(s) > shortlen) then writeln('USAGE: M <monster>')
+   else if lookup_pers(pid,s,true) then begin
+      getint(N_LOCATION);
+      freeint;
+      room := anint.int[pid];
+      getpers;
+      freepers;
+      s := pers.idents[pid];
+      gethere(room);    
+      mslot := x_slot (s);
+      if mslot = 0 then writeln ('%error')
+      else if here.people[mslot].kind <> P_MONSTER then writeln ('No monster')
+      else begin
+         parm := here.people[mslot].parm;
+         if parm = 0 then writeln ('%error')
+         else begin
+            set_owner(parm,,system_id);
+	    writeln('System is now owner of ',here.people[mslot].name,'.');
+         end
+      end
+   end else writeln ('No such monster.');
+end;
+
+procedure system_claim_spell(s: shortstring);
+var room,n,parm: integer;
+begin       
+   if (s = '') or (length(s) > shortlen) then writeln('USAGE: S <spell>')
+   else if lookup_spell(n,s,true) then begin
+      getint(N_SPELL);
+      freeint;
+      parm := anint.int[n];
+      if parm = 0 then writeln ('%error')
+      else begin
+            set_owner(parm,,system_id);
+	    writeln('System is now owner of ',spell_name.idents[n],'.');
+      end
+   end else writeln ('No such spell.');
+end;
+
+procedure system_2 {(s: string); forward };
+var continue: boolean;
+    a: string;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	s := 'q';
+    end;
+
+    procedure null;
+    begin
+	writeln('QUIT');
+	s := '';
+    end;
+
+begin
+   continue := true;
+   if s = '' then grab_line('Subsystem> ',s,eof_handler := leave)
+   else continue := false;
+   repeat
+       s := lowcase(s);
+       a := bite(s);
+       if a > '' then case a[1] of
+	    '?','h': command_help('*system 2 help*');
+	    'a': block_monster(s);
+	    'b': block_object(s);
+	    'c': block_room(s);
+	    'd': begin
+		    if s = '' then grab_line('Message? ',s,eof_handler := null);
+		    do_s_shutdown(s);
+		    set_global_flag(GF_ACTIVE,FALSE);
+		 end;
+	    'f': set_global_flag(GF_ACTIVE,TRUE);
+	    'g': block_spell(s);
+	    'i': custom_global_code(GF_CODE);
+	    'o': system_claim_object(s);
+	    'r': system_claim_room(s);
+	    'w': begin
+		    if s = '' then grab_line('Message? ',s,eof_handler := null);
+		    do_s_announce(s);
+		 end;
+	    'm': system_claim_monster(s);
+	    's': system_claim_spell(s);
+	    'v': fix_view_global_flags;
+	    'e','q': continue := false;
+	    otherwise 
+		if continue then writeln('Type ? for help.')
+		else writeln('Type C ? for help.');
+       end;
+       if continue then grab_line('Subsystem> ',s,eof_handler := leave);
+   until not continue;
+end;
+
+procedure throw_player {(s: string)};
+label exit_label;
+var mess: string;
+    room,pid,count: integer;
+    done: boolean;
+
+    procedure leave;
+    begin
+	writeln('EXIT');
+	goto exit_label;
+    end;
+
+begin
+    if s = '' then grab_line('Player''s (personal) name? ',s,
+	eof_handler := leave);
+    if (s = '') or (s = '?') then 
+	writeln ('Usage: T <Player''s personal name>')
+    else if length(s) > shortlen then writeln('Limit name to ',
+	shortlen:1,' characters.')
+    else begin
+	grab_line('Message? ',mess,
+	    eof_handler := leave);
+	room := x_where(s,pid);
+	if pid = mylog then 
+	    writeln ('You can''t throw yourself out from Monster.')
+	else if room = 0 then writeln('Player isn''t in Monster now.')
+	else begin
+	    log_event(0,E_KICK_OUT,pid,,mess,room);
+	    done := false;
+	    count := 0;
+	    while not done and (count < 20) do begin
+		wait(2);
+		checkevents(TRUE);
+		getindex(I_ASLEEP);
+		freeindex;
+		done := indx.free[pid];
+		count := count +1;
+	    end;
+	    if done then writeln('Ok.');
+	end;
+    end;
+    exit_label:
+end;
+
+
+
+begin	    { main program }
+    Get_Environment;
+
+    if not lookup_class(system_id,'system') then
+	writeln('%error in main program: system');
+    if not lookup_class(public_id,'public') then
+	writeln('%error in main program: public');
+    if not lookup_class(disowned_id,'disowned') then
+	writeln('%error in main program: disowned');
+
+    done := false;
+    setup_guts;
+    if terminal_line_len < 40 then begin { to avoid run time errors }
+	writeln('Monster requires, that');
+	writeln('terminal width is at');
+	writeln('least 40 chars.');
+    end else if terminal_page_len < 5 then begin { to avoid run time errors }
+	writeln('Monster requires, that');
+	writeln('terminal height is at');
+	writeln('least 5 lines.');
+    end else begin
+
+      very_init;
+      very_prestart;  { very_prestart reopen OUTPUT }
+      if init then begin
+
+	init_interpreter;
+	prestart; 
+			
+	if not(done) then begin
+	    if not read_global_flag(GF_VALID) then begin
+		writeln('Can''t enter Monster universe.');
+		writeln('Database marked as invalid by Monster Manager.');
+		if userid = MM_userid then
+		    writeln('Use /FIX option to mark database as valid.');
+
+	    end else if enter_universe then begin
+		repeat
+			parser;
+			if not read_global_flag(GF_ACTIVE) then begin
+			    if manager_priv then 
+				writeln('WARNING: Monster is shutdown.')
+			    else begin
+				writeln('Monster is shutdown.');
+				done := true;
+			    end;
+			end;
+		until done;
+		leave_universe;
+	    end else
+		writeln('You attempt to enter the Monster universe, but a strange force repels you.');
+	end;
+	finish_interpreter;
+	close_database;
+      end else if work_time then write_message   { now is work time }
+      else writeln('Monster is ill, please notify Monster Manager.');
+	    { file protection problem }
+    end;
+    finish_guts;
+end.
 
 { Notes to other who may inherit this program:
 
@@ -9883,7 +12361,7 @@ lines and player log entries.  The allocation is from a bitmap.  I chose a
 bitmap over a linked list to make the multiuser access to the database
 more stable.  A particular resource (such as log entries) will have a
 particular bitmap in the file INDEXFILE.  A getindex(I_LOG) will retrieve
-the bitmap for it.  
+the bitmap for it.
 
 Actually allocation and deallocation is done through the group of functions
 alloc_X and delete_X.  If alloc_X returns true, the allocation was successful,
@@ -9937,6 +12415,5 @@ room and compare's the player's buffer pointer with the record's buffer
 pointer.  If they are different, checkevent bites off events and sends them
 to handle_event until there are no more events to be processed.  Checkevent
 ignores events logged by it's own player.
-
 
 }

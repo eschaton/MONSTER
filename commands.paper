@@ -1,0 +1,512 @@
+SYNTAX:	function	->	name (p) / name (p,p) / name (p,p,p) /
+				name (p,...)
+
+	name 		->	fname /
+				GOSUB label / 
+				DEFINE variable / 
+				SET variable / 
+				LABEL label /
+				SUBMIT label /
+				FOR variable
+
+	label		->	list of words
+
+	p		->	function / const / variable
+
+	const		->	"some text" /
+				"some text"&
+				const
+
+	fname		->	+ / = / == / === / inv / pinv / players /
+				objects / get / pget / drop / pdrop /
+				and / or / move / pmove / pprint /
+				print / oprint / if / where / null /
+				attack / not / random / strip /
+                                experience / set experience / pluss /
+				difference / times / quotient /
+				set state / get state / less / number /
+				health / all objects / all players / 
+				all rooms / control / include / exclude /
+				get remote state / set remote state /
+				remote objects / remote players / heal /
+				duplicate / pduplicate / destroy / pdestroy /
+				string head / string tail / head / tail /
+				lookup object / lookup player / lookup room /
+				parse object / parse player / parse room /
+				privilege / userid / pprint raw / print raw /
+				oprint raw / print null / mheal / mattack /
+				list / lookup direction / get global flag /
+                                spell level / set spell level
+
+	program		->	sentence +
+
+
+	sentence	->	function /
+				- function
+
+Comments start with ! and end to end of line. ! isn't comment character inside
+const.
+
+Summary:	+	concatenate all parameters
+		=	compare two parameters
+		==	compare two parameters with spaces padding
+		===	compare two parameyers with spaces compressing 
+				and characters turning lowcase
+		inv	inventory of monster
+		pinv	inventory of player
+		players	list players in room
+		objects	list items in room
+		get	monster get items (defined by parameter) from ground
+		pget	player get items (defined by parameter) from ground
+		drop	monster drop (defined by parameter) items to ground
+		pdrop	player drop items (defined by parameter) items to ground
+		and	select the common elements of two parameters
+		or 	select all elements from two parameters
+		move	monster jump to some room (defined by parameter)
+		pmove	player jump to some room (defined by parameter)
+		pprint	print message to players 
+		pprint raw	(same)
+		print	print message to all players in the same room
+				as monster
+		print raw	(same)
+		oprint	the same as print, but do not print to the
+                                original player (victim)
+		oprint raw	(same)
+		print null	run text through print -formatter
+		if	eval second or third parameter according to
+				first parameter
+		where	room of any player or monster
+		null	eval all parameters, but do not return anything
+		attack	decrease player's force
+		heal	increase player's force
+		mattack	decrease monster's force
+		mheal	increase monster's force
+		not	return nothing, if parameter is empty, else return
+				text TRUE
+		random	select one item (object) from item's (object's) list
+		strip	remove all other characters except letters a - z and 
+				A - Z and numbers from parameter  
+				and return result, upper case converted to 
+				lower
+		experience	return experience of any player
+		set experience	set player experience
+		plus	calculate integer value 
+				first parameter + second parameter
+		difference	calculate integer value
+				first parameter - second parameter
+		times	calculate integer value
+				first parameter * second parameter
+
+		quotient	calculate integer value
+				first parameter div second parameter
+		get state	get value of permanent code variable
+		set state	set value of permanent code variable
+		get global flag	read value of given flags
+		less	return TRUE if first value is lower than second value
+		number	return value of parameter if parameter is integer
+		health  return health of any player
+		set experience	set players's experience
+		all players	list players and monsters of universe
+		all objects	list objects of universe
+		all rooms	list rooms of universe
+		control	shift control to monster named in first 
+			parameter during evaluating second parameter
+		include	return second parameter if first parameter
+			includes second parameter
+		exclude	return the atoms of first parameter, excluding
+			those in second parameter
+		get remote state	get value of permanent code
+					variable of certain monster, specified
+					by first parameter
+		set remote state	set value of permanent code
+					variable of certain monster, specified
+					by first parameter
+		remote objects	list items in certain room, specified by first
+				parameter
+		remote players	list players in certain room, specified by 
+				first parameter
+		duplicate	monster make items to monster's inventory
+				(order by parameter)
+		pduplicate 	monster make items to player's inventory
+				(order by parameter)
+		destroy		monster destroy items from monster's inventory
+				(order by parameter)
+		pdestroy	monster destroy items from player's inventory
+				(order by parameter)
+		string head	return first word of parameter
+		string tail	return parameter excluding first word
+		head		return first item of parameter
+		tail		return parameter excluding first item
+		lookup player	fill parameter's player names
+		lookup room	fill parameter's room names
+		lookup object	fill parameter's object names
+		lookup direction	fill parameter's direction names
+		parse player	parsing player name (with joker)
+		parse room	parsing room name (with joker)
+		parse object	parsing object name (with joker)
+		privilege	check given privileges (second parameter)
+					of any player (first parameter)
+		userid		give userid of players
+		list	        concentenate list of parameters
+		spell level	return spell level of summoner 
+					of current spell
+		set spell level	set spell level of summoner (or learner)
+					of current spell
+
+The commands do not print anything except:
+	pdrop		may print unwear or unwield meassage
+	pdestroy	may print unwear or unwield meassage
+	print		message to players
+	print raw	message to players
+	pprint		message to victim
+	pprint raw	message to victim
+	oprint		message to players except victim
+	oprint raw	message to players except victim
+
+The following commands require that monster is in privileged mode:
+	pget		all cases
+	pdrop		all cases
+	pmove		all cases
+	
+			pmove requires that monster has poof privilege
+			(or requires that code is spell mode)
+			if target isn't by monster's owner or public.
+
+			move requires that monster has poof privilege
+			(or requires that code is spell mode)
+			if target isn't by monster's owner or public.
+
+	heal		all cases
+
+	set experience  requires that monster has experience privilege,
+			experience of owner cannot be set
+
+	control		can't shift control from one owner's monster to 
+			other owner's monster
+
+	get remote state	requires that monster's owner is owner
+				of current code, or that monster is public
+				and current monster has owner privilege
+
+	set remote state	requires that monster's owner is owner
+				of current code, or that monster is public
+				and current monster has owner privilege
+
+	pduplicate	all cases
+			requires that monster has owner privilege 
+			(or requires that code is spell mode)
+			if object not owned by owner of current code
+			
+			duplicate requires that monster has owner privilege 
+			(or requires that code is spell mode)
+			if object not owned by owner of current code
+
+	pdestroy	all cases
+			requires that monster has owner privilege 
+			(or requires that code is spell mode)
+			if object not owned by owner of current code
+	
+			destroy requires that monster has owner privilege 
+			(or requires that code is spell mode)
+			if object not owned by owner of current code
+
+			userid requires that monster has experience privilege
+
+	mattack 	all cases
+			mattack requires that the monster has manager 
+			privilege if the controlled monster or the 
+			player isn't in the same room as the target monster
+
+	mheal 		all cases
+			mheal requires that monster has also manager privilege
+			for self healing
+			mattack requires that the monster has manager 
+			privilege if the controlled monster or the 
+			player isn't in the same room as the target monster
+
+			attack: monster's level limit attack power
+
+The parameters of the following commands are object's (or other) list:
+	and,or,get,pget,drop,pdrop,exclude,duplicate,pduplicate,
+	destroy,pdestroy,head,tail,lookup room,lookup object,
+	lookup object,lookup direction, privilege(only second parameter),
+	userid, list, get global flag
+
+The following commands return object's (or other) list:
+	and,or,get,pget,drop,pdrop,inv,pinv,players,objects,all objects,
+	all players,all rooms,exclude,remote players,remote objects,
+	duplicate,pduplicate,destroy,pdestroy,lookup room,
+	lookup object,lookup player,lookup direction,
+	parse object,parse room,parse player,
+	experience,userid,list, get global flag
+
+The following commands return a numeric value:
+	attack,experience,set experience,plus,difference,times,quotient,
+	health,number,heal,mattack,mheal, spell level,
+	set spell level
+
+The following commands return TRUE or null string:
+	not, less, get global flag (if parameter isn't list)
+
+Example of object's list:
+	shovel, hat, ruby, note
+
+Return:		+	concatenated parameters
+		=	"" or parameter
+		==	"" or parameter
+		===	"" or parameter (in lowcase)
+		inv	monster's inventory list		> item list
+		pinv	player's inventory list			> item list
+		players	list of players in room			> item list
+		objects	list of objects in room			> item list
+		get	succesfully taken objects		> item list
+		pget	succesfully taken objects		> item list
+		drop	succesfully dropped objects		> item list
+		pdrop	succesfully dropped objects		> item list
+		and						> item list
+		or	union of parameters			> item list
+		move	room name if succesfully, else ""
+		pmove	room name if succesfully, else ""
+		pprint	message (parameters)
+		print	message (parameters)
+		oprint	message (parameters)
+		pprint raw	message(parameters)
+		print raw	message(parameters)
+		oprint raw	message(parameters)
+		print null	'message'(parameters)
+		if	second or third parameter
+		where	room name
+		not	"" or "TRUE"
+		random	item from item list
+		strip	stripped parameter
+		attack	used attack power, will be lower than
+				parameter's value	> numeric value
+		heal	parameter's value		> numeric value
+		mattack	second parameter's value	> numeric value
+		mheal	second parameter's value	> numeric value
+		set experience	parameter's value	> numeric value
+		experience 	experience of given player > numeric value
+		plus		first + second		> numeric value
+		difference	first - second		> numeric value
+		quotient	first div second	> numeric value
+		get state	permanent variable
+		set state	parameter's value
+		get global flag	List of TRUEs			> item list
+		less	"" or "TRUE"
+		number	"" or parameter's value		> numeric value
+		health	health of given player		> numeric value
+		set experience	parameter's value	> numeric value
+		all players	list of players			> item list 
+		all rooms	list of rooms			> item list
+		all objects	list of objects			> item list 
+		control	second parameter
+		include	second parameter  or "" 
+		exclude	unmatched items from first parameter	> item list
+		get remote state	permanent variable
+		set remote state	(second) parameter's value
+		remote players	list of players of certain room	> item list
+		remote objects	list of objects of certain room	> item list
+		duplicate	succesfully made objects	> item list
+		pduplicate	succesfully made objects	> item list
+		destroy		succesfully destroyed objects	> item list
+		pdestroy	succesfully destroyed objects	> item list
+		string head	head of string parameter 
+		string tail	tail of string parameter
+		head		head of list parameter
+		tail		tail of list parameter       (> item list)
+		privilege	privilege list			> item list
+		parse player	player list			> item list
+		parse object	object list			> item list
+		parse room	room list			> item list
+		userid		userid list			> item list
+		list	concentenated lists			> item list
+		spell level	summoner's spell level  > numeric value
+		set spell level parameter's value       > numeric value
+                                                        
+The following commands don't work with a hook, except by using a 
+control function:
+		inv
+		get
+		drop
+		move              
+		pduplicate
+		pdestroy
+
+		set experience		(use control function)
+		userid			(use control function)
+
+Special commands:
+		GOSUB
+		LABEL
+		DEFINE                                   
+		SET
+		SUBMIT
+		FOR
+
+The scope of variables is limited by DEFINE commands and executed GOSUB - LABEL
+commands inside DEFINE commands. So the scope is defined at run-time.
+
+SUBMIT requires that the monster has manager privilege if the monster or the
+previous player isn't in the same room as the new player. The unit of delta
+time is uncertain.
+
+FOR evaluates the second parameter with every item of the first list parameter
+(it is assigned to variable) and returns that item when the result of the
+evaluation wasn't null.
+
+Default variables in all cases:
+player name		Player's personal name
+monster name		Monster's name (when hook, value of this variable is "")
+			(as the control function changes the controlled monster,
+			 the value of this variable is also changed)
+
+Labels and default variables for Monster:
+enter		-			entering room, start game or
+					poof to room
+leave		target			leaving room, quit game or
+					poof from room
+say		speech			say something
+attack		-			attacking to Monster
+look		-			look something in room
+look you	-			look monster
+command		command			for Command Extension System
+
+Labels and default variables for hook of rooms:
+start		-			start game
+enter		-			entering room
+escaped		-			leaving room or poof from room
+					activated when player is really leave
+					room
+leave		target			leaving room
+poof in		-			poof to room
+poof out	target			poof from room
+say		speech			say something
+look detail	detail			look detail in room
+look around	-			look around in room
+command		command			for Command Extension System
+wrong dir	direction		when user gives go <unmatched direction>
+
+Labels and default variables for hook of objects:
+get fail	-			failing to get object
+get succeed	-			getting object
+drop succeed	-			dropping object ( by drop -command )
+drop you	-			dropping object ( other reason )
+use succeed	-			using object
+look you	-			look object
+command		command			for Command Extension System
+start		-			start game 
+enter		-			entering room
+leave		target			leaving room
+
+Labels and default variables for spell's code:
+summon           -                       wictim execute this when
+                                           summoner attack's wictim
+learn           book name               when player reads book what
+                                           learn's spell (that code
+                                           must use set spell level for
+                                           this).
+In spell there is defined variables spell name and summoner name.
+
+
+Labels and default variables for global code:
+start		-			start games
+quit		-			quit games
+
+Command Extension System:
+
+When the user types an invalid command, the following will happen:
+
+1)	form of command is: <something> 
+	to hook of room, run label command
+	the value of variable command is <something>
+
+2)	form of command is: <something> <object name>
+	to hook of object, run label command
+	the value of variable command is <something>
+
+3)	form of command is: <something> <monster name>
+	to monster's code run label command
+	the value of variable command is <something>
+	
+Parameters of functions:
+
++ 		(<line 1>,...,<line n>) 
+= 		(<line 1>,<line 2>) 
+== 		(<line 1>,<line 2>) 
+=== 		(<line 1>,<line 2>) 
+inv		() 
+pinv		() 
+players		() 
+objects		() 
+get		(<object list>) 
+pget		(<object list>) 
+drop		(<object list>) 
+pdrop		(<object list>) 
+and		(<item list>,<item list>) 
+or		(<item list>,<item list>) 
+move		(<room's name>) 
+pmove		(<room's name>) 
+pprint		(<message part 1>,...,<message part n>) 
+print		(<message part 1>,...,<message part n>) 
+oprint		(<message part 1>,...,<message part n>) 
+pprint raw	(<message part 1>,...,<message part n>) 
+print raw	(<message part 1>,...,<message part n>) 
+oprint raw	(<message part 1>,...,<message part n>) 
+print null	(<message part 1>,...,<message part n>) 
+if 		(<p1>,<action 1>,<action 2>) 
+where		(<monster's or player's name>) 
+null		(<action 1>,<action 2>,<action 3>,...,<action n>) 
+attack		(<attack force: nr>) 
+not		(<p1>)
+random		(<item list>) 
+strip		(<string>) 
+experience	(<player's name>) 
+set experience	(<player's new experience>) 
+plus		(<p1: nr>,<p2: nr>)           
+difference	(<p1: nr>,<p2: nr>)
+times		(<p1: nr>,<p2: nr>)
+quotient	(<p1: nr>,<p2: nr>)
+get state	()
+set state	(<string>)
+get global flag	(<flag list>)
+less		(<p1: nr>,<p2: nr>)
+number		(<p1: nr>)
+health		(<player's name>)
+all players	()
+all objects	()
+all rooms	()
+control		(<monster's name>,<action>)
+include		(<string>,<substring>)
+exclude		(<item list>,<sub item list>)
+remote object	(<room name>)
+remote players	(<room name>)
+heal		(<healing amount: nr>)
+duplicate	(<object list>)
+pduplicate	(<object list>)
+destroy		(<object list>)
+pdestroy	(<object list>)
+string head	(<string>)
+string tail	(<string>)
+head		(<item list>)
+tail		(<item list>)
+lookup object	(<object list>)
+lookup player	(<player list>)
+lookup room	(<room list>)
+lookup direction	(<direction list>)
+parse object	(<parameter>)
+parse player	(<parameter>)
+parse room	(<parameter>)
+experience	(<player name>,<privilege list>)
+userid		(<player list>)
+mheal		(<monster name>,<heal amount: nr>)
+mattack		(<monster name>,<attck amont>: nr>)
+list		(<item list 1>,...,<item list n>)
+spell level     ()
+set spell level (level number)
+
+LABEL <label>		(<action 1>,...,<action n>)
+GOSUB <label>		(<param 1>,...,<param n>)
+DEFINE <variable>	(<action>)
+SET <variable>		(<value>)
+SUBMIT <label>		(<delta time>,<player's name>)
+FOR <variable>		(<list>,<action>)

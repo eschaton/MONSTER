@@ -1,0 +1,3949 @@
+1 MONSTER
+  Monster, a multiplayer adventure game where the players create the 
+  world and make the rules.
+
+  Command: MONSTER/qualifiers [dump_file]
+
+2 Parameters
+
+ dump_file
+  
+  Only with /DUMP or /BUILD -qualifiers.
+
+  This paramter specifies text form equivalant of database.  Default 
+  extension is .DMP.  This parameter required with /DUMP and  /BUILD 
+  -qualifiers.
+
+2 General_Qualifiers
+
+/VERSION
+ /VERSION
+  Show version text of Monster.  Version -command  shows  same  text 
+  when playing Monster.
+
+  Incombatible with /WHO.
+
+/START
+ /START
+ /NOSTART
+  Prevents or enables start  of  playing  after  handling  of  other 
+  qualifiers. Usefull with /VERSION or qualifiers for management.
+
+  Incombatible with /WHO, /DUMP and /BUILD.
+
+/OUTPUT
+ /OUTPUT[=output-file-spec]
+ /NOOUTPUT
+  Redirects Monster's output  to  file.  Usefull  with  /VERSION  or 
+  qualifiers  for management.
+
+  Incombatible with /FIX, /WHO, /DUMP and /BUILD.
+
+2 Management_Qualifiers
+
+  These qualifeirs is only for Monster Manager.
+
+/REBUILD
+ /REBUILD
+  Build new database for  monster.  Check  before  this  entries  of 
+  MONSTER.INIT -file.
+
+  Incombatible with /FIX, /REAL_USERID, /USERID, /BATCH, /WHO, /DUMP
+  and /BUILD.
+
+/FIX
+ /FIX
+  Activate  /FIX -system  in  interactive  mode.  With  this  system 
+  Monster Manager can fixs errors of database.
+
+  Incombatible with /OUTPUT, /REBUILD, /REAL_USERID, /USERID, /BATCH, 
+  /WHO, /DUMP and /BUILD.
+
+  Look Fixing_Database.
+
+/DEBUG
+ /DEBUG
+ /NODEBUG (D)
+  Turn debug mode on or off. Same as  debug  -command  when  playing 
+  Monster.
+
+  Incombatible with /WHO.
+
+/REAL_USERID
+ /REAL_USERID
+  Enable playing with someone other's name.
+
+  Incombatible with /REBUILD, /FIX, /USERID, /BATCH, /WHO, /DUMP and 
+  /BUILD.
+
+/BATCH
+ /BATCH=command-file-spec
+  Runs /FIX -system in batch mode. 
+
+  Incombatible with /REBUILD, /FIX,  /REAL_USERID,  /USERID, /BATCH, 
+  /WHO, /DUMP and /BUILD.
+
+/BUILD
+ /BUILD
+  Same as /REBUILD, except that this read database from special text 
+  file. Parameter dump_file is required with this qualifier.
+
+  Look also /DUMP.
+
+  Incombatible with /REBUILD, /FIX, /REAL_USERID,  /USERID,  /BATCH, 
+  /BUILD, /OUTPUT and /START.
+
+/DUMP
+  /DUMP
+   Make text form copy of database for /BUILDing. Parameter dump_file
+   is required with this qualifier.
+
+  Incombatible with /REBUILD, /FIX, /REAL_USERID,  /USERID,  /BATCH, 
+  /DUMP, /OUTPUT and /START.
+
+2 Playing_Qualifiers
+
+/USERID
+ /USERID=virtual_userid
+  Enable playing with virtual userid. Virtual userids is indebendent 
+  of real userids. Virtual userids is protected with password. 
+
+  Incombatible with   /REBUILD,  /FIX,  /REAL_USERID,  /BATCH,  /WHO, 
+  /DUMP and /BUILD.
+
+/WHO
+ /WHO
+  Shows players what is currently  playing Monster,  but  not  start 
+  Monster. Good for LOGIN.COM.
+
+  Incombatible with all other qualifiers.
+
+2 Initialization_file
+
+  Monster read file MONSTER.INIT from directory where is  executable 
+  monster program. Monster gets directory from  process'  image_name 
+  entry. There is follow entries:
+
+3 MM_userid
+
+  This entry include userid  of  Monster  Manager.  Userid  must  be 
+  written by lowercase. The Monster Manager has the most power. This 
+  should be the game administrator. 
+
+4 Example
+MM_userid: leino
+
+3 gen_debug
+  This tells whether everyone may use the debug command.  It must be 
+  able to be disabled  because  it  tells  players  too  much  about 
+  monsters.  On the other hand, it must also be able to be  enabled, 
+  if we want to do test runs under an unprivileged userid.
+
+4 Example
+gen_debug:   false
+
+3 REBUILD_OK
+  If this is true,  the Monster Manager can blow away  and  reformat 
+  the entire universe.  It's a good idea to set this to false.  This 
+  must be true when Monster Manager want use /REBUILD option.
+
+4 Example
+REBUILD_OK: false
+
+3 root
+  This is where the Monster database goes. The root directory must be  
+  world:e and the datafiles Monster creates in it world:rw for people 
+  to be able to play.
+
+4 Example
+root:    games_disk:monster.database.db>		 
+
+3 coderoot
+  The  coderoot  directory  is  where  the codefiles for monsters  go. 
+  The directory must additionally have  an  ACL  default world:rw  for  
+  files  and ACL rw for the managers.
+
+4 Example
+coderoot:games_disk:<monster.database.c>   
+
+3 LEVELTABLE
+  Leveltable tells levels of  Monster.  There  is  certain  privileges 
+  associateden to levels.  Higger level there is Monster Manager  (not 
+  in leveltable).
+
+4 Privileges
+  Value    Name      Meaning 
+  32       Monster   Can create Mosters what can modify player's contex.
+  16       Special   Can make special items
+  256      Spell     Can create spells what can modify player's contex.
+  4        Global    Can modify global describtions and flags.
+  8        Owner     Can customize other's stuff as owner of stuff.
+  64       Experince Can make MDL code, what give score to players.
+  1        Manager   Can execute system -command.
+
+4 Example
+LEVELTABLE:
+!  name		    exp	         priv	 health	   h.fac    pow    hidden 
+Beginner,           0,           0,      10,       40,      0,     nohidden
+Novice,             1,           0,      10,       40,      2,     nohidden
+Ranger,             500,         0,      15,       50,      3,     nohidden
+Adventurer,         1000,        0,      20,       60,      5,     nohidden
+Hero,               2000,        32,     30,       60,      10,    nohidden
+Champion,           6000,        0,      40,       70,      10,    nohidden
+Conjurer,           12000,       16,     50,       70,      12,    nohidden
+Magician,           20000,       0,      60,       70,      15,    nohidden
+Enchanter,          40000,       2,      80,       75,      20,    nohidden
+Sorcerer,           70000,       256,      100,      80,      20,    nohidden
+Warlock,            120000,      4,      120,      85,      35,    nohidden
+Apprentice wizard,  300000,      8,      150,      85,      50,    nohidden
+Wizard,             700000,      64,     300,      90,      80,    nohidden
+Almost Dead,        1000100,     0,      10,       40,      2,     hidden
+Manager,            2000000,     1,      500,      100,     500,   hidden
+Druid,              2001000,     0,      500,      100,     500,   hidden
+Charlatan,          2008000,     0,      500,      100,     500,   hidden
+Wanderer,           2009000,     0,      500,      100,     500,   hidden
+Chief Architect,    3000000,     0,      500,      100,     500,   hidden
+Bug Hunter,         5000000,     0,      500,      100,     500,   hidden
+END OF LEVELTABLE
+
+3 Archpriv
+  Experience entry for Monster Manager. Level of Monster manager isn't 
+  in leveltable.
+
+4 Example
+Archpriv:   0
+
+3 Archhealth
+  Health entry for Monster Manager.
+
+4 Example
+Archhealth: 800
+
+3 Archfactor
+  Hit factor for Monster Manager.
+
+4 Example
+Archfactor: 100
+
+3 Archpower
+  Power entry for Monster Manager.
+
+4 Example
+Archpower:  1000
+
+3 maxexperience
+  Maximun experience what player can reach.  Notice that experience of 
+  Monster manager is MAXINT.
+
+4 Example
+maxexperience: 1000000
+
+3 protect_exp
+  When player reach this experince, player is deadless.
+
+4 Example
+protect_exp: 700000
+
+3 Playtime
+  Tells time when Monster is playable in workdays.  Mark +  mean  that
+  monster is playable and mark - mean that monster isn't. First mark is
+  time from 00 to 01 and last mark is time from 23 to 24.
+
+4 Example
+Playtime: +++++++++--------+++++++
+
+3 default_allow
+  How many rooms players made at default.
+
+4 Example
+default_allow: 20
+
+3 min_room
+  How many rooms players can made without exit request.
+
+4 Example
+min_room:      5
+
+3 min_accept
+  How many accepts must players made.
+
+4 Example
+min_accept:    5
+
+2 Installation
+  For installing Monster your must make several  directories,  compile 
+  Monster, put files to right directories,  edit configurion files and 
+  build database for Monster. 
+
+3 Directories
+  Make four directories:
+    Directory for sources, lets CALL it SOURCES directory.
+    Directory for MONSTER.EXE and MONSTER_WHO.EXE, lets call it  IMAGE 
+      directory.
+    Directory for *.MON files, lets call it DATABASE_MON directory.
+    Directory for CODE*.MON files, lets call it DATABASE_CODE directory.
+
+4 SOURCE
+  Files: CLI.PAS, CONVERT.BATCH, CUSTOM.PAS, DATABASE.PAS,  FIX.BATCH, 
+  GLOBAL.PAS, GUTS.PAS, INTERPRETER.PAS, KEYS.PAS, MAKEFILE.  MON.PAS,
+  MONSTER_WHO.PAS, PARSER.PAS, PRIVUSERS.PAS, QUEUE.PAS, MONSTER_E.HLP,
+  MONSTER_DUMP.PAS.
+
+4 IMAGE
+  Files: MONSTER.CLD, MONSTER.INIT.
+
+  Compiled Files: MON.EXE, MONSTER_WHO.EXE, MONSTER_E.HLB, 
+  MONSTER_DUMP.EXE.
+
+4 DATABASE_MON
+  Files: COMMANDS.PAPER, ILMOITUS.TXT, MONSTER.HELP.
+
+  Files created by /REBUILD: DESC.MON, EVENTS.MON, HEADER.MON, INDEX.MON,
+  INTFILE.MON, LINE.MON, NAMS.MON, OBJECTS.MON, ROOMS.MON, SPELLS.MON.
+
+4 DATABASE_CODE
+  Files created by /REBUILD: CODE1.MON, CODE2.MON, CODE3.MON, CODE4.MON,
+  CODE5.MON.
+
+  Command H (Add header blocks) in System menu adds number of files in
+  this directory!
+
+3 Compilation
+  First: Edit KEYS.PAS (change gryp-keys !!)
+
+  Commands for compilation:
+$ LIBRARIAN/CREATE/HELP MONSTER_E MONSTER_E
+$ PASCAL /CHECK=ALL GLOBAL		
+$ PASCAL GUTS/CHECK=ALL
+$ PASCAL /CHECK=ALL DATABASE		
+$ PASCAL  CLI
+$ PASCAL  PRIVUSERS / CHECK = ALL
+$ PASCAL /CHECK=ALL PARSER 		
+$ PASCAL /CHECK=ALL QUEUE 		
+$ PASCAL /CHECK=ALL INTERPRETER 		
+$ PASCAL  KEYS /CHECK = ALL	
+$ PASCAL /CHECK=ALL MON			
+$ LINK MON,GUTS,INTERPRETER,KEYS,PRIVUSERS,QUEUE,PARSER,CLI,GLOBAL,DATABASE,CUSTOM	! Linkkaus
+$ PASCAL /CHECK=ALL MONSTER_WHO
+$ LINK MONSTER_WHO, DATABASE, GUTS, GLOBAL, PRIVUSERS, PARSER
+$ PASCAL /CHECK=ALL MONSTER_DUMP
+$ LINK MONSTER_DUMP, DATABASE, GUTS, GLOBAL, PRIVUSERS, PARSER
+
+  Put MON.EXE, MONSTER_WHO.EXE, MONSTER_DUMP.EXE and MONSTER_E.HLB 
+  to IMAGE directory.
+
+3 Editing
+
+  Edit follow files: KEYS.PAS, MONSTER.CLD, MONSTER.INIT and ILMOITUS.TXT.
+  Edit KEYS.PAS before compilating Monster !
+
+4 KEYS.PAS
+
+  Edit keys array.  You can chage number of lines of keys -array,  but 
+  you can't change length of lines of keys -array. Put number of lines
+  to maxkeys -const.
+
+4 MONSTER.CLD
+   Put right full specification of IMAGE directory to follow places:
+
+define syntax MONSTER_WHO
+   image <IMAGE -directory>monster_who
+   noqualifiers
+define verb MONSTER
+   image <IMAGE -directory>mon
+   qualifier WHO
+      nonnegatable
+      syntax = MONSTER_WHO
+4 MONSTER.INIT
+  Edit places marked with <> -marks:
+
+MM_userid: <your userid in lowcase>
+
+gen_debug:   false
+
+REBUILD_OK: <put this true before /REBUILD and then false>
+
+root:     <full specificaton of DATABASE_MON -directory>
+coderoot: <full specification of DATABASE_CODE -direcory>
+       
+LEVELTABLE:
+* Leveltable removed: looke example from initialization_file -part of 
+  this help *
+END OF LEVELTABLE
+Archpriv:   0
+Archhealth: 800
+Archfactor: 100
+Archpower:  1000
+
+maxexperience: 1000000
+
+protect_exp: 700000
+
+Playtime: <put right time to this: look example from initilization_file 
+           -part of this help>
+
+default_allow: 20    
+min_room:      5     
+min_accept:    5    
+4 ILMOITUS.TXT
+  Monster print this file,  when Monster isn't playable in work  hours.
+  Work hours are in Playtime -line in MONSTER.INIT.
+
+3 Protection
+  Put follows ACls to DATABASE_MON and DATABASE_CODE directories 
+  (to *.DIR file).
+          (IDENTIFIER=<your name>,ACCESS=READ+WRITE+EXECUTE+DELETE+CONTROL)
+          (IDENTIFIER=<your name>,OPTIONS=DEFAULT,ACCESS=READ+WRITE+EXECUTE+DELETE+CONTROL)
+          (DEFAULT_PROTECTION,SYSTEM:RWED,OWNER:RWED,GROUP,WORLD:RW)
+
+  Put same kind ACL for all other managers (of monster) to DATABASE_CODE 
+  directory.
+
+  Put protection (world:execute) or (world:read+execute) to 
+                IMAGE, DATABASE_MON and DATABASE_CODE directory
+
+  Put protection (world:read) to 
+        ILMOITUS.TXT, MONSTER.CLD, MONSTER.INIT, MONSTER_E.HLB,
+        and MONSTER.HELP files.
+        
+  Put protection (world:execute) to 
+        MON.EXE and MONSTER_WHO.EXE files 
+
+  MONSTER_DUMP.EXE don't need to be executable by world.
+
+  After building database put protection (world:read+write) to
+        *.MON files
+  in DATABASE_MON and DATABASE_CODE direcories.
+
+3 Database
+  Define monster command with command
+      SET COMMAND MONSTER (in IMAGE directory)
+
+  Make monster universe with command MONSTER/REBUILD
+
+  or
+
+  copy your old (Skrenta's) monster database to DATABASE_MON directory
+  and try MONSTER/BATCH=CONVERT (No warranty!)
+
+  or
+
+  MONSTER/BUILD CASTLE.DMP
+  (where in file CASTLE.DMP have distributed starter's castle)
+
+  Put protection (world:read+write) to
+        *.MON files
+  in DATABASE_MON and DATABASE_CODE direcories.
+3 Publishing
+  Tell anybody that he can play monster
+     after command
+     SET COMMAND Your_Disk:<Your IMAGE directory>MONSTER
+  with MONSTER command
+3 Questions
+  Questions to Kristallipallo@com.cc.Helsinki.FI
+               Kari.Hurtta@Helsinki.FI        hurtta@cc.Helsinki.FI
+               HURTTA@FINUH.BITNET
+               Antti.Leino@Helsinki.FI        leino@cc.Helsinki.FI
+               LEINO@FINUH.BITNET
+               Juha.Laiho@Helsinki.FI         jlaiho@cc.Helsinki.FI
+               JLAIHO@FINUH.BITNET
+2 Original
+  This text is from release of original Skrenta's Monster. I only
+  put this to Help structure.
+
+3 Files 
+  Monster was written in VMS Pascal under VMS 4.6.  It uses file 
+  sharing and record locking for communication.  Outside of that, 
+  it doesn't do anything tricky.  However, after playing around with 
+  a VMS 4.2 system, I have doubts if it will work on a system that 
+  old.  If you've got a reasonably recent version of VMS and a Pascal 
+  compiler, you shouldn't have any problems.
+ 
+  The Monster source is in two files:  a short one, approx 300 lines, 
+  called guts.pas, and a big one, mon.pas, approx 13,000 lines.  The 
+  compiled program contains everything necessary to create and 
+  maintain  the Monster universe. There is no separate maintenance 
+  program.  Instead,  specific people in the game have priviledges, 
+  and are known as the  "Monster Managers".  The MMs can do system 
+  maintenance while playing, and  other players can even observe their 
+  work.
+ 
+  After reading the document, if you would still like to obtain Monster,
+  send me a letter reaffirming your interest.  Thanks!
+ 
+3 Game
+ 
+  Monster is a text-oriented computer adventure game.  Like other 
+  traditional adventure games such as Zork and Adventure, Monster 
+  players issue simple commands to direct a "puppet" through an 
+  artificial world.  Players can explore the world, pick up and 
+  make use of objects, and solve puzzles.
+ 
+  However, Monster is quite different from other computer adventures 
+  in two respects:  first, Monster is a multiplayer game.  In addition 
+  to the normal actions a player can effect on the simulated environment, 
+  players can also interact with one another.  Player characters can 
+  fight, talk, trade items and explore territory together.  Monster 
+  is similar in this respect to some multiplayer games available on 
+  computer networks such as the Source and Compuserve.
+ 
+  However, Monster allows players to do something that very few, if any, 
+  other games allow:  the players themselves create the fantasy world as 
+  part of the game.  Players can create objects, make locations, and set 
+  up puzzles for other players to solve.  Game mechanisms allow players to:
+ 
+        o Create and describe new objects and locations
+        o Specify how game objects function
+        o Provide text descriptions for events that may happen
+ 
+  For example, a player in Monster could create a room named "Great 
+  Hall", provide a textual description for it (which other players 
+  would see upon entering the rooms), and describe special features 
+  of the room (for instance, a brass plaque on the wall).
+ 
+  Here's what another player who walked into the room described above 
+  would see (lines beginning with > are the player's input):
+ 
+  > look
+  You're in Great Hall
+  You're in the middle of a vast hall stretching out of sight to the
+  east and west.  Strange shadows play across the high vaulted ceiling.
+  The floor is set with smooth rectangular stones.  The walls feel slightly
+  cold to the touch, and damp with condensation.  A copper plaque, slightly
+  green with age, is set into one wall.
+ 
+  > look plaque
+ 
+  The plaque looks very old and corroded.   However, you can still make out
+  the writing:
+ 
+  " Monster, created by Rich Skrenta, 1988.  Play at your own risk. "
+ 
+  Now the creator of the rooms could add a secret passage, perhaps 
+  hidden underneath some stones in the floor.  To do this, first the 
+  player would describe what the stones looked like, then make a hidden 
+  exit to another location with a special command which would activate 
+  it.  Here's what the player would see after making these changes:
+ 
+  > show details
+  Details here that you may inspect:
+      stones
+      plaque
+  > look stones
+  The stones are rough and black, and cold to the touch.  Although the
+  mortar work appears to have been expertly done, it has decayed with time.
+  Many stones are cracked, and narrow spaces fracture the carefully laid
+  pattern.  Some of the stones are quite loose.  You might be able to lift
+  one of them with some effort.
+  > lift
+  With great effort, you manage to lift the stone enough to fit inside.
+ 
+  Once below the stone, it falls back into place, sealing out the light
+  from above.  You squirm down the narrow tunnel . . .
+ 
+  This example only hints at the details that actually go into the 
+  creation of a realistic game puzzle.  To set up a rich game location, 
+  a player would have to
+  specify:
+ 
+        o A textual description of the room, as well as separate descriptions
+          for various rooms details (in the example above, the plaque and
+          the stones are room details)
+        o A description of each of the possible exits from the rooms (there
+          might be no description if the exit is hidden)
+        o What happens when an object is dropped at the location (for example,
+          if a player is swimming and he drops something, the object should
+          sink) as well as a message describing what happened to the object
+        o For each exit, a set of messages and parameters including:
+                - the name of the exit
+                - whether the exit requires a special object to pass (for
+                  example, a door key or some magic object)
+                - a message displayed to the player if he can't successfully
+                  leave through the exit (if he doesn't have the key, for
+                  instance)
+                - an optional message that the player sees when he goes
+                  through an exit (in the example above, the text "Once below
+                  the stone, it falls back into place...." is such a message)
+                - a message that players inside the room see when someone
+                  leaves through the exit
+                - a message that players inside the room see when another
+                  player enters the room through the exit
+		- special features specific to this exit
+                - miscellaneous other parameters
+ 
+ 
+ 
+3 Technical_Aspects
+ 
+  Each player who plays the Monster game runs a separate copy of the 
+  game.  Each individual Monster process shares a database containing 
+  all of the information about the simulated world, including:
+ 
+        o Records describing all of the rooms, interconnections between 
+          rooms, objects, and descriptions for the above
+        o The locations of every player and object
+        o A special shared file used for interprocess communication
+ 
+  Each of the Monster database files are organized as a linear collection
+  of fixed-length records.  Monster uses the following files:
+ 
+        roomfile:       file of records containing data on Monster locations
+        namfile:        file containing names for objects, rooms and people
+        descfile:       file of text description blocks (10 lines maximum)
+        linefile:       file of short (one line) descriptions
+        intfile:        file of various integer parameters
+        objfile:        file of records containing data on Monster objects
+        indexfile:      file of bitmaps for the other files; used to mark
+                        free/inuse records for dynamic allocation
+        eventfile:      file of records used for interprocess communication
+	spellfile:      contains player's spell information
+ 
+ 
+4 Record_Locking
+ 
+  When Monster tries to access a record in one of the shared data 
+  files, it first makes a read attempt on the record.  If the record 
+  is available (no other Monster process is reading or writing it) VMS 
+  will lock and read the record and return successfully.  If another 
+  process has locked the record, VMS will return an error condition.  
+  In this case the Monster process will wait a small random amount of 
+  time and attempt to read the record again.  Then if the Monster program 
+  cannot successfully read and lock the record after a certain number of
+  retries, it prints an error message and aborts.
+ 
+  In initial versions of Monster a count was kept of how many times 
+  two processes would "collide" when both wanted to read one record.  
+  The random wait dramatically reduced this hit count.
+ 
+  Monster's response time using this scheme is acceptable when the 
+  load on the VAX is not too high.  However, it does have some 
+  drawbacks.  The first is that a data record being read by a Monster 
+  process is locked for a short time, even if the process has no 
+  intention of writing to it.  Also, the collide-and-wait approach is 
+  somewhat crude considering VMS has extensive record locking facilities 
+  which are capable not only of allowing multiple-read access to a 
+  record but also of queueing processes desiring to write-lock a record.
+  Unfortunately, the use of these facilities requires special VMS 
+  priviliges not available to ordinary users.  During testing on a 
+  VAX 8800 running VMS 5.1 with over 50 interactive users and 14 
+  players response time was fast enough for most picky users.
+ 
+ 
+4 Interprocess_Communication
+ 
+  Monster processes communicate through a shared file.  A communication 
+  from one process to another is referred to as an event; the shared 
+  file for communication is called the event file.  Two player processes 
+  will only need to communicate if both players are in the same location, 
+  since actions in one room won't affect gamers elsewhere.  However, 
+  when two or more players are in the same location, quite a lot of events 
+  may happen:
+ 
+        o Notification of entry and exit -- players in the room must see when
+          other players come and go
+        o Notification of various actions -- such as picking up and dropping
+          objects, taking inventory and closely examining things
+        o Messages when players talk to each other in the game
+        o Primary, target and third-party events for fighting -- the player
+          throwing the punch sees one thing, the person being hit another,
+          and somone else watching sees a third message.
+ 
+  Because only player processes in the same Monster game location 
+  need to communicate, each room has an associated event file record.  
+  Each event file record contains a circular list of events with a 
+  pointer to the most recent event.  When a player enters a new room, 
+  either by moving or joining the game, the Monster process reads the 
+  event file record for the room and makes a local copy of the current 
+  event pointer.  At periodic intervals, the Monster process will reread 
+  the event file record and compare its local pointer to the one in the 
+  event file.  If they are different, other player processes have logged
+  events to the event record, and the Monster process will pull them 
+  off the list, handle them, and update its own local pointer.  When 
+  a process needs to log an event, it write-locks the event file record, 
+  writes a new event, and updates the event file pointer.
+ 
+  There are over sixty different events that a Monster process can 
+  initiate or handle; each event can be interpreted differently 
+  according to circumstances. For example, player A may whisper 
+  something to player B.  Suppose player C is also in the room.  
+  Player A's process logs an event containing the message, the event 
+  type ("whisper") and the target of the whisper (player B) to the
+  event file record associated with their current location.
+ 
+  > whisper b
+  >> Hey b, this is something I whispered to you.
+ 
+  Player B's process will receive and handle the event:
+ 
+  A whispers, "Hey b, this is something I whispered to you."
+ 
+  Player C's process will also receive and handle the event.  
+  Usually C will only see A and B whispering together:
+ 
+  A is whispering to B.
+ 
+  However, there is a small chance that C will overhear the message:
+ 
+  You overhear A whispering to B:
+    "Hey b, this is something I whispered to you."
+ 
+  This method of interprocess communication requires that all 
+  Monster processes frequently read the event file to see if any 
+  events have occured.  This might seem less efficient than another 
+  scheme possibly using VMS mailboxes or shared memory.  Lack of 
+  sufficient VMS privileges prevented me from using shared memory.  
+  Mailboxes might be more efficient, especially if used with the Vax's
+  interrupt system.  However, several problems would be present:
+ 
+        o In order to allow any process to communicate with any other,
+          full interconnection would be necessary.  In addition, since VMS
+          mailboxes only transmit data in one direction, n Monster processes
+          would require 2n mailboxes.  A scheme using mailboxes would quickly
+          exhaust process quota limits.
+ 
+        o It is somewhat awkward to set up mailboxes and even more difficult
+          to inform other processes of their presence.  Once again, I believe
+          that special VMS privileges might be necessary to do this.
+ 
+  The event file scheme of communication has proven flexible and is 
+  fast enough when the VAX load is not high.
+ 
+ 
+4 Maintaining_a_Player's_Existence_in_the_Database
+ 
+  When a user runs Monster, it first checks a playerlog to see if 
+  he has ever played before.  If so, the player is restored to the 
+  state he was in when he last played, just before issuing the QUIT 
+  command.  In the user is not found in the playerlog, he is started 
+  out at an initial location, somewhat in the center of the world.
+ 
+  To place a player into a location, Monster scans the room record 
+  for a free "person" slot to put the player's index into.  Once the 
+  player is part of the room record, he will be visible to other 
+  players who are also in that room (providing he hasn't hidden 
+  himself), and they will be able to interact with him.
+ 
+  A dangerous situation occurs when a player process dies or becomes 
+  disconnected for some reason.  In this case, the room record shows 
+  that a certain player is in a location, but in fact there is no 
+  controlling Monster process for that player.  There will be no 
+  process to handle events directed at that player. This is a bad 
+  situation because they player is not obviously "dead" to the
+  other Monster programs, as interprocess communication only involves 
+  sending an event, and does not provide for receipt acknowledgement.
+ 
+  These "zombie" players were a serious nuisance in an early version 
+  of Monster. The Monster world appeared to be full of players, when 
+  in fact they were just ghosts left from players typing the VAX 
+  interrupt character or becoming disconnected from modems (Monster 
+  now inhibits the interrupt character to help prevent the casual 
+  creation of zombies).
+ 
+  There are two cases where a zombie game character may be detected:  
+  when another player suspects that a game character is not being 
+  controlled by a real user (either from a lack of response from the 
+  game character or by checking the VAX user list); or when the player 
+  who created the zombie character attempts to play Monster again (only 
+  one player per account is allow to play Monster at a time, so if a 
+  player tries to enter Monster and also appears to be currently playing 
+  the game, either 1) two players on one account are trying
+  to play Monster at the same time, or 2) the player character that 
+  appears to be currently playing Monster is really a zombie).
+ 
+  To handle the first case, when one player suspects another of being 
+  a zombie, the player can issue the PING command.  PING sends repeated 
+  events directed at the suspected zombie, with short pauses between the 
+  sends.  If PING does not receive a response within a certain amount of 
+  time (currently about three seconds) it attempts to smoothly return the 
+  zombie character to the "inactive" (not playing) state.  This involves 
+  taking every object the player character was holding and dropping them 
+  on the ground, updating the "time of last play" record and modifying 
+  the playerlog to show that the player is not currently playing.
+ 
+  In the second case, when no other player has PINGed away the zombie 
+  and the original player (the one responsible for the zombie character) 
+  attempts to reenter Monster, Monster will inform him:
+ 
+        There may have been some trouble the last time you played.
+        Trying to fix it . . .
+ 
+  At this point, Monster itself attempts to PING the player's character.  
+  If two people on the same account are trying to play Monster at the 
+  same time the PING will be answered and Monster will not let the 
+  second player into the game.  Otherwise, the player will enter Monster 
+  normally after a short pause:
+ 
+        All should be fixed now.
+ 
+        Welcome back, Faust.  Your last play was on 13-MAY-1988 at 8:31pm.
+ 
+  Even with this solution, there are still situations where trouble can 
+  arise with zombie characters.  For example, suppose a player is on a 
+  modem playing Monster and becomes disconnected.  Another player PINGs 
+  away the zombie character.  The dialup player calls up the VAX again, 
+  and reconnects to his disconnected process.  Now his Monster process 
+  still thinks the player character is alive in the room (it has no 
+  knowledge of the disconnect) but the database shows that the player 
+  is inactive.
+ 
+  If only a few events have been logged in the associated event file 
+  record, the reconnnected Monster process will notice the fatal PING 
+  to itself (lingering in the event file record) and will abort.  
+  However, if many events have occured while the process was disconnected, 
+  it will not be aware of the change to the database. This will leave the 
+  database in an inconsistent state until the player QUITs the game.  
+  Fortunately, when the player quits the database will be fixed.
+ 
+  Since this problem will eventually correct itself (when the player 
+  quits) and because checking for this very rare situation would slow 
+  response time considerably (Monster would have to verify its existence 
+  in the database continuously) I decided to ignore this exception.
+ 
+  I had originally hoped for a smoother solution to the "disconnected 
+  player" problem.  In a system where a central process drives all of 
+  the player terminals, this is possible.  However, because control in 
+  Monster is shared between many identical processes, the problem is 
+  much harder.
+ 
+ 
+4 Reflections_on_the_Project
+
+  How the "Installed Base" Stagnated New Development:
+  
+ 
+  During the development of Monster I would periodically change the
+  records that held the Monster database.  Once changed in the program, 
+  this would render the existing database unusable, as the new program 
+  could no longer open the old files.  Thus, I would have to destroy 
+  the existing world if I wanted to add any fields to the records that 
+  comprised the shared files.
+ 
+  In order to provide a stable environment for players who did not want 
+  to see their hard work making Monster rooms destroyed every time I made 
+  a change to the structure of the database, I installed a version with 
+  a separate set of data files than the copy I worked on for development.  
+  Players created rooms and tested the installed version, while I continued 
+  to develop my own copy. Eventually, the world in the first release of 
+  Monster had about 60 rooms.
+ 
+  About a month after installing the original Monster I replaced it 
+  with the new, greatly enhanced version I had been working on (the 
+  executable was about 4 times the size of the original) and started 
+  over with an empty world.  I had provided expansion fields in the 
+  data records for the new release of Monster so I could continue to 
+  develop the game without having to work on my own private copy.
+ 
+  The second release of Monster was very popular.  I continued to add 
+  features to the program, and made use of the expansion fields when 
+  possible.  However, I felt more and more constrained by the limits of 
+  my database.  I needed to change more about the data records than the 
+  expansion fields would allow. I wanted to erase the world a second time; 
+  however, players had put much work into creating over 100 rooms, and 
+  became quite angry when I suggested that I might throw away the current 
+  world to make a new one.
+ 
+  Some suggested that I write a program which would convert the existing 
+  database to a new format.  However, I felt that the work to do this 
+  would be much greater than the work I was planning to spend to make 
+  enhancements to the game. Also, the style of my changes during development 
+  called for small frequent changes. I abandoned the idea of trying to 
+  write a translation program, and instead attempted to work around the 
+  limitations of the database structure.  Eventually, however, my work 
+  stagnated, and new development on Monster ceased.
+ 
+  I never anticipated the work of my playtesters holding back further 
+  development. If I were to rewrite Monster, I would use a more flexible 
+  storage approach, one probably involving a form of dynamic typing which 
+  would let me add new parameters to the database without actually 
+  changing the record structure or size.
+ 
+3 Appendixs  
+4 A
+Appendix A:  Specifyable Parameters for Monster Locations and Objects
+ 
+  Rooms:
+  ------
+   
+  nicename:       the name of the room
+  nameprint:      formatting control for the nicename
+  primary,
+  secondary:      textual descriptions of the room
+  which:          control for which room description prints:
+                          0 - only print primary room description
+                          1 - only print secondary room description
+                          2 - print both primary and secondary room descriptions
+                          3 - print primary description; then print secondary
+                              description if the player is holding the specified
+                              magic object for the room
+  magicobj:       the magic object for the room
+  trapto,
+  trapchance:     allows a player to semi-randomly be thrust through an exit
+  rndmsg:         eerie message that randomly prints
+  details:        details that may be looked at in the room
+   
+   
+  Exits:
+  ------
+   
+  toloc:          where the exit goes
+  kind:           type of the exit:
+                          0 - no exit; always fails
+                          1 - open exit; always succeeds
+                          2 - exits succeeds if player has key object
+                          3 - exit fails if player has key object
+                          4 - exit randomly fails
+                          5 - potential exit; doesn't exist yet
+                          7 - exit cycles between being open and closed
+  exitdesc:       short textual descrption of the exit
+  fail:           description if player fails to go through exit
+  success:        description if player succeeds to go through exit
+  goin:           what other players see when someone goes into the exit
+  comeout:        what others see when a player comes out of the exit
+  hidden:         what the player sees when he finds the exit (if it's hidden)
+  objreq:         key object for exit
+  alias:          name of the exit
+  reqverb:        requires the player to use the alias only (without "go") to
+                  use the exit
+  reqalias:       requires the player to know the exit alias; can't use the
+                  compass point
+  autolook:       surpresses the automatic "look" done upon entering the
+                  new room
+   
+  Objects:
+  --------
+   
+  oname:          the name of the object
+  kind:           type parameter for the object
+  linedesc:       short description of the object (the "on the floor" description)
+  examine:        close inspection description for the object
+  numexist:       how many copies of the object exist
+  sticky:         inhibits players from being able to pick up the object
+  getobjreq:      requires the player to be holding another object before
+                  he can pick up this one
+  getfail:        message printed if a player fails to get an object
+  getsuccess:     message printed when an object is successfully picked up
+  useobjreq:      object player must be holding to use this object
+  uselocreq:      place player must be in to use this object
+  usefail:        message printed if player fails in use of the object
+  usesuccess:     message printed if object is successfully used
+  usealias:       alias word to "use"
+  reqalias:       require player to know the alias to use the object
+  article:        whether "a", "an", "some", "the" should precede the object name
+   
+ 
+4 B
+Appendix B:  Monster Command List
+ 
+  Accept/Refuse #  Allow others to Link an exit here at direction # | Undo Accept
+  Brief            Toggle printing of room descriptions
+  Customize [#]    Customize this room | Customize exit # | Customize object #
+  Describe [#]     Describe this room | Describe a feature (#) in detail
+  Destroy #        Destroy an instance of object # (you must be holding it)
+  Duplicate #      Make a duplicate of an already-created object.
+  Form/Zap #       Form a new room with name # | Destroy room named #
+  Get/Drop #       Get/Drop an object
+  #,Go #           Go towards # (Some: N/North S/South E/East W/West U/Up D/Down)
+  Health           Show how healthy you are
+  Hide/Reveal [#]  Hide/Reveal yoursef | Hide object (#)
+  I,Inventory      See what you or someone else is carrying
+  Link/Unlink #    Link/Unlink this room to/from another via exit at direction #
+  Look,L [#]       Look here | Look at something or someone (#) closely
+  Make #           Make a new object named #
+  Name #           Set your game name to #
+  Players          List people who have played Monster
+  Punch #          Punch person #
+  Quit             Leave the game
+  Relink           Move an exit
+  Rooms            Show information about rooms you have made
+  Say, ' (quote)   Say line of text following command to others in the room
+  Search           Look around the room for anything hidden
+  Self #           Edit a description of yourself | View #'s self-description
+  Show #           Show option # (type SHOW ? for a list)
+  Unmake #         Remove the form definition of object #
+  Use #            Use object #
+  Wear #           Wear the object #
+  Wield #          Wield the weapon #;  you must be holding it first
+  Whisper #        Whisper something (prompted for) to person #
+  Who              List of people playing Monster now
+  Whois #          What is a player's username
+  ?,Help           This list
+  . (period)       Repeat last command
+ 
+
+4 C 
+Appendix C:  Customization Subsystem Menus
+ 
+  Room Customization:
+  -------------------
+   
+  Custom> ?
+   
+  D       Alter the way the room description prints
+  N       Change how the room Name prints
+  P       Edit the Primary room description [the default one] (same as desc)
+  S       Edit the Secondary room description
+  X       Define a mystery message
+   
+  G       Set the location that a dropped object really Goes to
+  O       Edit the object drop description (for drop effects)
+  B       Edit the target room (G) "bounced in" description
+   
+  T       Set the direction that the Trapdoor goes to
+  C       Set the Chance of the trapdoor functioning
+   
+  M       Define the magic object for this room
+  R       Rename the room
+   
+  V       View settings on this room
+  E       Exit (same as quit)
+  Q       Quit (same as exit)
+  ?       This list
+   
+   
+  Exit customization:
+  -------------------
+   
+  Custom [direction]> ?
+   
+  A       Set an Alias for the exit
+  C       Conceal an exit
+  D       Edit the exit's main Description
+  E       EXIT custom (saves changes)
+  F       Edit the exit's failure line
+  I       Edit the line that others see when a player goes Into an exit
+  K       Set the object that is the Key to this exit
+  L       Automatically look [default] / don't look on exit
+  O       Edit the line that people see when a player comes Out of an exit
+  Q       QUIT Custom (saves changes)
+  R       Require/don't require alias for exit; ignore direction
+  S       Edit the success line
+  T       Alter Type of exit (passage, door, etc)
+  V       View exit information
+  X       Require/don't require exit name to be a verb
+  ?       This list
+   
+   
+  Object Customization:
+  ---------------------
+   
+  Custom object> ?
+   
+  A       "a", "an", "some", etc.
+  D       Edit a Description of the object
+  F       Edit the GET failure message
+  G       Set the object required to pick up this object
+  1       Set the get success message
+  K       Set the Kind of object this is
+  L       Edit the label description ("There is a ... here.")
+  P       Program the object based on the kind it is
+  R       Rename the object
+  S       Toggle the sticky bit
+   
+  U       Set the object required for use
+  2       Set the place required for use
+  3       Edit the use failure description
+  4       Edit the use success description
+  V       View attributes of this object
+   
+  X       Edit the extra description
+  5       Edit extra desc #2
+  E       Exit (same as Quit)
+  Q       Quit (same as Exit)
+  ?       This list
+   
+4 D 
+Appendix D:  Monster Playerlist as of June 5, 1988
+ 
+  dolpher       ! Monster Manager        5-JUN-1988  1:48pm * great baths
+  dasun_c       ! Iceman                 4-JUN-1988 10:30pm * the transporter room
+  kirsten       ! Kirsten                4-JUN-1988 11:20pm * ffoirefirma
+  isakson       ! Satan                  3-JUN-1988 10:13am * satan's private hell
+  tlb05405      ! Tlb05405               3-JUN-1988 11:59am * east hall
+  nate          ! Smaug                  3-JUN-1988  7:41pm * platform 1
+  skrenta       ! Faust                  3-JUN-1988  8:37pm * tower room
+  gary          ! Monster Vice Manager   2-JUN-1988  9:50pm * inner office
+  laura         ! Laura                  2-JUN-1988 10:36pm * turbolift chamber
+  james         ! James                  1-JUN-1988  7:54pm * chuk's elevator
+  chuk          ! SoulStorm              1-JUN-1988  9:57pm * east hall
+  peter_t       ! Peter_t               31-MAY-1988  8:33pm * pine forest
+  cary          ! Cary                  31-MAY-1988 11:20pm * maelstrom
+  francisco     ! Prof. Anthrax         30-MAY-1988  3:54pm * waterbed
+  sundeep       ! Sundeep               29-MAY-1988  2:21pm * mta office
+  bkc04916      ! Cheekster             28-MAY-1988 10:51am * the 'ell stop
+  ktl04905      ! Corwin                28-MAY-1988 11:44am * west hall
+  perry         ! Bufu Master!!!        28-MAY-1988  8:40pm * pinkie's place
+  maryahn       ! pinkie                27-MAY-1988 12:39pm * the sewer tunnel
+  immell        ! hurricane eye         26-MAY-1988  2:25am * post office 3
+  robert        ! Hungry Wolf           26-MAY-1988  2:26am * roll6
+  linda         ! linlop                26-MAY-1988 10:47am * terminal room
+  jeff          ! Pringle               25-MAY-1988  7:12pm * ic
+  mic00229      ! Mic00229              22-MAY-1988  8:33pm * great hall
+  jeffoire      ! Ffoire Zen Salad      20-MAY-1988  1:41pm * bar
+  schroder      ! Schroder              19-MAY-1988 10:09am * burrow
+  lunde         ! Purple Peril          18-MAY-1988 12:55pm * cloud 9.5
+  pib           ! Great Pib             17-MAY-1988 11:51pm * great pib's lair
+  ahrens        ! it                    15-MAY-1988  4:56pm * landing
+  mborsetti     ! Mborsetti             12-MAY-1988 10:20pm * sewer crossroads
+  brian         ! Mr. Raven             11-MAY-1988 11:24am * a damp and dark hole
+  wen05563      ! Gary                  11-MAY-1988  9:00pm * great hall
+  jimbo         ! Jimbo                  8-MAY-1988 10:02pm * great hall
+  lentz         ! Lentz                  7-MAY-1988  8:24am * front of isp noyes
+  miller        ! Mungus                 5-MAY-1988  1:14pm * starbase
+  otto          ! Otto                   4-MAY-1988  8:45pm * heidi's nightmare
+  chris         ! House Manager          3-MAY-1988  3:54am * home base
+  liao          ! Liao                  30-APR-1988  1:21pm * white house
+  chaz          ! Chaz                  29-APR-1988  4:05pm * post office 2
+  jmc           ! Run JMC               29-APR-1988  4:37pm * isp heaven
+  rod           ! Rod                   29-APR-1988  9:00pm * great hall
+  choi          ! Choi                  28-APR-1988  8:25pm * east hall
+  bo            ! God                   26-APR-1988  1:58pm * great hall
+  jonathan      ! Jonathan              26-APR-1988  5:26pm * eye of the hurricane
+  swift         ! Swift                 26-APR-1988  8:53pm * post office hall
+  ric05787      ! Deadhead              26-APR-1988 10:57pm * nightmarish room
+  mccoy         ! The Scribe            26-APR-1988 11:41pm * scribe home
+  g_wenslow     ! Gary II               24-APR-1988 11:58pm * east hall
+  kri04333      ! Kri04333              18-APR-1988 12:11am * great hall
+  dissett       ! Kronos                18-APR-1988 10:13pm * kronos' room
+  wantz         ! Wantz                 17-APR-1988  2:51pm * great hall
+  cheezer       ! Cheezer               16-APR-1988  7:55pm * the pine forest
+  ahr04465      ! Ivo                   16-APR-1988  7:56pm * sewer transport
+  joey          ! geek                  15-APR-1988  8:03pm * forest crossroads
+  wargaski      ! Wargaski              14-APR-1988  4:01pm * toxicated
+  eric          ! Eric                  13-APR-1988  3:51pm * the hall of chuk
+  rwc00220      ! Rwc00220              12-APR-1988  1:32pm * great hall
+  kstull        ! Kstull                12-APR-1988  5:01pm * post office 3
+  tim           ! Tim                   11-APR-1988  8:26pm * great hall
+  sean          ! Sean                  10-APR-1988  4:27pm * great hall
+  sam           ! Sam                   10-APR-1988 12:54pm * great hall
+  dean          ! Artagel                9-APR-1988  8:21am * turbolift chamber
+  supercom      ! Cursor                 8-APR-1988 12:00am * forest paths
+  anne          ! Anne                   7-APR-1988  6:55pm * great hall
+  lisa          ! Lisa                   7-APR-1988  6:56pm * great hall
+  mouse         ! Mouse                  3-APR-1988 11:26pm * west hall
+  mca04477      ! Mca04477               2-APR-1988  8:56pm * burrow
+  sajiv         ! Sajiv                 30-MAR-1988  6:06pm * great hall
+  chad          ! Chad                  30-MAR-1988  6:37pm * chuk's elevator
+  jennifer      ! Jennifer              30-MAR-1988  7:22pm * east hall
+  lasonia       ! Lasonia               29-MAR-1988 11:22am * west hall
+  brian_t       ! Brian_t               29-MAR-1988 11:59am * maelstrom
+  mikk          ! Random                29-MAR-1988 11:19pm * ledge
+  topher        ! Topher                28-MAR-1988  1:19pm * great hall
+  spectre       ! Ghost in the machine  28-MAR-1988 11:43pm * ghost's mailroom
+  dave          ! Dave                  18-MAR-1988 10:14am * post office hall
+  penguins      ! Penguins Amok         18-MAR-1988 11:52pm * chuk's elevator
+  lawson        ! Space Cowboy          18-MAR-1988 12:23pm * great hall
+  heidi         ! Heidi                 17-MAR-1988  1:11am * digital purgatory
+  bueno         ! Bueno                 17-MAR-1988  7:49pm * post office hall
+  dan           ! Grando                16-MAR-1988  8:18am * eye of the hurricane
+  eric_yue      ! Samsok                16-MAR-1988  9:29pm * the yueguy's joint
+  cra01453      ! Cra01453              15-MAR-1988  3:01am * great hall
+  adam          ! Adam                  14-MAR-1988  6:45pm * round room
+  was04906      ! Milt                  14-MAR-1988  9:48pm * great hall
+  watson        ! Watson                14-MAR-1988 10:22pm * chuk's elevator
+  brianw        ! Brianw                12-MAR-1988         * ffoirefirma
+  mike          ! Mike                  12-MAR-1988         * toxicated
+  predator      ! Predator              12-MAR-1988         * east hall
+  daniel        ! Daniel                11-MAR-1988         * west hall
+  dav08345      ! Dav08345              11-MAR-1988         * great hall
+  vlahos        ! otis                  11-MAR-1988         * post office
+  ginter        ! Ginter                10-MAR-1988         * living room
+  rob09549      ! Rob09549               9-MAR-1988         * great hall
+  dora          ! Dora                   8-MAR-1988         * toxicated
+  kim           ! kim                    8-MAR-1988         * post office 2
+  michael       ! Prabdib                7-MAR-1988         * tunnel of love
+  bradley       ! Bradley               29-FEB-1988         * eye of the hurricane
+  john          ! Raunchmeister         29-FEB-1988         * underhall
+  melvin        ! Killer Melvin         27-FEB-1988         * chuk's elevator
+  cliff         ! Cliff                 26-FEB-1988         * east hall
+   
+4 E 
+Appendix E:  An Actual Monster Game Log
+ 
+  $ monster
+  Welcome to Monster!  Hit return to start:
+   
+  Welcome back, Faust.  Your last play was on 1-JUN-1988 at 10:47pm.
+   
+  You're in Great Hall
+  You're in the middle of a vast hall stretching out of sight to the
+  east and west.  Strange shadows play across the high vaulted ceiling.
+  The floor is set with smooth rectangular stones.  The walls feel slightly
+  cold to the touch, and damp with condensation.  A copper plaque, slightly
+  green with age, is set into one wall.
+   
+  Monster Manager is here.
+  >
+  Monster Manager vanishes in a brilliant burst of multicolored light.
+  > l
+  You're in Great Hall
+  You're in the middle of a vast hall stretching out of sight to the
+  east and west.  Strange shadows play across the high vaulted ceiling.
+  The floor is set with smooth rectangular stones.  The walls feel slightly
+  cold to the touch, and damp with condensation.  A copper plaque, slightly
+  green with age, is set into one wall.
+   
+  >
+  Monster Manager appears in a brilliant burst of multicolored light.
+  > who
+                     Monster Status
+                   1-JUN-1988 10:48pm
+   
+  Username        Game Name                 Where
+  dolpher         Monster Manager           great hall
+  skrenta         Faust                     great hall
+  > look plaque
+   
+  The plaque looks very old and corroded.   However, you can still make out
+  the writing:
+   
+   " Monster, created by Rich Skrenta, 1988.  Play at your own risk. "
+   
+  > show details
+  Details here that you may inspect:
+      stones
+      plaque
+  > look stones
+  The stones are rough and black, and cold to the touch.  Although the
+  mortar work appears to have been expertly done, it has decayed with time.
+  Many stones are cracked, and narrow spaces fracture the carefully laid
+  pattern.  Some of the stones are quite loose.  You might be able to lift
+  one of them with some effort.
+  >
+  Monster Manager is looking at the stones.
+  >
+  Monster Manager is looking at the plaque.
+  >
+  Monster Manager says, "Hey Faust, let's go down to the Underhall."
+  >
+  Monster Manager manages to lift a stone in the floor and descends.
+  > lift
+  With great effort, you manage to lift the stone enought to fit inside.
+   
+  Once below the stone, it falls back into place, sealing out the light
+  from above.  You squirm down the narrow tunnel . . .
+   
+  You're in UnderHall
+  This is a cramped, humid room beneath the Great Hall.  The walls are
+  dripping with water condensed from mist rising from the baths.  Some
+  of the mist follows the ceiling and dissappears up the narrow tunnel.
+   
+  Stairs lead north down to the Great Baths.
+  A neon sign flashes "Great PIB's Lair" over a door to the South.
+  You could manage a crawl through a narrow tunnel leading upwards.
+   
+  Monster Manager is here.
+  > look Monster Manager
+  Monster Manager is the stereotype of a computer hacker.  He is wearing
+  a flannel shirt with several snickers bars in the breast pocket.  On
+  his belt is an ASCII-HEX conversion chart.  On his feet are a scuffed
+  pair of hiking boots so he can tackle those dangerous mountains that
+  crop up in operations.  Also dangling from his belt is a battered box
+  with many buttons on the front and wires with sockets on the ends protruding
+  from the back.  The switches seem to have been placed haphazardly, but
+  the object is unmistakably one of great power nonetheless.
+   
+  Monster Manager is in perfect health.
+  Monster Manager is empty handed.
+  >
+  Monster Manager is looking at you.
+  >
+  Monster Manager swings at you but misses.
+  >
+  You duck in time to avoid Monster Manager's punch.
+  >
+  You see stars as Monster Manager bashes you in the face.
+  >
+  You parry Monster Manager's attack.
+  > punch Monster Manager
+  You can't punch the Monster Manager.
+  > l
+  You're in UnderHall
+  This is a cramped, humid room beneath the Great Hall.  The walls are
+  dripping with water condensed from mist rising from the baths.  Some
+  of the mist follows the ceiling and dissappears up the narrow tunnel.
+   
+  Stairs lead north down to the Great Baths.
+  A neon sign flashes "Great PIB's Lair" over a door to the South.
+  You could manage a crawl through a narrow tunnel leading upwards.
+   
+  Monster Manager is here.
+  > n
+  You're in Great Baths
+  These are the luxurious Great Baths where tired adventurers may come
+  to relax and try to regain their health and youth from the mineral waters.
+  From where you stand at the entrance, you can see below you the bubbling
+  soapy pools of water churning violently in tile-lined pits.  The pools
+  are fed by hot springs from deep in the rock beneath you.  Steam and
+  huge soapy bubbles rise out of the hot pools of water.  The bubbles
+  dance through the air, climbing higher and higher, until they either
+  burst on the sharp walls of the cave or are lost in the mist above you.
+   
+  Shallow tiled steps, wet and slick from the hot soapy waters of the
+  springs, lead down to the pools.
+   
+  Rough stone stairs lead up to the south.
+   
+  >
+  In an explosion of orange smoke Monster Vice Manager poofs into the room.
+  >
+  Monster Manager has come down the stairs from the Underhall.
+  >
+  Monster Vice Manager produces a "who" list and reads it.
+  > system
+  System> v
+   
+                 used   free   total
+  Block file    1008     92    1100
+  Line file     1501    109    1610
+  Room file      283     27     310
+  Object file    139     41     180
+  Integer file     6      0       6
+   
+  System>
+  Monster Vice Manager is in system maintenance mode.
+  System> exit
+  >
+  Monster Vice Manager is no longer in system maintenance mode.
+  > 'Hey Gary
+  >
+  Monster Vice Manager says, "Hi, Faust."
+  > look Monster Vice Manager
+  The Monster Vice Manager is dressed in a conservative three piece
+  suit.  The stern expression on his face is just a facade, he really
+  is a warm and sensitive guy underneath.  He is willing to answer
+  any questions and help out with any problems.  He can best be
+  described by the phrase:
+   
+              "Do what thou wilt, so mete it be."
+   
+  He returns your gaze with a hint of understanding and amusement.
+   
+  Monster Vice Manager is in perfect health.
+  Monster Vice Manager is empty handed.
+  >
+  Monster Vice Manager is looking at you.
+  > punch Monster Vice Manager
+  You swing wild and miss.
+  > .
+  Monster Vice Manager ducks and avoids your punch.
+  > .
+  A quick punch, but it only grazes Monster Vice Manager.
+  >
+  You only feel the breeze as Monster Vice Manager swings wildly.
+  > .
+  You swing wild and miss.
+  >
+  You see stars as Monster Vice Manager bashes you in the face.
+  >
+  You only feel the breeze as Monster Vice Manager swings wildly.
+  > .
+  You deliver a quick jab to Monster Vice Manager's jaw.
+  >
+  Monster Vice Manager's swing misses you by a yard.
+  > .
+  Your roundhouse blow sends Monster Vice Manager reeling.
+  >
+  You double over after Monster Vice Manager lands a mean jab to your stomach!
+  Monster Vice Manager looks a little dazed.
+  >
+  Monster Vice Manager vanishes from the room in a cloud of orange smoke.
+  > who
+                     Monster Status
+                   1-JUN-1988 10:56pm
+   
+  Username        Game Name                 Where
+  dolpher         Monster Manager           great baths
+  skrenta         Faust                     great baths
+  gary            Monster Vice Manager      inner office
+  > poof inner office
+   
+  This rooms is a conservatively decorated office.  A large
+  desk dominates the room.  Several pictures hang on the walls
+  and a silver service is on a stand off to the left.  Two plush
+  chairs beckon for you to sit down.
+   
+  There are stairs leading down.
+   
+  Monster Vice Manager is here.
+  Monster Vice Manager looks a little dazed.
+  > sh det
+  Details here that you may inspect:
+      bin
+      plaque
+      pictures
+      stand
+  > look bin
+   
+  The bin has a sign on it saying, "Leave mail for the Monster
+  Vice Manager here.  Thank you."
+   
+  > look plaque
+   
+  The plaque reads:
+   
+           Gary Wenslow, Monster Vice Manager
+   
+  > look pictures
+   
+  These are very nice pictures of landscapes.  They look expensive.
+   
+  > look stand
+   
+  The silver service on this stand is of fine workmanship.
+  There are also crystal goblets and flasks containing very
+  fine wine, brandy, and whiskey.
+   
+  > l
+   
+  This rooms is a conservatively decorated office.  A large
+  desk dominates the room.  Several pictures hang on the walls
+  and a silver service is on a stand off to the left.  Two plush
+  chairs beckon for you to sit down.
+   
+  There are stairs leading down.
+   
+  Monster Vice Manager is here.
+  Monster Vice Manager looks a little dazed.
+  > rooms gary
+  gary:
+      tunnel of love            more tunnel of love       end of tunnel
+      hot dog stand             picnic                    window
+      mvm office                inner office              hall1
+      hall2                     hall3                     hall4
+      hall5                     hall6                     hall7
+      hall8                     hall9                     concession
+      roll1                     roll2                     roll3
+      roll4                     roll5                     roll6
+      roll7                     roll8                     roll9
+      roll10                    worker's ledge            railing
+      rope                      mvm mail room
+   
+  > rooms dolpher
+  dolpher:
+      void                      pit of fire               underhall
+      great baths               pools                     in the pool
+      in the bubble             higher bubble             highest bubble
+      ledge                     tower ledge               circular staircase
+      behind house              kitchen                   living room
+      bottom of stairs          manager's mailbox         tower room
+      on the scaffolding        round room                mountain pass
+      roof of tower             west passageway           castle entrance
+      center hall               outside the gate          east passageway
+      narrow passage
+   
+  > poof behind house
+  You're at Behind House
+  The back door of the house is boarded up, but the windows have not been
+  blocked.  One window at ground level leads into what appears to be the
+  kitchen.  All of the other windows are too far above the ground for you
+  to reach.
+   
+  A path leads west to the front of the house.
+   
+  > form Study
+  > poof studty
+  There is no room named studty.
+  > poof study
+  You're in Study
+   
+  A note on the east wall says "Your exit here."
+   
+  > refuse east
+  Exits east will be refused.
+  > l
+  You're in Study
+   
+  > desc
+  [ Editing the primary room description ]
+  Enter text.  Terminate with ** at the beginning of a line.
+  You have 10 lines maximum.
+   
+   1: This is a luxurious study walled with fine oak paneling.  A window
+   2: looks out of the east wall.  It is surrounded by purple curtains.
+   3: There is a small sign on the wall.
+   4: **
+   
+  * e
+  > l
+  You're in Study
+  This is a luxurious study walled with fine oak paneling.  A window
+  looks out of the east wall.  It is surrounded by purple curtains.
+  There is a small sign on the wall.
+   
+  > desc sign
+  [ Editing detail "sign" of this room ]
+  Enter text.  Terminate with ** at the beginning of a line.
+  You have 10 lines maximum.
+   
+   1: The note seems to have been hurriedly scrawled.  It reads:
+   2:
+   3:    "  This room for demonstration purposes only!  "
+   4:
+   5: **
+   
+  * ?
+   
+  A       Append text to end
+  C       Check text for correct length with parameter substitution (#)
+  D #     Delete line #
+  E       Exit & save changes
+  I #     Insert lines before line #
+  P       Print out description
+  Q       Quit: THROWS AWAY CHANGES
+  R #     Replace text of line #
+  Z       Zap all text
+  @       Throw away text & exit with the default description
+  ?       This list
+   
+   
+  * p
+   
+   1: The note seems to have been hurriedly scrawled.  It reads:
+   2:
+   3:    "  This room for demonstration purposes only!  "
+   4:
+   
+  * e
+  > sh det
+  Details here that you may isspect:
+      sign
+  > look sign
+  The note seems to have been hurriedly scrawled.  It reads:
+   
+     "  This room for demonstration purposes only!  "
+   
+  > l
+  You're in Study
+  This is a luxurious study walled with fine oak paneling.  A window
+  looks out of the east wall.  It is surrounded by purple curtains.
+  There is a small sign on the wall.
+   
+  > desc sign
+  [ Editing detail "sign" of this room ]
+   
+  * i 1
+  1:
+  2: **
+   
+  * p
+   
+   1:
+   2: The note seems to have been hurriedly scrawled.  It reads:
+   3:
+   4:    "  This room for demonstration purposes only!  "
+   5:
+   
+  * e
+  > look sign
+   
+  The note seems to have been hurriedly scrawled.  It reads:
+   
+     "  This room for demonstration purposes only!  "
+   
+  > l
+  You're in Study
+  This is a luxurious study walled with fine oak paneling.  A window
+  looks out of the east wall.  It is surrounded by purple curtains.
+  There is a small sign on the wall.
+   
+  > form Behind the Curtains
+  > link west
+  Hit return alone at any prompt to terminate exit creation.
+   
+  Room to link to? behind the curtains
+  Exit comes out in target room
+  from what direction? east
+  Exit created.  Use CUSTOM west to customize your exit.
+  > l
+  You're in Study
+  This is a luxurious study walled with fine oak paneling.  A window
+  looks out of the east wall.  It is surrounded by purple curtains.
+  There is a small sign on the wall.
+   
+  There is a passage leading west.
+   
+  > custom west
+  Customizing west exit
+  If you would rather be customizing this room, type CUSTOM with no arguments
+  If you would rather be customizing an object, type CUSTOM <object name>
+   
+  Type ** for any line to leave it unchanged.
+  Type return for any line to select the default.
+   
+  Custom west> ?
+   
+  A       Set an Alias for the exit
+  C       Conceal an exit
+  D       Edit the exit's main Description
+  E       EXIT custom (saves changes)
+  F       Edit the exit's failure line
+  I       Edit the line that others see when a player goes Into an exit
+  K       Set the object that is the Key to this exit
+  L       Automatically look [default] / don't look on exit
+  O       Edit the line that people see when a player comes Out of an exit
+  Q       QUIT Custom (saves changes)
+  R       Require/don't require alias for exit; ignore direction
+  S       Edit the success line
+  T       Alter Type of exit (passage, door, etc)
+  V       View exit information
+  X       Require/don't require exit name to be a verb
+  ?       This list
+   
+  Custom west> a
+  Alternate name for the exit? curtains
+  Custom west> r
+  The alias for this exit will be required to reference it.
+  Custom west> d
+  Enter a one line description of the exit.
+   
+  Type ** to leave line unchanged, * to make [no line]
+  *
+  Custom west> exit
+  > l
+  You're in Study
+  This is a luxurious study walled with fine oak paneling.  A window
+  looks out of the east wall.  It is surrounded by purple curtains.
+  There is a small sign on the wall.
+   
+  > go curtains
+  You're in Behind the Curtains
+   
+  There is a passage leading east.
+  A note on the floor says "Your exit here."
+   
+  > e
+  You're in Study
+  This is a luxurious study walled with fine oak paneling.  A window
+  looks out of the east wall.  It is surrounded by purple curtains.
+  There is a small sign on the wall.
+   
+  > desc window
+  [ Editing detail "window" of this room ]
+  Enter text.  Terminate with ** at the beginning of a line.
+  You have 10 lines maximum.
+   
+   1  You see a green lawn shaded by tall trees and bordered with sculptured
+   2: shrubbery.  A small rabbit is nibbling at some grass.  The entire
+   3: scene has an artificial look, as if it were some cartoon rendering.
+   4: **
+   
+  * exit
+  > sh det
+  Details here that you may inspect:
+      sign
+      window
+  > look window
+  You see a green lawn shaded by tall trees and bordered with sculptured
+  shrubbery.  A small rabbit is nibbling at some grass.  The entire
+  scene has an artificial look, as if it were some cartoon rendering.
+  > quit
+  You vanish in a brilliant burst of multicolored light.
+  $
+2 Commands
+  You get help of these commands in monster by typing command and 
+  questionmark. For example: accept ?
+
+3 accept
+Syntax:        Accept <direction>
+
+Description:   Allows others to link exits here at <direction>
+Requirements:  You are the owner of this room
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of this room is System
+3 atmosphere
+Syntax:        Atmosphere <your action>
+Shortcut:      :<your action>
+
+Description:   Prints other players and you 
+               a text <your player name> <your action>
+3 brief
+Syntax:        Brief
+
+Description:   Toggles brief printing of room description off or on
+3 claim
+Syntax:        Claim
+               Claim <object>
+               Claim <monster>
+               Claim <spell>
+
+Description:   Sets the ownership of <object> or <monster> or <spell> or
+                  this room to you
+Requirements:  Current ownership of target is Disowned
+                  or you have the Manager -privilege
+3 customize
+Syntax:        Customize
+               Customize <direction>
+               Customize <object>
+               Customize <monster>
+               Customize room
+               Customize object <object>
+               Customize monster <monster>
+
+Description:   Customizes <object> or <monster> or <direction> or this room
+Requirements:  You are the owner of the target
+               or you have the Owner -privilege, 
+               or you have the Manager -privilege, 
+                  if owner of target is System
+
+Bugs:          Following non-existed commands is recognized:
+               Customize player <...>
+               Customize spell <...>
+
+4 Exit-menu
+
+  A	Set an Alias for the exit
+  C	Conceal an exit
+  D	Edit the exit's main Description
+  E	EXIT custom (saves changes)
+  F	Edit the exit''s failure line
+  I	Edit the line that others see when a player goes Into an exit
+  K	Set the object that is the Key to this exit
+  L	Automatically look [default] / don't look on exit
+  O	Edit the line that people see when a player comes Out of an exit
+  Q	QUIT Custom (saves changes)
+  R	Require/don't require alias for exit; ignore direction
+  S	Edit the success line
+  T	Alter Type of exit (passage, door, etc)
+  V	View exit information
+  X	Require/don't require exit name to be a verb
+  ?	This list
+
+4 Room-menu
+
+  A	Define an alternate mystery message block
+  B	Edit the target room (G) "bounced in" description   
+  C	Define action code (hook) for room   
+  D	Alter the way the room description prints   
+  E	Exit (same as quit)   
+  F	Set the chance of the trapdoor functioning   
+  G	Set the location that a dropped object really goes to   
+  H	This list   
+  I	Edit the default exit failure message   
+  M	Define the magic object for this room
+  N	Change how the room Name prints
+  O	Edit the object drop description (for drop effects)
+  P	Edit the Primary room description <the default one> (same as desc)
+  Q	Quit (same as exit)
+  R	Rename the room
+  S	Edit the Secondary room description
+  T	Set the direction that the Trapdoor goes to
+  V	View settings on this room
+  X	Define a mystery message
+  1	Set the primary visual link for this room
+  2	Set the secondary visual link for this room
+  
+  ?	This list
+  
+5 Hook-menu
+
+  B       Block hook code.
+  C       Type COMMANDS.PAPER.
+  D       Delete hook.
+  E       Exit customizing hook.
+  F       Free hook code.
+  G       Get program file, default extension is .MDL.
+  H       This list.
+  L       List hook code.
+  M       Run manually hook code.
+  O       List hook code to file.
+  P       Change hook privilege.
+  Q       Exit customizing hook.
+  V       View hook.
+  ?       This list.
+
+6 Privilege-menu
+
+  - <privilege>   Remove privilege
+  + <privilege>   Add privilege
+  E               Exit
+  L               List possible privileges.
+  Q               Quit (do not save changes)
+  V               View current privileges
+  ?               This list
+
+4 Object-menu
+
+  A	"a", "an", "some", etc.
+  C	Customizing hook
+  D	Edit a Description of the object
+  F	Edit the GET failure message
+  G	Set the object required to pick up this object
+  1	Set the get success message
+  K	Set the Kind of object this is
+  L	Edit the label description ("There is a ... here.")
+  P	Program the object based on the kind it is
+  R	Rename the object
+  S	Toggle the sticky bit
+  
+  U	Set the object required for use
+  2	Set the place required for use
+  3	Edit the use failure description
+  4	Edit the use success description
+  V	View attributes of this object
+  
+  X	Edit the extra description
+  5	Edit extra desc #2
+  E	Exit (same as Quit)
+  Q	Quit (same as Exit)
+  ?	This list
+  
+  6	Set home description
+  7	Set home of object
+
+5 Hook-menu
+
+  B       Block hook code.
+  C       Type COMMANDS.PAPER.
+  D       Delete hook.
+  E       Exit customizing hook.
+  F       Free hook code.
+  G       Get program file, default extension is .MDL.
+  H       This list.
+  L       List hook code.
+  M       Run manually hook code.
+  O       List hook code to file.
+  P       Change hook privilege.
+  Q       Exit customizing hook.
+  V       View hook.
+  ?       This list.
+
+5 Privilege-menu
+
+  - <privilege>   Remove privilege
+  + <privilege>   Add privilege
+  E               Exit
+  L               List possible privileges.
+  Q               Quit (do not save changes)
+  V               View current privileges
+  ?               This list
+
+4 Monster-menu
+
+  A       Give monster's level and heal monster.
+  B       Block monster
+  C       Type COMMANDS.PAPER
+  D       Customize monster's privilege  set.
+  E       Exit customizing monster
+  F       Free monster
+  G       Get program file, default extension is .MDL
+  H       This list
+  I       Give monster's health.
+  J       Disable/Enable control access.
+  L       List monster code.
+  M       Run manually monster code
+  N       Change monster's name
+  O       List monster code to file.
+  P       Change monster's privilege
+  Q       Exit customizing monster
+  S       Write monster's self description
+  V       View monster.
+  ?       This list
+
+5 Privilege-menu
+
+  - <privilege>   Remove privilege
+  + <privilege>   Add privilege
+  E               Exit
+  L               List possible privileges.
+  Q               Quit (do not save changes)
+  V               View current privileges
+  ?               This list
+
+3 dcl
+Syntax:        Dcl
+               Dcl <command>
+
+Description:   Starts subprocess for shell and  leaves  Monster  running  
+               Executes <command>, if given 
+3 describe
+Syntax:        Describe 
+               Describe <detail>
+
+Description:   Writes description of <detail> or this room
+Requirements:  You are owner of this room
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if owner of this room is System
+3 destroy
+Syntax:        Destroy <object>
+               Destroy all
+               Destroy <object,...>
+
+Description:   Destroys an instance of object(s) 
+Requirements:  You are the owner of the object
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if owner of object is System
+               And you are the owner of this room
+               or this room is public
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if owner of this room is System
+3 disown
+Syntax:        Disown
+               Disown <object>
+               Disown <monster>
+               Disown <spell>
+
+Description:   Sets ownership of <object> or <monster> or <spell>
+                  this room to Disowned
+Requirements:  You happen to be the owner of the target
+               or you have the Owner -privilege, if target is this room
+               or you have the Owner -privilege, 
+                  if target is object or monster
+               or you have the Manager -privilege, 
+                  if owner of target is System
+3 drop
+Syntax:        Drop <object>
+               Drop all
+               Drop <object,...>
+
+Description:   Drops object
+3 duplicate
+Syntax:        Duplicate <object>
+               Duplicate all
+               Duplicate <object,...>
+
+Description:   Creates an instance of object(s)
+Requirements:  You are the owner of the particular object
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of object is System
+               And you are the owner of this room
+               or this room is public
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of this room is System
+3 erase
+Syntax:        Erase <monster>
+
+Description:   Destroys <monster>
+Requirements:  You are the owner of the monster
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of monster is System
+3 form
+Syntax:        Form <room>
+
+Description:   Creates new room with a name: <room>
+Requirements:  You are the owner of this room
+               or this room have some kind of exit with Accept
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if owner of this room is System
+3 get
+Syntax:        Get <object>
+               Get all
+               Get <object,...>
+
+Description:   Gets object
+3 go
+Syntax:        Go <direction>
+Shorcut:       <direction>
+3 health
+Syntax:        Health
+
+Description:   Gives your health
+3 hide
+Syntax:        Hide
+               Hide <object>
+               Hide all
+               Hide <object,...>
+
+Description:   Hides object or yourself
+3 inventory
+Syntax:        Inventory
+               Inventory <player>
+               Inventory all
+               Inventory <player,...>
+
+Description:   Gives inventory of <player> or your inventory
+3 link
+Syntax:        Link <direction>
+
+Description:   Creates new exit from this room to <direction>
+Requirements:  You are the owner of this room
+               or <direction> is Accepted
+               or you have the Owner -privilege
+               or you have the Manager -privilege, 
+                  if the owner of this room is System
+3 look
+Syntax:        Look
+               Look <object>
+               Look <monster>
+               Look <player>
+               Look <detail>
+               Look all
+               Look <object,...>
+               Look <monster,...>
+               Look <player,...>
+
+Description:   Looks something. (Gives its description)
+3 make
+Syntax:       Make <object>
+
+Description:  Creates a new object with a name: <object>
+Requirements: You are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if owner of this room is System
+3 bear
+Syntax:       Bear <monster>
+
+Description:  Creates a new monster with name <object>
+Requirements: You are owner of this room
+              or room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if owner of this room is System
+3 name
+Syntax:       Name <nicename>
+
+Description:  Changes yoy player name to <nicename>
+3 monsters
+Syntax:       Monsters
+              Monsters <player>
+              Monsters all
+              Monsters public
+              Monsters disowned
+              Monsters system
+
+Description:  Types objets of <player> or yourself
+Requirements: You, Public or Disowned have target
+              or you have the Owner -privilege
+3 objects
+Syntax:       Objects 
+              Objects <player>
+              Objects all
+              Objects public
+              Objects disowned
+              Objects system
+
+Description:  Types objets of <player> or yourself
+Requirements: You, Public or Disowned have target
+              or you have the Owner -privilege
+3 spells
+Syntax:       Spells 
+              Spells <player>
+              Spells all
+              Spells public
+              Spells disowned
+              Spells system
+
+Description:  Types spells of <player> or yourself
+Requirements: You, Public or Disowned have target
+              or you have the Owner -privilege
+3 players
+Syntax:       Players
+              Players all
+              Players monster
+              Players player
+
+Description:  Lists players or monsters
+3 poof
+Syntax:       Poof <room>
+              Poof <player>
+              Poof <monster>
+
+Description:  Moves you to <room> or moves <player> or <monster>
+Requirements: You are the owner of this room and <room>
+              or You have the Poof -privilege
+3 punch
+Syntax:       Punch <player>
+
+Description:  Punches <player>
+Requirements: Experience of <player> is lower than 700000
+3 quit
+Syntax:       Quit
+Shortcut:     <F10> 
+              Ctrl-Z
+
+Description:  Ends playing
+3 relink
+Syntax:       Relink <direction>
+
+Description:  Reroutes exit to <direction>
+Requirements: You are the owner of this room
+              You have the Owner -privilege
+              You have the Manager -privilege, 
+                 if the owner of this room is System
+3 refuse
+Syntax:       Refuse <direction>
+
+Description:  Hinders other players to link to <direction>
+Requirements: You are the owner of this room
+              You have the Owner -privilege
+              You have the Manager -privilege, 
+                 if owner of this room is System
+3 reveal
+Syntax:       Reveal
+
+Description:  Reveals yourself
+3 rooms
+Syntax:       Rooms
+              Rooms <player>
+              Rooms all
+              Rooms public
+              Rooms disowned
+              Rooms system
+
+Description:  Types all the rooms of <player> or yourself
+Requirements: the target is owned by you, public or is disowned.
+              or you have the Owner -privilege
+3 say
+Syntax:       Say <message>
+Shortcut:     "<message>
+
+Description:  Says a message to other players in this room
+3 scan
+Syntax:       Scan <object>
+              Scan all
+              Scan <object,...>
+
+Description:  Lists all locations of object
+Requirements: You are the owner of this very object
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of the object is System
+              And you are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of this room is System
+3 reset
+Syntax:       Reset <object>
+              Reset all
+              Reset <object,...>
+
+Description:  Erases all instances of an object from public and your 
+                rooms - and from public and your monsters
+              Creates one instance of the object to its home location
+              Doesn't affect objects that players are carrying
+Requirements: There is at least one instance of object in public or your room
+                  or carrying by public or your monster
+              You are the owner of object
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of this object is System
+              And you are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if owner of this room is System
+3 score
+Syntax:       Score
+              Score <player>
+              Score <level>
+              Score all
+
+Description:  Prints your score and level
+              or prints score and level of <player>
+              or prints players, whose level is <level>
+3 search
+Syntax:       Search
+
+Description:  Searches hidden objects and players
+3 self
+Syntax:       Self 
+              Self <player>
+              Self <monster>
+              Self all
+              Self <player,...>
+              Self <monster,..>
+
+Description:  Creates your own self-description
+              or types the self-description of <player>
+3 set
+Syntax:       Set <option>
+
+Options:      Password		Change your password
+              War               Allow violance in Monster
+              Peace             Forbid any violance in Monster
+              Spell             Make new spell or customizing spell
+              NewPlayer         Set new player's welcome text
+              Welcome           Set welcome text
+              Privilege         Change your privileges
+
+4 Spell-menu
+
+  A       Toggle spell mode
+  B       Block spell code.
+  C       Type COMMANDS.PAPER.
+  D       Delete spell.
+  E       Exit customizing spell.
+  F       Free hook code.
+  G       Get program file, default extension is .MDL.
+  H       This list.
+  I       Change your own level of this hook
+  L       List spell code.
+  M       Run manually spell code.
+  O       List spell code to file.
+  P       Change spell privilege.
+  Q       Exit customizing spell.
+  V       View hook.
+  ?       This list.
+
+4 Privilege-menu
+
+  - <privilege>   Remove privilege
+  + <privilege>   Add privilege
+  E               Exit
+  L               List possible privileges.
+  Q               Quit (do not save changes)
+  V               View current privileges
+  ?               This list
+
+3 show
+Syntax:       Show <option>
+
+Options:      Exits               Lists exits you can inspect here
+              Object              Shows internals of an object
+              Details             Shows all the details you can look at this room
+              Monster             Shows the owner of a monster
+              Privileges          Shows your privileges
+              Time                Shows time and date
+              Room                Shows the owner of a room
+              Commands.paper      Lists COMMANDS.PAPER
+              Levels              Shows all the experience levels
+              Quotas              Show your quotas
+              Spell               Show your spell level or what spells you know
+3 summon
+Syntax:       Summon <spell name>
+              <victim name> (type to prompt)
+3 unlink
+Syntax:       Unlink <direction>
+
+Description:  Removes exit to <direction>
+Requirements: You are the owner of this room
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of this room is System
+3 unmake
+Syntax:       Unmake <object>
+
+Description:  Removes description of <object>
+Requirements: You are the owner of object
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of object is System
+              And you are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of this room is System
+3 use
+Syntax:       Use <object>
+3 wear
+Syntax:       Wear
+              Wear <armour>
+3 wield
+Syntax:       Wield
+              Wield <weapon>
+3 whisper
+Syntax:       Whisper <player>
+3 who
+Syntax:       Who
+              Who all
+              Who player
+              Who monster
+
+Description:  Lists active players or monsters
+3 whois
+Syntax:       Whois <player>
+              Whois all
+              Whois <player,...>
+
+Description:  Types the username of <player>
+3 zap
+Syntax:       Zap <room>
+
+Description:  Removes <room>
+Requirements: You are the owner of <room>
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if the owner of <room> is System
+              And you are the owner of this room
+              or this room is public
+              or you have the Owner -privilege
+              or you have the Manager -privilege, 
+                 if owner of this room is System
+3 help
+Syntax:       Help
+
+3 system
+Syntax:       System
+
+Description:  Manages Monster
+Requirements: You have the Manager -privilege (which is rare)
+
+4 System-menu
+
+  1      Customize player database.
+  A      Alter player privileges
+  B      Add description blocks
+  C      Subsystem
+  D      Disown <user>
+  E      Exit (same as quit)
+  H      Add header blocks
+  K      Kill <user>
+  L      Add one liner records
+  M      Move a player who is asleep (not playing now)
+  O      Add object records
+  P      Write a distribution list of players
+  Q      Quit (same as exit)
+  R      Add rooms
+  T      Throw player out from Monster
+  V      View current sizes/usage
+  W      List of players
+  ?      This list
+
+5 Authorize-menu
+
+  - <privilege>   Remove privilege
+  + <privilege>   Add privilege
+  E               Exit
+  L               List possible privileges.
+  Q               Quit (do not save changes)
+  V               View current privileges
+  ?               This list
+
+5 Player-menu
+
+  A      Change player''s health.
+  E,Q    for quit.
+  L      Change player's level/experience.
+  N      Change player's personal name.
+  P      Change player's password.
+  R      Change player's room quota.
+  V      View player''s data.
+  H,?    for help.
+
+5 Subsystem-menu
+
+  A         Block monster''s code.
+  B         Block object''s code.
+  C         Block room''s code.
+  D         Shutdown Monster.
+  E         Leave subsystem.
+  F         Open Monster for playing.
+  G         Block spell's code.
+  H         This text.
+  I         Customize global MDL code
+  M         Claim monster to System.
+  O         Claim object to System.
+  W         Announce over Monster Universe.
+  Q         Leave subsystem.
+  R         Claim room to System.
+  S         Claim spell to System
+  V	    View global flags.
+  ?         This text.   
+
+3 public
+Syntax:       Public
+              Public <room>
+              Public <object>
+              Public <monster>
+              Public <spell>
+
+Description:  Sets the ownership of room or object or monster or spell
+                  or this room to Public
+Requirements: You have the Manager -privilege
+
+2 Editing
+
+  Editing of  block desciptions  uses  simple  line  editor.  Editor 
+  executes automatic A(ppend text to end) -command. Give ** alone in
+  in line to get follow menu.
+
+  A	Append text to end
+  C	Check text for correct length with parameter substitution (#)
+  D #	Delete line #
+  E	Exit & save changes
+  I #	Insert lines before line #
+  P	Print out description
+  Q	Quit: THROWS AWAY CHANGES
+  R #	Replace text of line #
+  Z	Zap all text
+  @	Throw away text & exit with the default description
+  ?	This list
+  
+2 MDL
+  MDL is language for programming of monsters, objects, rooms and spells.
+  Look COMMANDS.PAPER for more info.
+
+3 Syntax
+        function	->	name (p) / name (p,p) / name (p,p,p) /
+				name (p,...)
+
+	name 		->	fname /
+				GOSUB label / 
+				DEFINE variable / 
+				SET variable / 
+				LABEL label /
+				SUBMIT label /
+				FOR variable
+
+	label		->	list of words
+
+	p		->	function / const / variable
+
+	const		->	"some text" /
+				"some text"&
+				const
+
+	fname		->	+ / = / == / === / inv / pinv / players /
+				objects / get / pget / drop / pdrop /
+				and / or / move / pmove / pprint /
+				print / oprint / if / where / null /
+				attack / not / random / strip /
+                                experience / set experience / pluss /
+				difference / times / quotient /
+				set state / get state / less / number /
+				health / all objects / all players / 
+				all rooms / control / include / exclude /
+				get remote state / set remote state /
+				remote objects / remote players / heal /
+				duplicate / pduplicate / destroy / pdestroy /
+				string head / string tail / head / tail /
+				lookup object / lookup player / lookup room /
+				parse object / parse player / parse room /
+				privilege / userid / pprint raw / print raw /
+				oprint raw / print null / mheal / mattack /
+				list / lookup direction / get global flag /
+                                spell level / set spell level
+
+	program		->	sentence +
+
+
+	sentence	->	function /
+				- function
+
+  Comments start with ! and end to end of line. ! isn't comment character 
+  inside const.
+
+3 Parameters 
+
+  + 		(<line 1>,...,<line n>) 
+  = 		(<line 1>,<line 2>) 
+  == 		(<line 1>,<line 2>) 
+  === 		(<line 1>,<line 2>) 
+  inv		() 
+  pinv		() 
+  players		() 
+  objects		() 
+  get		(<object list>) 
+  pget		(<object list>) 
+  drop		(<object list>) 
+  pdrop		(<object list>) 
+  and		(<item list>,<item list>) 
+  or		(<item list>,<item list>) 
+  move		(<room's name>) 
+  pmove		(<room's name>) 
+  pprint		(<message part 1>,...,<message part n>) 
+  print		(<message part 1>,...,<message part n>) 
+  oprint		(<message part 1>,...,<message part n>) 
+  pprint raw	(<message part 1>,...,<message part n>) 
+  print raw	(<message part 1>,...,<message part n>) 
+  oprint raw	(<message part 1>,...,<message part n>) 
+  print null	(<message part 1>,...,<message part n>) 
+  if 		(<p1>,<action 1>,<action 2>) 
+  where		(<monster's or player's name>) 
+  null		(<action 1>,<action 2>,<action 3>,...,<action n>) 
+  attack		(<attack force: nr>) 
+  not		(<p1>)
+  random		(<item list>) 
+  strip		(<string>) 
+  experience	(<player's name>) 
+  set experience	(<player's new experience>) 
+  plus		(<p1: nr>,<p2: nr>)           
+  difference	(<p1: nr>,<p2: nr>)
+  times		(<p1: nr>,<p2: nr>)
+  quotient	(<p1: nr>,<p2: nr>)
+  get state	()
+  set state	(<string>)
+  get global flag	(<flag list>)
+  less		(<p1: nr>,<p2: nr>)
+  number		(<p1: nr>)
+  health		(<player's name>)
+  all players	()
+  all objects	()
+  all rooms	()
+  control		(<monster's name>,<action>)
+  include		(<string>,<substring>)
+  exclude		(<item list>,<sub item list>)
+  remote object	(<room name>)
+  remote players	(<room name>)
+  heal		(<healing amount: nr>)
+  duplicate	(<object list>)
+  pduplicate	(<object list>)
+  destroy		(<object list>)
+  pdestroy	(<object list>)
+  string head	(<string>)
+  string tail	(<string>)
+  head		(<item list>)
+  tail		(<item list>)
+  lookup object	(<object list>)
+  lookup player	(<player list>)
+  lookup room	(<room list>)
+  lookup direction	(<direction list>)
+  parse object	(<parameter>)
+  parse player	(<parameter>)
+  parse room	(<parameter>)
+  experience	(<player name>,<privilege list>)
+  userid		(<player list>)
+  mheal		(<monster name>,<heal amount: nr>)
+  mattack		(<monster name>,<attck amont>: nr>)
+  list		(<item list 1>,...,<item list n>)
+  spell level     ()
+  set spell level (level number)
+  
+  LABEL <label>		(<action 1>,...,<action n>)
+  GOSUB <label>		(<param 1>,...,<param n>)
+  DEFINE <variable>	(<action>)
+  SET <variable>		(<value>)
+  SUBMIT <label>		(<delta time>,<player's name>)
+  FOR <variable>		(<list>,<action>)
+3 Labels
+  When player do somtehing, correspond labels of monsters and hooks
+  are executed.
+
+  Default variables in all cases:
+  player name		Player's personal name
+  monster name		Monster's name (when hook, value of this variable is "")
+			(as the control function changes the controlled monster,
+			 the value of this variable is also changed)
+4 Monster
+  Labels and default variables for Monster:
+  enter		-			entering room, start game or
+					poof to room
+  leave		target			leaving room, quit game or
+					poof from room
+  say		speech			say something
+  attack	-			attacking to Monster
+  look		-			look something in room
+  look you	-			look monster
+  command	command			for Command Extension System
+4 Room
+  Labels and default variables for hook of rooms:
+  start		-			start game
+  enter		-			entering room
+  escaped	-			leaving room or poof from room
+					activated when player is really leave
+					room
+  leave		target			leaving room
+  poof in	-			poof to room
+  poof out	target			poof from room
+  say		speech			say something
+  look detail	detail			look detail in room
+  look around	-			look around in room
+  command	command			for Command Extension System
+  wrong dir	direction		when user gives go <unmatched direction>
+4 Object
+  Labels and default variables for hook of objects:
+  get fail	-			failing to get object
+  get succeed	-			getting object
+  drop succeed	-			dropping object ( by drop -command )
+  drop you	-			dropping object ( other reason )
+  use succeed	-			using object
+  look you	-			look object
+  command	command			for Command Extension System
+  start		-			start game 
+  enter		-			entering room
+  leave		target			leaving room
+4 Spell
+  Labels and default variables for spell's code:
+  summon        -                       wictim execute this when
+                                           summoner attack's wictim
+  learn         book name               when player reads book what
+                                           learn's spell (that code
+                                           must use set spell level for
+                                           this).
+  In spell there is defined variables spell name and summoner name.
+4 Global_Code
+  Labels and default variables for global code:
+  start		-			start games
+  quit		-			quit games
+3 Command_Extension_System
+  When the user types an invalid command, the following will happen:
+
+  1)	form of command is: <something> 
+	to hook of room, run label command
+	the value of variable command is <something>
+
+  2)	form of command is: <something> <object name>
+	to hook of object, run label command
+	the value of variable command is <something>
+
+  3)	form of command is: <something> <monster name>
+	to monster's code run label command
+	the value of variable command is <something>
+3 Funktiot (suomenkielinen)
+  Tämä dokumentaatio ei ole ajan tasalla. Erityisesti
+  funktioiden parameterien määrä ei ole rajoittunut 
+  kolmeen, kuten tämä antää ymmärtää. Tiedostossa
+  COMMANDS.PAPER on ajan tasalla oleva dokumentaatio.
+4 +
+  Funktio: + (p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa arvonnaan p1:n ja p2:n arvot yhdistettynä yhdeksi 
+  merkkijonoksi siten, että niiden välillä on yksi välilyönti. 
+
+  Virhetilanteet: 
+     - yhdistetty merkkijono pitempi kuin 1000 merkkiä
+       > Tulos: Parametrin p1 arvo
+
+  Tulkinta:
+    p1    - merkkijono
+    p2    - merkkijono
+    tulos - merkkijono
+4 = 
+  Funktio: =(p1, p2)
+  Funktio: ==(p1,p2)
+  Funktio: ===(p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Funktiot =, == ja === palauttavat ensimmäisen parametrin arvon, 
+  kun parametrit ovat samat, muutoin tyhjän. Funktioiden tulkinta, 
+  siintä mitkä merkkijonot ovat samoja vaihtelee: = -funktion on 
+  tiukin ja === -funktion tulkinta on löysin. = vaatii täsmällisen 
+  vastaavuuden, jossa välilyönnit huomioidaan. ==  ei  huomioi lo-
+  pussa olevia välilyöntejä. === tiivistää ennen vertailua välilyön-
+  nit ja muuttaa isot kirjiamet pieniksi.
+
+  Tulkinta:
+     p1    - merkkijono
+     p2    - merkkijono
+     tulos - merkkijono (totuusarvo?)
+
+  Huomautus:
+   - Aiempi = -funktio on nyt nimell{ ==. Siis = toimii nyt eri-
+     lailla kuin aiemmin. Tosin se nyt toimii niin kuin se oli 
+     aiemmin dokumentoitu.
+4 inv
+  Funktio: inv ()
+
+  Palauttaa arvonaan monsterin mukana olevien esineiden lista.
+
+  Virhetilanteet:
+     - Suorituksessa oleva koodi ei ohjaa monsteria
+       > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+    tulos - lista
+4 pinv
+  Funktio: pinv ()
+
+  Palauttaa arvonaan (toiminnan laukaisseen) pelaajan mukana olevien 
+  esineiden listan.
+
+  Tulkinta:
+    tulos - lista
+4 players
+  Funktio: players ()
+
+  Palauttaa arvonaan niiden pelaajien listan, jotka ovat samas-
+  sa huoneessa kuin monster.
+
+  Virhetilanteet:
+    - Suorituksessa oleva koodi ei ohjaa monsteria
+      > Tulos: niiden pelaajien lista, jotka ovat samassa huone-
+         essa kuin (toiminnan laukaissut) pelaaja.
+
+  Tulkinta:
+     tulos - lista
+4 objects
+  Funktio: objects ()
+
+  Palauttaa arvonaan niiden esineden listan, jotka ovat samassa 
+  huoneessa kuin monster.
+
+  Virhetilanteet:
+     - Suorituksessa oleva koodi ei ohjaa monsteria
+       > Tulos: Niiden esineiden lista, jota ovat samassa huone-
+         essa kuin (toiminnan laukaissut) pelaaja.
+
+  Tulkinta:
+     tulos - lista
+4 get
+  Funktio: get (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Ottaa maasta monsterin mukaan p1:n ilmoittamat esineet.
+
+  Palauttaa arvonaan niiden esineiden lista, jotka todella saa-
+  tiin otettua.
+
+  Virhetilanteet:
+     - Suorituksessa oleva koodi ei ohjaa monsteria
+       > Ei toimintaa, tulos: Tyhjä merkkijono/lista
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 drop
+  Funktio: drop (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Pudottaa maahan monsterilta p1:n ilmoittamat esineet.
+
+  Palauttaa arvonaan listan niistä esineistä, jotka 
+  todella saatiin pudotettua.
+
+  Virhetilanteet:
+     - Suorituksessa oleva koodi ei ohjaa monsteria
+       > Ei toimintaa, tulos: Tyhj{ merkkijono/lista
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 and
+  Funktio: and (p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa listan, jossa on ne alkiot, jotka ovat sekä p1:ssä 
+  että p2:ssa. Jokainen alkio esiintyy tuloksessa vain kerran.
+
+  Tulkinta:
+     p1    - lista
+     p2    - lista
+     tulos - lista
+4 move
+  Funktio: move (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Siirtää monsterin p1:n ilmoittamaan huoneeseen.
+
+  Palauttaa huoneen nimen, jonne siirsi monsterin.
+
+  Vaatimukset:
+      - Jos kohde huone ei ole julkinen eikä monsterin omistajan 
+        omistuksessa, niin monsterilla pitää olla poof -privile-
+        gio.
+
+  Virhetilanteet:
+      - Kohde ei ole huone
+        > Tulos: tyhj{ nimi/merkkijono
+      - Siirto ei onnistu jostain syystä (esim. poof privilegio-
+        ta olisi tarvittu)
+        > Tulos: tyhjä nimi/merkkijono
+      - Suoritettava koodi ei ohjaa monsteria
+        > Tulos: tyhjä nimi/merkkijono
+
+  Tulkinta:
+      p1    - nimi
+      tulos - nimi
+4 pmove
+  Funktio: pmove (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Siirtää  (toiminnan laukaisseen)  pelaajan p1:n  ilmoittamaan 
+  huoneeseen.
+
+  Palauttaa huoneen nimen, jonne siirsi pelaajan.
+
+  Vaatimukset:
+      - Jos kohde huone ei ole julkinen eikä monsterin omistajan 
+        omistuksessa, niin monsterilla pitää olla poof -privilegio.
+      - Koodi pitää olla privileged moodissa.
+
+  Virhetilanteet:
+      - Kohde ei ole huone
+        > Tulos: tyhjä nimi/merkkijono
+      - Siirto ei onnistu jostain syystä (esim. poof privilegio-
+        ta olisi tarvittu)
+        > Tulos: tyhjä nimi/merkkijono
+      - Suoritettava koodi ei ohjaa monsteria ja  poof  privile-
+        giota olisi tarvittu
+        > Tulos: tyhjä nimi/merkkijono
+      - Koodi ei ole privileged-moodissa
+        > Tulos: tyhjä nimi/merkkijono
+
+  Tulkinta:
+      p1    - nimi
+      tulos - nimi
+4 if
+  Funktio: if (p1,p2,p3)
+
+  Laskee parametrin p1 arvon.
+
+  Laskee parametrin p2 arvon, jos p1 ei ollut tyhjä, muutoin 
+  laskee parametrin p3 arvon.
+
+  Palauttaa p2 tai p3, riippuen siitä kumman arvon laski.
+
+  Tulkinta:
+     p1    - merkkijono
+     p2    - merkkijono
+     p3    - merkkijono
+     tulos - merkkijono
+
+  Huomautus:
+      - Puuttuvat parametrit tulkitaan tyhjiksi (tämä koskee 
+        myös muita funktiota).
+      - Koodin ei siis tarvitse ohjata monsteria,  jos  poof 
+        privilegiota ei tarvita.
+4 where
+  Funktio: where (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa huoneen, jossa pelaaja p1 on.
+
+  Virhetilanteet:
+     - p1 ei ole pelajan nimi
+       > tulos: tyhjä nimi/merkkijono
+     - Pelaaja p1 ei pelaa funktion kutsuhetkellä
+       > tulos: huone, johon pelaaja lopetti pelaamisen
+
+  Tulkinta:
+     p1    - nimi
+     tulos - nimi
+4 null
+  Funktio: null (p1,p2,p3,...)
+
+  Laskee parametrien p1, p2 ja p3 arvon.
+
+  Palautaa tyhjän merkkijonon.
+
+  Tulkinta:
+     p1   - merkkijono
+     p2   - merkkijono
+     p3   - merkkijono
+
+  Huomautus:
+     - Sopii peräkkäisen toiminnan toteuttamiseen.
+4 prog
+  Funktio: prog (p1, p2, p3, ...)
+
+  Palauttaa viimeisen parameterin arvon.
+
+  Palautaa tyhjän merkkijonon.
+
+  Tulkinta:
+     p1   - merkkijono
+     p2   - merkkijono
+          .
+          .
+          .
+  Huomautus:
+     - Sopii peräkkäisen toiminnan toteuttamiseen.
+
+4 not
+  Funktio: not (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa "TRUE", jos p1 on "", muutoiin palauttaa "".
+
+  Tulkinta:
+     p1    - merkkijono
+     tulos - merkkijono (?) / totuusarvo
+4 random
+  Funktio: random (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa yhden satunnaisesti valitun alkion p1:n listasta.
+
+  Virhetilanteet:
+     - p1 on tyhjä
+       > Tulos: tyhjä nimi/merkkijono
+
+  Tulkinta:
+     p1    - lista
+     tulos - nimi
+4 strip
+  Funktio: strip (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa p1:n muutettuna kirjaimet A-Z kirjaimiksi a-z ja 
+  muut merkit korvattuna välilyönnillä.
+
+  Tulkinta:
+     p1    - merkkijono
+     tulos - merkkijono
+
+  Huomatus:
+     - Useiden välilyöntien sarja (kuten kaikissa muissakin 
+       funktiossa) korvaatuu yhdellä välilynillä.
+     - Funktio on käyttökelpoinen poistettaessa välimerkke-
+       jä pelaajan puheesta  (valitettvasti  samalla  menee 
+       skanditkin...).
+4 experience
+  Funktio: experience (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa pelaajan p1 pisteet.
+
+  Virhetilanteet:
+     - p1 ei ole pelaajan nimi
+       > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - nimi
+     tulos - luku
+4 set_experience
+  Funktio: set experience (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Asettaa (toiminnnan laukaisseen) pelaajan kokemukseksi p1:n.
+
+  Palauttaa p1:n.
+
+  Vaatimukset:
+     - Monserilla pitää olla experience -privilegio.
+     - Pelaaja ei voi olla monsterin omistaja tai se, joka
+       on ladannut koodin.
+
+  Virhetilanteet:
+     - Koodi ei ohjaa monsteria
+       > Ei toimintaa, tulos: tyhjä merkkijono
+     - Monsterilla ei experience privilegiota
+       > Ei toimintaa, tulos: tyhjä merkkijono
+     - (Toiminnan laukaissut) pelaaja on monsterin omistaja tai
+       koodin lataaja.
+       > Ei toimintaa, tulos: tyhjä merkkijono
+
+  Tulkinta:
+     p1    - luku
+     tulos - luku
+
+  Huomautus:
+     - Funktiolla ei voi muuttaa omaa kokemusta.
+4 plus
+  Funktio: plus (p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa lukujen p1 ja p2 summan.
+
+  Virhetilanteet:
+     - p1 tai p2 ei ole luku
+       > Tulos: tyhjä merkkijono
+     - Lukualueen ylivuoto
+       > Tulos: tyhjä merkkijono
+
+  Tulkinta:
+     p1    - luku
+     p2    - luku
+     tulos - luku
+4 difference
+  Funktio: difference(p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa erotuksen p1 miinus p2.
+
+  Virhetilanteet:
+     - p1 tai p2 ei ole luku
+       > Tulos: Tyhjä merkkijono
+     - Lukualueen ylivuoto
+       > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - luku
+     p2    - luku
+     tulos - luku
+4 times
+  Funktio: times(p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa parametrien p1 ja p2 tulon.
+
+  Virhetilanteet:
+     - Lukualueen ylivuoto
+       > Tulos: Tyhjä merkkijono
+     - p1 tai p2 eiv{t ole lukuja
+       > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - luku
+     p2    - luku
+     tulos - luku
+4 quotient
+  Funktio: quotient(p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa p1 jaettuna p2:lla (kokonaislukujako).
+
+  Virhetilanteet;
+     - p1 tai p2 ei ole luku
+       > Tulos: Tyhjä merkkijono
+     - p2 on nolla
+       > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - luku
+     p2    - luku
+     tulos - luku
+4 set_state
+  Funktio: set state(p1)
+
+  Laskee parametrin p1 arvon.
+
+  Sijoittaa p1 koodikohtaiseen pysyv{{n muuttujaan.
+
+  Palauttaa p1:n.
+
+  Tulkinta:
+     p1    - merkkijono
+     tulos - merkkijono
+
+  Huomatus: 
+     - Muuttuja on koodikohtainen eli jokaisella monsterilla, 
+       ja huoneen ja esineen hookilla on oma muuttuja. 
+     - control -funktio ei vaikuta siihen, ett{ mihin muuttu-
+       jaan set state vaikuttaa.
+4 get_state
+  Funktio: get state(p1)
+
+  Lukee koodikohtaisen pysyvän muuttujan arvon.
+
+  Palauttaa muuttujan arvon.
+
+  Tulkinta:
+     tulos - merkkijono
+
+  Huomatus: 
+     - Muuttuja on koodikohtainen eli jokaisella monsterilla, 
+       ja huoneen ja esineen hookilla on oma muuttuja. Saman
+       esineen eri ilmentymillä on sama koodi, joten muuttu-
+       jakin on yhteinen.                              
+     - control -funktio ei vaikuta siihen, että mistä muuttu-
+       jasta get state lukee arvon.
+4 less
+  Funktio: less(p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Jos p1 on pienempi kuin p2 palauttaa "TRUE", muutoin tyhjän 
+  merkkijonon.
+
+  Virhetilanteet:
+     - p1 tai p2 ei ole luku
+       > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - luku
+     p2    - luku
+     tulos - merkkijono, totuusarvo (?)
+4 number
+  Funktio: number(p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa p1, jos p1 on luku, muutoin palauttaa tyhjän merkki-
+  jonon.
+
+  Tulkinta:
+    p1    - luku (?)
+    tulos - luku (?)
+4 health
+  Funktio: health(p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa pelaajan tai monsterin p1 voiman lukuarvon.
+
+  Virhetilanteet:
+     - p1 ei ole palaajan tai monsterin nimi
+       > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - nimi
+     tulos - luku
+4 all_objects
+  Funktio: all objects()
+
+  Funktio palauttaa listan kaikkista esineist{.
+
+  Virhetilanteet:
+     - Esineitä on enemmän kuin mahtuu 1000 merkin listaan
+       > Tulos: Niin monen ensimm{isen esineen lista, jotka mah-
+         tuivat 1000 merkkiin.
+
+  Tulkinta:
+     - tulos: lista
+
+  Huomautus:
+     - Jokainen määritelty esine esiintyy listassa kerran riip-
+       pumatta siitä kuinka monta kappaletta sitä  on  olemassa 
+       (vaikka sitä olisi olemassa 0 kappaletta).
+4 all_players
+  Funktio: all players()
+
+  Funktio palauttaa listan kaikkista pelaajista ja hirviäistä.
+
+  Virhetilanteet:
+     - Pelaajia on enemmän kuin mahtuu 1000 merkin listaan
+       > Tulos: Niin monen ensimmäisen pelaajan lista, jotka 
+         mahtuivat 1000 merkkiin.
+
+  Tulkinta:
+     - tulos: lista
+4 all_rooms
+  Funktio: all rooms()
+
+  Funktio palauttaa listan kaikkista huoneista.
+
+  Virhetilanteet:
+   - Huoneita on enemmän kuin mahtuu 1000 merkin listaan
+     > Tulos: Niin monen ensimm{isen huoneen lista, jotka mah-
+       tuivat 1000 merkkiin.
+
+  Tulkinta:
+     - tulos: lista
+4 control
+  Funktio: control(p1,p2)
+
+  Funktio laskee parametrin p1 arvon.
+
+  Funktio asettaa parametrin p2 laskemisen ajaksi ohjattavaksi 
+  monsteriksi p1:n. Suoritettavalla  koodilla  ja  monsterilla 
+  pitää olla sama omistaja.
+
+  Palauttaa p2:n.
+
+  Virhetilanteet:
+     - p1 ei ole monsterin nimi
+       > Funktio ei laske paramerin p2 arvoa - Tulos: Tyhjä merk-
+         kijono
+     - Suoritettavalla koodilla ja p1 määräämmällä monsterilla ei 
+       ole sama omistaja
+       > Funktio ei laske parametrin p2 arvoa - Tulos: Tyhjä merk-
+         kijono
+
+  Tulkinta:
+     p1    - nimi
+     p2    - merkkijono
+     tulos - merkkijono
+
+  Huomautus:
+     - Vaadittavat privilegiot katsotaan ohjattavalta monseril-
+       ta, joten funktio vaikuttaa niihin
+     - Funktio ei vaikuta privileged -moodiin
+     - p2:n suorituksen ajaksi funktio sijoittaa muuttujaan 
+       monster name ohjattavan monserin nimen eli p1:n
+4 include
+  Funktio: include(p1,p2)
+
+  Funktio laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa p2:n, jos p1 sisältää p2:n, muutoin tyhj{n merkki-
+  jonon.
+
+  Virhetilanteet:
+     - p2 on tyhjä merkkijono
+       > Tulos: Tyhjä merkkijono
+     - p1 on tyhj{ merkkijono
+       > Tulos: tyhjä merkkijono
+
+  Tulkinta:
+     p1    - merkkijono
+     p2    - merkkijono
+     tulos - merkkijono
+
+  Huomautus:
+     - Nuo 'virhetilanteet' sopivat kyllä funktion normaalikäy-
+       töksen puitteisiin eli kyseessä ei ole todellisia virhe-
+       tilanteita -  mutta tilanteet ovat sen verran erikoisia, 
+       että ne oli syytä mainita erikseen.
+4 exclude
+  Funktio: exclude (p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa arvonaan ne alkiot listasta p1, joita ei ole listas-
+  sa p2.
+
+  Tulkinta:
+    p1    - lista
+    p2    - lista
+    tulos - lista
+4 get_remote_state
+  Funktio: get remote state (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa arvonaan p1 ilmoittaman monsterin pysyvän muuttujan 
+  arvon (eli state kentän arvon).  Monsterilla  pitää olla sama 
+  omistaja kuin suoritettavalla koodilla tai monsteri pitää olla 
+  julkinen ja koodin ohjaamalla monsterilla pitää olla object 
+  -privilegio.
+
+  Virhetilanteet:
+      - p1 ei ole monsterin nimi
+        > Tulos: Tyhjä merkkijono
+      - p1:llä on eri omistaja kuin suoritettavalla koodilla
+        > Tulos: Tyhjä merkkijono
+      - p1 on julkinen ja koodi ei ohjaa monsteria
+        > Tulos: Tyhjä merkkijono
+      - p1 on julkinen ja koodin ohjaamalla monsterilla ei ole 
+        object -privilegiota
+        > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - nimi
+     tulos - merkkijono
+4 set_remote_state
+  Funktio: set remote state (p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Sijoittaa  p1  ilmoittaman  monsterin pysyvän muuttujaan p2:n 
+  arvon (eli state kentään). Monsterilla pitää olla sama omista-
+  ja kuin suoritettavalla koodilla tai monsteri pitää olla jul-
+  kinen ja koodin ohjaamalla monsterilla pitää olla object -pri-
+  vilegio.
+
+  Palauttaa p2:n arvon.
+
+  Virhetilanteet:
+      - p1 ei ole monsterin nimi
+        > Ei toimintaa - tulos: Tyhjä merkkijono
+      - p1:llä on eri omistaja kuin suoritettavalla koodilla
+        > Ei toimintaa - tulos: Tyhjä merkkijono
+      - p1 on julkinen ja koodi ei ohjaa monsteria
+        > Ei toimintaa - tulos: Tyhjä merkkijono
+      - p1 on julkinen ja koodin ohjaamalla monsterilla ei ole 
+        object -privilegiota
+        > Ei toimintaa - tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - nimi
+     p2    - merkkijono
+     tulos - merkkijono
+4 remote_objects
+  Funktio: remote objects (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa huoneessa p1 (maassa) olevien esineiden nimet.
+
+  Virhetilanteet:
+      - p1 ei ole huoneen nimi
+        > Tulos: Tyhj{ merkkijono
+
+  Tulkinta:
+     p1    - nimi
+     tulos - lista
+4 remote_players
+  Funktio: remote players (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa huoneessa p1 olevien pelaajien nimet.
+
+  Virhetilanteet:
+      - p1 ei ole huoneen nimi
+        > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - nimi
+     tulos - lista
+
+  Huomautus:
+     - Pelaajien listaan ei sis{lly monstereita toisin kuin all 
+       players(), lookup player() ja parse player() funktioiden 
+       kohdalla
+     - Funktio toimii vastaavasti kuin players() funktio - pait-
+       si, että huone valitaan parametrin avulla
+4 heal
+  Funktio: heal (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Nostaa toiminnan laukaiseen pelaajan terveyttä (voimia) para-
+  metrin ilmoittmalla määrällä.
+
+  Palauttaa p1:n.
+
+  Virhetilanteet:
+      - p1 ei ole luku
+        > Ei toimintaa - tulos: Tyhjä merkkijono
+      - p1 on negatiivinen
+        > Ei toimintaa - tulos: Tyhjä merkkijono
+
+  Tulkinta:
+ÿ    p1    - luku
+     tulos - luku
+
+  Huomautus: 
+      -   Mikäli (toiminnan laukaisseen) pelaajan nykyisen ter-
+          veyden ja lisäyksen summa on  suurempi  kuin pelaajan 
+          tason maksimiterveys, funktio asettaa pelaajalle tämän 
+          tason maksimiterveyden - tämä  ei  kuitenkaan  vaikuta
+          funktion palauttamaan arvoon.
+4 duplicate
+  Funktio: duplicate (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Tekee niistä esineistä, jotka on mainittu listassa p1 monste-
+  rin mukaan uuden kappaleen. Esineillä ja monsterilla pitää ol-
+  la sama omistaja tai monsterilla pitää olla object -privilegio.
+
+  Palauttaa listan niistä esineistä, jotka todella sai tehtyä.
+
+  Virhetilanteet:
+	  - Koodi ei ohjaa monsteria
+	    > Ei toimintaa: tulos: Tyhjä merkkijono
+          - Esineellä ei ole sama omistaja kuin monsterilla ja 
+            monsterilla ei ole object -privilegiota
+	    > Esinettä ei tule palautettavaan listaan eikä mons-
+              terin mukaan.
+          - Esine ei mahdu mukaan
+	    > Esinettä ei tule palautettavaan listaan eikä mons-
+              terin mukaan.
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 pprint
+  Funktio: pprint (p1,p2,p3,...)
+  Funktio: pprint raw (p1,p2,p3,...)
+
+  Laskee parametrin p1,p2 ja p3 arvon.
+
+  Tulostaa (toiminnan laukaiseelle) pelaajalle parametrien teks-
+  tin. Edellisen parametrin perään  funktio  lisää  välilyönnin, 
+  jos seuraava alkaa kirjaimella tai numerolla.  Tekstin  perään 
+  funktio lisää pisteen, jos se loppuu kirjaimeen tai numeroon. 
+  Funktio aloittaa virkeen isolla  kirjaimella.  raw -versio  ei 
+  muokkaa tekstiä.
+
+  Palauttaa tulostamansa tekstin.
+
+  Virhetilanteet:
+     - Teksti on pitempi kuin 1000 merkkiä
+       > Osa tekstistä jää pois (sekä tuloksesta, että tulosteesta).
+
+  Tulkinta:
+     p1    - merkkijono
+     p2    - merkkijono
+     p3    - merkkijono
+     tulos - merkkijono
+
+  Huomautus:
+     - Rivijakoon ei ole mahdollista vaikuttaa. Funktio päättää 
+       rivijaon itse.
+4 print
+  Funktio: print (p1,p2,p3,...)
+  Funktio: print raw (p1,p2,p3,...)
+
+  Laskee parametrin p1,p2 ja p3 arvon.
+
+  Tulostaa monsterin kanssa  samassa  huoneessa  oleville pelaa-
+  jille  parametrin tekstin. Edellisen parametrin perään funktio 
+  lisää välilyönnin, jos seuraava alkaa kirjaimella tai numerol-
+  la. Tekstin perään funktio lisää pisteen,  jos se loppuu  kir-
+  jaimeen tai numeroon. Funktio aloittaa virkkeen isolla kirjai-
+  mella. raw -versio ei muokkaa tekstiä.
+
+  Palauttaa tulostamansa tekstin.
+
+  Virhetilanteet:
+     - Suoritettava koodi ei ohjaa monsteria
+        > Tulostaa toiminnan laukaisseen pelaajan kanssa samas-
+          sa huoneessa oleville pelaajille parametrien tekstin, 
+          tulos: parametrien teksti
+     - Teksti on pitempi kuin 1000 merkkiä
+       > Osa tekstistä jää pois (sekä tuloksesta, että tulostees-
+          ta).
+
+  Tulkinta:
+      p1    - merkkijono
+      p2    - merkkijono
+      p3    - merkkijono
+      tulos - merkkijono
+
+  Huomautus:
+      - Jos (toiminan laukaissut) pelaaja on siis samassa huo-
+        neessa kuin  monster, niin teksti tulostuu myös hänelle.
+      - Erittäin monirivisillä viesteillä on mahdollista yli
+        kuormittaa  Monsterin tapahtumienvälitysjärjestelmä (jo-
+        kainen rivi on yksi tapahtuma), jolloin osaa tapahtumis-
+        ta on mahdollista hukkua.
+      - Rivijakoon ei ole mahdollista vaikuttaa. Funktio päättää 
+        rivijaon itse.
+4 oprint
+  Funktio: oprint (p1,p2,p3,...)
+  Funktio: oprint raw (p1,p2,p3,...)
+
+  Laskee parametrin p1,p2 ja p3 arvon.
+
+  Tulostaa monsterin kanssa samassa huoneessa oleville  pelaajil-
+  le parametrien tekstin, paitsi toiminnan laukaiseelle pelaajal-
+  le. Edellisen parametrin perään funktio lisää  välilyönnin, jos 
+  seuraava alkaa kirjaimella tai numerolla.  Tekstin perään funk-
+  tio lisää pisteen, jos se loppuu kirjaimeen tai numeroon. Funk-
+  tio aloittaa virkkeen isolla kirjaimella.  raw -versio ei muok-
+  kaa tekstiä.
+
+  Palauttaa tulostamansa tekstin.
+ 
+  Virhetilanteet:
+     - Suoritettava koodi ei ohjaa monsteria
+       > Tulostaa toiminnan laukaisseen pelaajan kanssa samas-
+         sa huoneessa oleville pelaajille parametrien  tekstin 
+         (paitsi toiminnan laukaiseelle  pelaajalle), tulos: 
+         tulostettava teksti
+     - Teksti on pitempi kuin 1000 merkkiä
+       > Osa tekstistä jää pois (sekä tuloksesta, että tulos-
+         teesta).
+
+  Tulkinta:
+      p1    - merkkijono
+      p2    - merkkijono
+      p3    - merkkijono
+      tulos - merkkijono
+
+  Huomautus:
+      - Erittäin monirivisillä viesteillä on mahdollista yli-
+        kuormittaa Monsterin tapahtumienvälitysjärjestys (jo-
+        kainen rivi on yksi tapahtuma), jolloin osan tapahtu-
+        mista on mahdollista hukkua.
+      - Rivijakoon ei ole mahdollista vaikuttaa. Funktio päät-
+        tää rivijaon itse.
+4 pget
+  Funktio: pget (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Ottaa maasta (toiminnan laukaisseen) pelaajan mukaan p1:n il-
+  moittamat esineet.
+
+  Palauttaa arvonaan listan niistä esineistä, jotka todella saa-
+  tiin otettua.
+
+  Vaatimukset:
+     - koodi pitää olla privileged-moodissa
+
+  Virhetilanteet:
+     - koodi ei ole privileged moodissa
+       > Ei toimintaa, funktio ei laske parametrin p1 arvoa,
+         tulos: Tyhjä merkkijono/lista                     
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 pdrop
+  Funktio: pdrop (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Pudottaa (toiminnan laukaisseen) pelaajalta  maahan  p1:n  il-
+  moittamat esineet.
+
+  Palauttaa arvonaan lista esineistä, jotka todella saatiin  pu-
+  dotettua.
+
+  Vaatimukset:
+     - koodi pitää olla privileged-moodissa
+
+  Virhetilanteet:
+     - koodi ei ole privileged moodissa
+       > Ei toimintaa. Funktio ei laske parametrin p1 arvoa
+         - tulos: Tyhjä merkkijono/lista
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+
+  Huomautus: 
+       Ilmoittaa (toiminnan laukaisseelle) pelaajalle ja muille 
+       pelaajille, jos esineen  pudottaminen  aiheutti  esineen 
+       riisumisen (vertaa: wear ja  wield komennot.)
+4 pduplicate
+  Funktio: pduplicate (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Tekee niistä esineistä, jotka on mainittu listassa p1 pelaajan  
+  mukaan uuden kappaleen. Esineillä ja koodilla pitää olla sama 
+  omistaja tai monsterilla pitää olla object -privilegio. 
+
+  Palauttaa listan niistä esineistä, jotka todella sai tehtyä.
+
+  Vaatimukset:
+	- koodi pitää olla privileged -moodissa.
+
+  Virhetilanteet:
+	- Koodi ei ole privileged tilassa
+	  > Ei toimintaa. Funktio ei laske parametrin p1 arvoa,
+            tulos: Tyhjä merkkijono
+        - Esineellä ei ole sama omistaja kuin koodilla ja koodi 
+          ei ohjaa monsteria
+	  > Esinettä ei tule palautettavaan listaan eikä pelaa-
+            jan mukaan.
+        - Esineellä ei ole sama omistaja kuin koodilla ja mons-
+          terilla ei ole object -privilegiota.
+	  > Esinettä ei tule palautettavaan listaan eikä pelaa-
+            jan mukaan.
+        - Esine ei mahdu mukaan
+	  > Esinettä ei tule palautettavaan listaan eikä pelaajan
+	    mukaan.
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 destroy
+  Funktio: destroy (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Tuhoaa monsterilta ne esineet jotka on mainittu listassa p1. 
+  Esineillä ja monsterilla pitää olla sama omistaja tai monste-
+  rilla pitää olla object -privilegio.
+
+  Palauttaa listan niistä esineistä, jotka todella sai tuhottua.
+
+  Virhetilanteet:
+	- Koodi ei ohjaa monsteria
+	  > Ei toimintaa: tulos: Tyhjä merkkijono
+        - Esineellä ei ole sama omistaja kuin monsterilla ja 
+          monsterilla ei ole object -privilegiota
+	  > Esinettä ei tule palautettavaan listaan eikä esine 
+            tuhoudu.
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 pdestroy
+  Funktio: pdestroy (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Tuhoaa pelaajalta ne esineet jotka on mainittu listassa p1. 
+  Esineillä ja monsterilla pitää olla sama omistaja tai monste-
+  rilla pitää olla object -privilegio.
+
+  Palauttaa listan niistä esineistä, jotka todella sai tuhottua.
+
+  Vaatimukset:
+	- koodi pitää olla privileged -moodissa.
+
+  Virhetilanteet:
+	- Koodi ei ole privileged tilassa
+	  > Ei toimintaa. Funktio ei laske parametrin p1 arvoa,
+            tulos: Tyhjä merkkijono
+        - Esineellä ei ole sama omistaja kuin koodilla ja koodi
+          ei ohjaa monsteria
+	  > Esinettä ei tule palautettavaan listaan eikä esine 
+            tuhoudu.
+        - Esineellä ei ole sama omistaja kuin koodilla ja mons-
+          terilla ei ole object -privilegiota.
+	  > Esinettä ei tule palautettavaan listaan eikä esine 
+            tuhoudu.
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 or
+  Funktio: or (p1,p2,p3)
+
+  Laskee parametrien p1, p2 ja p3 arvon.
+
+  Palauttaa listan, jossa on ne alkiot, jotka ovat p1:ssä, 
+  p2:ssa tai p3:ssa. Jokainen alkio esiintyy tuloksessa 
+  vain kerran.
+
+  Virhetilanteet:
+   - Tuloksena syntyvä lista on pitempi kuin 1000 merkkiä
+     > Tulos: lista, jossa on vain niin monta alkiota, että ne 
+       mahtuvat 1000 merkkiin.
+
+  Tulkinta:
+     p1    - lista
+     p2    - lista
+     p3    - lista
+ ÿ    tulos - lista
+4 string_head
+  Funktio: string head (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa merkkijonosta p1 ensimmäisen sanan (merkkijonon ekaan  
+  välilyöntiin saakka).
+
+  Virhetilanteet:
+	- p1 on tyhjä merkkijono
+	  > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - merkkijono
+     tulos - merkkijono
+4 string_tail
+  Funktio: string tail (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa merkkijonon p1 ensimmäistä sanaa lukuunottamatta 
+  (merkkijonon ekasta välilyännistä alkaen).
+
+  Virhetilanteet:
+	- p1 on tyhjä merkkijono
+	  > Tulos: Tyhjä merkkijono
+	- p1:ssä vain yksi sana
+	  > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - merkkijono
+     tulos - merkkijono
+4 tail
+  Funktio: tail (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa listan p1 ensimmäistä alkiota lukuunottamatta.
+
+  Virhetilanteet:
+	- p1 on tyhjä lista
+	  > Tulos: Tyhjä lista/merkkijono
+	- p1:ssä vain yksi alkio
+	  > Tulos: Tyhjä lista/merkkijono
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 head
+  Funktio: head (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Palauttaa listan p1 ensimmäisen alkion.
+
+  Virhetilanteet:
+	- p1 on tyhjä lista
+	  > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+     p1    - lista
+     tulos - alkio
+4 lookup_room
+  Funktio: lookup room (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Täydentää listan p1 alkiot huoneiden nimiksi. Jos jonkin alki-
+  on täydennys ei onnistu, kyseinen alkio jää pois tuloslistasta.
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 lookup_player
+  Funktio: lookup player (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Täydentää listan p1 alkiot pelaajien ja monsterien nimiksi. 
+  Jos jonkin alkion täydennys ei onnistu, kyseinen alkio  jää 
+  pois tuloslistasta.
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 lookup_object
+  Funktio: lookup object (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Täydentää listan p1 alkiot esineiden nimiksi. Jos jonkin alki-
+  on täydennys ei onnistu, kyseinen alkio jää pois tuloslistasta.
+
+  Tulkinta:
+     p1    - lista
+     tulos - lista
+4 parse_player
+  Funktio: parse player (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Funktio tarjoaa samanlaisen parametrin tulkintapalvelun kuin 
+  on käytössä monsterin komennoissa, joissa voi käyttää jokeri-
+  merkkiä.
+
+  Palauttaa parametria p1 vastaavan pelaaja ja monster -listan. 
+
+  Virhetilanteet:
+    - p1 on tyhjä merkkijono
+      > Tulos: Tyhjä merkkijono
+    - parametrin tulkinnassa tapahtuu virhe
+      > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+      p1    - merkkijono
+      tulos - lista
+4 parse_object
+  Funktio: parse object (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Funktio  tarjoaa samanlaisen parametrin tulkintapalvelun kuin 
+  on käytössä monsterin komennoissa, joissa voi käyttää jokeri-
+  merkkiä.
+
+  Palauttaa parametria p1 vastaavan esinelistan. 
+
+  Virhetilanteet:
+    - p1 on tyhjä merkkijono
+      > Tulos: Tyhjä merkkijono
+    - parametrin tulkinnassa tapahtuu virhe
+      > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+      p1    - merkkijono
+      tulos - lista
+4 parse_room
+  Funktio: parse room (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Funktio tarjoaa samanlaisen parametrin tulkintapalvelun kuin 
+  on käytössä monsterin komennoissa, joissa voi k{yttää jokeri-
+  merkkiä.
+
+  Palauttaa parametria p1 vastaavan huonelistan. 
+
+  Virhetilanteet:
+    - p1 on tyhjä merkkijono
+      > Tulos: Tyhjä merkkijono
+    - parametrin tulkinnassa tapahtuu virhe
+      > Tulos: Tyhjä merkkijono
+
+  Tulkinta:
+      p1    - merkkijono
+      tulos - lista
+4 privilege
+  Funktio: privilege (p1,p2)
+
+  Laskee parametrien p1 ja p2 arvon.
+
+  Palauttaa  listan  niistä pelaajan (taikka monsterin) p1 pri-
+  vilegeista, jotka ovat mainittu listassa p2. Mahdolliset pri-
+  vileget: wizard, manager, experience, quota, object, poof, 
+  special ja monster. wizard -privilege tarkoittaa, ett{ pelaaja 
+  on Monster Manager.
+
+  Virhetilanteet:
+	- p1 ei ole pelaajan tai monsterin nimi
+	  > Tulos: Tyhjä merkkijono/lista
+	- p2:ssa on mainittu privilege, jota ei ole olemassa
+	  > Tulos: Kyseinen privilege ei tule tulokseen mukaan
+
+  Tulkinta:
+     p1    - nimi
+     p2    - lista
+     tulos - lista
+
+4 userid
+  Funktio: userid (p1)
+
+  Funktio laskee parametrin p1 arvon.
+
+  Funktio vaatii toimiakseen, että ohjattavalla monsterilla on 
+  experience  -privilegio.
+
+  Palauttaa listan, jossa p1:n pelaajien nimet on vaihdettu vas-
+  taaviksi käyttäjätunnuksiksi.
+
+  Virhetilanteet:
+	- koodi ei ohjaa monsteri taikka ohjattavalla monsteril-
+          la ei ole experience -privilegiota
+	  > Funktio ei laske parametrin p1 arvoa, Tulos: Tyhjä 
+            merkkijono
+	- Listassa p1 on nimi, joka ei ole pelaajan taikka mons-
+          terin nimi
+	  > Ei tule mukaan tulokseen
+	- listssa on nimi, joka on monsterin nimi
+	  > Tulle mukaan tulokseen, userid -käyttää monsterien
+	    käyttäjätunnuksina ohjelman sisäistä esitysmuotoa 
+            (monster id), joka on yksik{sitteinen
+
+  Tulkinta:
+      p1    - lista
+      tulos - lista
+4 attack
+  Funktio: attack (p1)
+
+  Laskee parametrin p1 arvon.
+
+  Vähentää (toiminnan laukaisseen) pelaajan voimina p1:n ilmoit-
+  taman määrän, kuitenkaan ei enemm{n kuin monsterin kokemus an-
+  taa myötä. Peräkkäisten hyökkäysten summa ei saa ylittää mons-
+  terin kokemuksen määrääm{{ rajaa.
+
+  Palauttaa millä voimalla hyökättiin.
+
+  Vaatimukset:
+     - Monsteri ei saa olla hyökännyt jo kokemuksen m{{r{{n rajan 
+       verran
+     - Pelaaja ei saa olla suojattu.
+     - Hookeilla vaatii privileged -moodin
+
+  Virhetilanteet:
+     - Monsteri on hyökännyt jo kokemuksen määräämän rajan verran
+       > Ei toimintaa - Tulos: tyhjä merkkijono
+     - pelaaja on suojattu
+       > Ei toimintaa - Tulos: tyhjä merkkijono
+     - p1 ei ole luku
+       > Ei toimintaa - Tulos: tyhjä merkkijono
+     - p1 on suurempi kuin kokemus antaa my|t{
+       > Hyökätään voimalla jonka kokemus antaa my|ten, Tulos: 
+         voima jolla hyökättiin
+     - koodi ei ohjaa monsteria ja privileged -moodi päällä
+       > ei rajaa hyökkäyksen voimakkuudella
+     - koodi ei ohjaa monsteria ja ei privileged -moodia
+       > Ei toimintaa - Tulos: tyhjä merkkijono
+ 
+  Tulkinta:
+     p1    - luku
+     tulos - luku
+
+  Huomautus:
+     - Funktio ei kerro, kuinka hyvin hyökkäys todelisuudessa 
+       onnistui. (On mahdollista saada selville funktion health 
+       avulla.)
+     - Funktio ei vaadi en{{n privileged moodia monsterilta
+4 spell_level
+  Funktio: spell level()
+
+  Palauttaa taian käyttäjän kyseisen tain taitotason. Toimii vain 
+  suoritettaessa tain koodissa (labelit summon ja learn). 
+
+  Virhetilanteet:
+         - Käytetään muualla kuin taissa
+           > Tulos: Tyhjä (merkkijono)
+
+  Tulkinta:
+     tulos - luku
+
+  Huomaa:
+         - Taian käyttäjä (muutujassa summoner name) on eri kuin
+           koodin suorittaja (poikkeus: learn -label)
+4 set_spell_level
+  Funktio: set spell level(p1)
+
+  Laskee parametrin p1 arvon.
+
+  Asettaa taian käyttäjän kyseisen tain taitotason. Toimii vain 
+  suoritettaessa tain koodissa (labelit summon ja learn). Taso 0 
+  merkitsee, ett{ pelaaja ei osa taikaa, positiivinen luku merkit-
+  see, ett{ pelaaja osaa taian. 
+
+  Palautaa asetetun taian tason.
+
+  Virhetilanteet:
+         - Käytetään muualla kuin taissa
+           > Tulos: Tyhjä (merkkijono)
+         - p1 ei luku
+           > Tulos: Tyhjä (merkkijono)
+         - p1 < 0
+           > Tulos: Tyhjä (merkkijono)
+
+  Tulkinta:
+     p1    - luku
+     tulos - luku
+
+  Huomaa:
+         - Taian käyttäjä (muuttujassa summoner name) on eri kuin
+           koodin suorittaja (poikkeus: learn -label)
+
+         - Tämä funktio on tarkoitettu taian opettamiseen pelajalle
+           (learn -labelissa)
+
+         - Muuttujasta book name voi tarkistaa mikä kirja (magic book)  
+           on  käynistänyt taian  learn  -labelin.  
+2 Fixing_Database  
+  Start  monster  with MONSTER/FIX -command.
+
+  Fix-subsystem uses file level locks to prevent  other  players  to 
+  playing monster, when you fixing database.
+
+  If someone is playing, when you want fix-database, it's better run
+  monster down with D -commands in subsystem -menu (in system-menu).
+  
+3 Menu
+  Follow menu you get with ? -command in /FIX -system:
+
+  A        Clear/create privileges database.
+  B        Clear/create health database.
+  C        Create event file.
+  D        Reallocate describtins
+  E        (Exit subsystem) Start monster playing.
+  F        Clear/create experience database.
+  G        Calculate objects' number in existence.
+  GL       Clear/create global database.
+  GS       Mark moster shutdown to global database.
+  GU       Mark monster active to global database.
+  GV       Show global database.
+  G-       Mark monster database as invalid.
+  G+       Mark monster database as valid.
+  H        This list
+  I        Repair index file.
+  J        Repair paths.
+  K        Reallocate MDL codes.
+  L        Repair monsters' location.
+  M        Clear/create MDL database.
+  N        Clear/create and recount quota database.
+  O        Clear/create object database.
+  OW       Check owners of objects, rooms and monsters.
+  P        Clear/create player database.
+  Q        (Quit) Leave monster.
+  R        Clear/create room database.
+  S        Clear/create password database.
+  SP       Clear/create spell database.
+  V        View database capacity.
+  ?        This list
+
+3 Partial_rebuild
+  Follow commands make  partial rebuild  of Monster database.  After 
+  these command use fix -commands to fix pointers in database.
+
+  A        Clear/create privileges database.
+  B        Clear/create health database.
+  C        Create event file.
+  F        Clear/create experience database.
+  M        Clear/create MDL database.
+  N        Clear/create and recount quota database.
+  O        Clear/create object database.
+  P        Clear/create player database.
+  GL       Clear/create global database.
+  R        Clear/create room database.
+  S        Clear/create password database.
+  SP       Clear/create spell database.
+
+  Recommented order: GL R O P M C F N S SP
+
+  You can do only one of R, O and P.  Use /REBUILD  istead,  if  you 
+  need more.
+
+3 Fix_commands
+  Follow commands can fix small errors in database without disaster:
+
+  C        Create event file.
+  D        Reallocate descriptions
+  G        Calculate objects' number in existence.
+  I        Repair index file.
+  J        Repair paths.
+  K        Reallocate MDL codes.
+  L        Repair monsters' location.
+  N        Clear/create and recount quota database.
+  OW       Check owners of objects, rooms and monsters.
+
+  Recommented order: C I N G J K L D OW
