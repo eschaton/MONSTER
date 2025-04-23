@@ -1,17 +1,17 @@
 !*************************************MONSTER**************************************
 define syntax MONSTER_WHO
-   image MONSTER_IMAGE_:monster_who
+   image DKA300:[MONSTER.IMAGE]monster_who
    noqualifiers
 define syntax MONSTER_DUMP
-   image MONSTER_IMAGE_:monster_dump
+   image DKA300:[MONSTER.IMAGE]monster_dump
    parameter P1
 	label = DUMP_FILE
 	prompt = "Dump file"
 	value(type=$file,required)
 define syntax MONSTER_REBUILD
-   image MONSTER_IMAGE_:monster_rebuild
+   image DKA300:[MONSTER.IMAGE]monster_rebuild
 define verb MONSTER
-   image MONSTER_IMAGE_:mon
+   image DKA300:[MONSTER.IMAGE]mon
    qualifier WHO
       nonnegatable
       syntax = MONSTER_WHO

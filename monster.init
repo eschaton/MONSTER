@@ -22,8 +22,8 @@ REBUILD_OK: true
 !		  if this is true, the MM can blow away and reformat the
 !		  entire universe. It's a good idea to set this to false
 
-root:    DATABASE_:
-coderoot:DATABASE_CODE_: ! mdl database
+root:        DKA300:[MONSTER.DATABASE_MON]:
+coderoot:    DKA300:[MONSTER.DATABASE_CODE]: ! mdl database
         
 !		  This is where the Monster database goes.
 !		  The root directory must be  world:e  and
