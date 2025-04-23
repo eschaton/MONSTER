@@ -508,6 +508,20 @@ begin
     for i := 1 to length(s) do name[low + i -1] := s[i];
 end; { as }
 
+function es(a: array [ lowa .. hia: integer] of char;
+            b: array [ lowb .. hib: integer] of char): boolean;
+var i: integer;
+begin
+    if (hia - lowa + 1) = (hib - lowb + 1) then
+    begin
+        for i := 0 to hia - lowa + 1 do
+            if a[lowa + i] <> b[lowb + i] then
+                es := false;
+        es := true;
+    end else
+        es := false;
+end; { es}
+
 procedure parse (function reader (var line: string_t): boolean;
 		var result: text);       
 label 999;
@@ -944,7 +958,7 @@ var atom_count: integer;
 		   if pool^[current_buffer].table[i].long_name = nil then flag 
 			:= true
 		   else flag := 
-		    EQ(pool^[current_buffer].table[atom_count].long_name^,
+		    es(pool^[current_buffer].table[atom_count].long_name^,
 			pool^[current_buffer].table[i].long_name^);
 		    { EQ: NonPadding comparison }
 
