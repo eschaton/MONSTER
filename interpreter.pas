@@ -164,8 +164,7 @@ type  atom_t = shortstring; 			    { Muuttujat ja käskyt   }
 
       paramtable = array [ 1 .. max_param ] of integer;
 
-      name_string(maxlen: integer) = [hidden]
-	array [1 .. maxlen] of char;
+      name_string = [hidden] array [ 1 .. 256 ] of char;
 
       atom = record				    { yksi ohjelman käsky   }
 		nametype: name_type;
@@ -186,7 +185,7 @@ type  atom_t = shortstring; 			    { Muuttujat ja käskyt   }
 						{ käytöstä }
     end; { buffer }
 
-    pool_array(n: integer) = array [ 1 .. n] of buffer;
+    pool_array = array [ 1 .. 16 ] of buffer;
                       
 Var	line_i: string_t := '';
       code_running : boolean := false; { estää päälekkäisen suorittamisen }
@@ -426,6 +425,39 @@ external;
 
 { cut_atom moved to parser.pas }
 
+{ equal strings? (replacement for EQ) }
+function es(a: array [ lowa .. hia: integer] of char;
+            b: array [ lowb .. hib: integer] of char): boolean;
+var i: integer;
+begin
+    if (hia - lowa + 1) = (hib - lowb + 1) then
+    begin
+        for i := 0 to hia - lowa + 1 do
+            if a[lowa + i] <> b[lowb + i] then
+                es := false;
+        es := true;
+    end else
+        es := false;
+end; { es}
+
+{ equal atoms? (replacement for EQ) }
+function ea(a, b: atom_t): boolean;
+var
+    al, bl: integer;
+    i: integer;
+begin
+    al := length(a);
+    bl := length(b);
+    if (al = bl) then
+    begin
+        for i := 1 to al + 1 do
+            if a[i] < b[i] then
+                ea : false;
+        ea := true;
+    end else
+        ea := false;
+end;
+
 function exact_function (var x: integer; s: atom_t): boolean;
 var i: integer;
 begin
@@ -433,7 +465,7 @@ begin
     x := 0;
     for i := 1 to max_functions do
 	if ftable[i].name > '' then
-	    if EQ (s,ftable[i].name) then x := i;
+	    if ea(s,ftable[i].name) then x := i;
     exact_function := x <> 0;
     if x > 0 then write_debug('%exact_function : ok');
 end;
@@ -508,20 +540,6 @@ begin
     for i := 1 to length(s) do name[low + i -1] := s[i];
 end; { as }
 
-function es(a: array [ lowa .. hia: integer] of char;
-            b: array [ lowb .. hib: integer] of char): boolean;
-var i: integer;
-begin
-    if (hia - lowa + 1) = (hib - lowb + 1) then
-    begin
-        for i := 0 to hia - lowa + 1 do
-            if a[lowa + i] <> b[lowb + i] then
-                es := false;
-        es := true;
-    end else
-        es := false;
-end; { es}
-
 procedure parse (function reader (var line: string_t): boolean;
 		var result: text);       
 label 999;
@@ -539,7 +557,7 @@ var atom_count: integer;
     line: string_t;
     linep,atom_line_p: integer;
     linecount: integer;
-    eof_flag: boolean := false;
+    eof_flag: boolean;
 
     procedure read_line;
     begin
@@ -606,7 +624,7 @@ var atom_count: integer;
     begin
 	loc := 0;
 	for j := 1 to label_count do
-	    if EQ(name,labels[j].name) then loc := j;
+	    if es(name,labels[j].name) then loc := j;
 	locate_label := loc;
     end; { locate_label }
 
@@ -1377,6 +1395,7 @@ var atom_count: integer;
 	  end;
   
       begin { parse }
+        eof_flag := false;
 	write_debug('%parse');
 
 	clear_program(current_buffer);
@@ -1847,9 +1866,10 @@ function exec_program (label_name: atom_t; monster: atom_t;
 
       function e_boolean_and(params: paramtable): string_t;
       var result: string;
-	  bresult: boolean := true;
+	  bresult: boolean;
 	  i: integer;
       begin
+        bresult := true;
 	write_debug('%e_boolean_and');
 	for i := 1 to count_params(params) do 
 	    if clean_spaces(eval_atom (params[i])) = '' then 
@@ -1862,9 +1882,10 @@ function exec_program (label_name: atom_t; monster: atom_t;
 
       function e_boolean_or(params: paramtable): string_t;
       var result: string;
-	  bresult: boolean := false;
+	  bresult: boolean;
 	  i: integer;
       begin
+        bresult := false;
 	write_debug('%e_boolean_or');
 	for i := 1 to count_params(params) do 
 	    if clean_spaces(eval_atom (params[i])) > '' then 
@@ -1876,10 +1897,12 @@ function exec_program (label_name: atom_t; monster: atom_t;
       end; { e_boolean_or }
 
       function e_or_else(params: paramtable): string_t;
-      var result: string_t := '';
+      var result: string_t;
 	  i,n: integer;
-	  cont: boolean := true;
+	  cont: boolean;
       begin
+        result := '';
+        cont := true;
         write_debug('%e_or_else');
 	n := count_params(params);
 	i := 1;
@@ -1893,10 +1916,12 @@ function exec_program (label_name: atom_t; monster: atom_t;
       end; { e_or_else }
 
       function e_and_then(params: paramtable): string_t;
-      var result: string_t := '';
+      var result: string_t;
 	  i,n: integer;
-	  cont: boolean := true;
+	  cont: boolean;
       begin
+        result := '';
+        cont := true;
         write_debug('%e_and_then');
 	n := count_params(params);
 	i := 1;
