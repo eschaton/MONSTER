@@ -1,0 +1,191 @@
+                  MONSTER Helsinki V 1.06
+                  -----------------------
+
+    Monster, a multiplayer adventure game where the players create the
+    world and make the rules.
+
+    Derived from Rich Skrenta's Monster (from version 1).
+
+    Includes programmable non-player characters (NPC) with own programming
+    language - MDL (Monster Defination Language). Also rooms and objects
+    can program with it (via so called hooks). NPCs are called to 'monster',
+    all other MDL-objects are called to 'hook'.
+
+    In this version have new documentation. So you perhaps want this.
+    Look also bug fig of MONSTER/FIX (there was one severe bug).
+
+Environment: VMS V4.x (MONSTER_INSTALL.COM requires V5.x)
+             PASCAL 
+
+THIS IS DELTA POSTING AGAIST VERSION 1.05
+Delta from version 1.04 to version 1.05 is posted 1.7.1992
+Version 1.04 is posted 14.6.1992
+
+New to version 1.05:
+- Jorma Korkiakoski translated Finnish ducumentation of MDL to English
+  (This includes only MDL functions of version 1.05). And fix (part of)
+  monster_e.hlp. (Thanks !)
+- New commands:
+	show charset
+- New command forms:
+	claim room
+	claim object {object}
+	claim monster {monster}
+	claim spell {spell}
+	disown room
+	disown object {object}
+	disown monster {monster}
+	disown spell {spell}
+	public room
+	public object {object}
+	public monster {monster}
+	public spell {spell}
+
+	If {orject}, {monster} or {spell} argument is missing, it is prompted.
+	If it is ambiquous, list for possible matches are given (selection
+		by number or cursor keys).
+- New MDL-functions:
+	boolean and (arg1,arg2,...)
+	boolean or (arg1,arg2,...)
+	or else (arg1,arg2,...)
+	and then (arg1,arg2,...)
+- Changed MDL-functions:
+	get global flag(arg)
+	strip (arg)
+- Default character set is now Dec Multinational
+- If argument of command is ambiquos, monster gives list of possible
+  matches and player can select correct one by number or by cursor keys.
+  (This not apply to all commands or all forms of commands.)
+  This is available (at least) in following commands:
+	claim [object|monster|spell] {something}
+	disown [object|monster|spell] {something}
+	public [object|monster|spell] {something}
+	custom [object|monster] {something}
+	get {obejct}
+	drop {object}
+	delete [room|object|monster] {something}
+	scan {object}
+	destroy {object}
+	duplicate {object}
+	erase {monster}
+	reset {object}
+	wear {object}
+	wield {object}
+	set {something}
+- New tables in MONSTER.INIT:
+	CHARTABLE:   (can be empty)
+	{ charset ....
+	  char ... }			This table also effects to parsing of 
+	END OF CHARTABLE		MDL and MDL function strip(...).
+
+	CLOSED MESSAGE:			This is same as ILMOITUS.TXT file
+	{some text}				in previously.
+	END OF MESSAGE
+- New fields in MONSTER.INIT:		(this is value what MONSTER_INSTALL.COM
+					 gives)
+	database_poltime:		default "0 ::1"
+	mdl_buffers: 			default 20
+	dcl_access_allowed:		default yes
+- Format of dump of MONSTER/DUMP is also changed little (as usual).
+	MONSTER/REBUILD (of course) reads all previous formats.
+- MDL parser now tires check if variable is used before it defination
+	in compile time (not easy task, because variables are defined 
+	dynamically).
+- MDL code loading from terminal is now handled correctly (no block
+	Monster's event loop). So you can use "g tt:" command to
+	enter MDL -code.
+- MDL interpreter should now be little faster (and uses memory
+	little more sensible - however number of mdl -buffers
+	is now 20 by default instead of 5).
+- BUG fixes:
+	- recovery routines in MONSTER/FIX destroys intergity
+	  of database in version 1.05. Now fixed.
+	- MONSTER/DUMP - MONSTER/REBUILD now not destroy end
+	  of descriptions lines if these are near to 80 characters.
+        - MONSTER/REBUILD don't now crashed so easily when it
+	  detects some errors in dumpfile.
+	- Some other bug fixes.
+
+New in verstin 1.05 to version 1.04 (posted 1.7.1992):
+ - MONSTER /BUILD and /DUMP commands now correct handle passwords
+   of virual userids created by MONSTER/USER (you can't do
+     text dump of database and build new database where password
+     of virtual userids have saved in available)
+ - MDL function 'or' accept now any number of parameters
+ - MDL function 'and' accept now more than two parameters
+ - New modules: VERSION.PAS (version number of monster)
+                ALLOC.PAS
+ - New image MONSTER_REBUILD.EXE - here is now commands:
+		MONSTER/REBUILD
+		MONSTER/FIX
+		MONSTER/BATCH
+ - Document have updated little
+
+New in version 1.04 to version 1.03 (posted 24.11.1990):
+ -  Several bugfixes (of course)
+ -  New commands MONSTER/DUMP and MONSTER/BUILD (via MONSTER_DUMP.EXE)
+ -  Reading of keyboard and database polling starategy have rewrote -
+    should cause smaller IO-load to system (new GUTS.PAS).
+ -  MDL -parser now writes offending line and points error position when 
+    it detects error in MDL-program.
+
+Previous distributions:
+	in machine hylkb.Helsinki.FI   (also hylka.Helsinki.FI, but this
+					will be removed form service)
+	in directory public_disk:<public.vax.games-etc.monster.sources>
+	have following savesets:
+
+	dist_10_11_1990.saveset		Monster Helsinki 1.00
+	dist_24_11_1990.saveset		Monster Helsinki 1.02
+	diff_6_12_1990.saveset			Delta 1.02 -> 1.03
+	dist_14_6_1992.saveset 		Monster Helsinki 1.04
+	diff_1_7_1992.saveset			Delta 1.04 -> 1.05
+	and will be:
+	diff_7_12_1992.saveset			Delta 1.05 -> 1.06
+
+	This is available also in some site(s), which archives
+	vmsnet.sources.games. Check:
+	unix.hensa.ac.uk:	
+		/pub/uunet/usenet/comp.sources.games/vmsnet.sources.games
+	src.doc.ic.ac.uk: /usenet/comp.sources.games/vmsnet.sources.games
+	puffin.doc.ic.ac.uk: /usenet/comp.sources.games/vmsnet.sources.games
+	archie.au: /usenet/comp.sources.games/vmsnet.sources.games
+	pinus.slu.se: /pub/usenet/comp.sources.games/vmsnet.sources.games
+	( ftp.uu.net )
+	mirrors of ftp.uu.net
+
+Running delta:
+    Get MONSTER Version 1.05 distribution
+      Put logical name MONSTER105 to point that directory
+    Create directory for sources of version 1.06 
+      Put logical name MONSTER106 to point that directory
+    Go to directory where is this delta distribution
+      execute UPDATE.COM:
+         $ @UPDATE
+
+    Go directory MONSTER105
+
+    Compilation and installation - three possibility:
+1)  Compile MONSTER_E.HLP
+         $ LIBRARIAN/HELP/CREATE MONSTER_E MONSTER_E
+    Read installation help
+         $ HELP/LIBRARY=SYS$DISK:<>MONSTER_E Installation
+    and follow help.
+2)  Run installation-script
+         $ @MONSTER_INSTALL
+    and answer to questions.
+
+3)  Compile with MMS (there if file MAKEFILE.)
+         $ MMS ALL
+    Install manually
+
+    Send notice to me (Kari.Hurtta@Helsinki.Fi) or to 
+    kristallipallo@com.cc.Helsinki.FI if you get this
+    working or if you have problems.
+
+- K E H
+( Kari.Hurtta@Helsinki.FI,
+  hurtta@cc.Helsinki.FI,
+  hurtta@cs.Helsinki.FI,
+  HURTTA@FINUH.BITNET
+)
