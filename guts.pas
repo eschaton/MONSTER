@@ -185,7 +185,7 @@ begin
     if (uand(code,2 ** (tmr_efn-base_efn)) > 0) or force then begin
 	syscall($clref (tmr_efn));
 	syscall($bintim (database_poltime,time)); { yksi sekuntti laukeamiseen }
-	syscall($setimr (tmr_efn,time,,,));
+	syscall($setimr (tmr_efn,time,,)); (* remove final flags param *)
 	check_timer := true;
     end else check_timer := false;
 end; { check_timer }
@@ -295,7 +295,7 @@ type	Line_buffer = Array [ 1 .. Lines ] of string;
 	    rtradr: [long] unsigned;
 	end;
 var
-        esc_table : array [ 0 .. ESC_LAST] of shortstring :=
+        esc_table : [static] array [ 0 .. ESC_LAST] of shortstring :=
 	    ( '',	    { ESC_NONE }
 	      ''(13),	    { ESC_RETURN }
 	      ''(26),	    { ESC_EOF }
@@ -312,14 +312,13 @@ var
 	      
 
 
-        mask:	    unsigned := 2 ** (grab_efn-base_efn) + 
-			2 ** (tmr_efn-base_efn);
-	end_grab:   boolean := false;
+        mask:	    unsigned;
+	end_grab:   boolean;
 	code:	    unsigned;
 	start: [volatile] string;
 	line:	    string;
 	area:	    [volatile] packed array [ 1 .. max_line + max_esc ] of char;
-	modifiers:  unsigned := 0;
+	modifiers:  unsigned;
 	iosb:	    [volatile] record
 	    status: [volatile] $uword;
 	    offtrm: [volatile] $uword;
@@ -338,8 +337,8 @@ var
         result  : unsigned;
 	terminator : shortstring;
 	esccode : integer;
-	eof_detected : boolean := false;
-	have_deccrt : boolean := false;
+	eof_detected : boolean;
+	have_deccrt : boolean;
 
       procedure erase_line;
       begin
@@ -352,11 +351,15 @@ var
 		putchars(chr(13),channel);			
 	    end;
 	end; 
-    end; { erase_line }
+      end; { erase_line }
 
     var tmp : terminal_t;
 begin
-
+   mask := 2 ** (grab_efn-base_efn) + 2 ** (tmr_efn-base_efn);
+   end_grab := false;
+   modifiers := 0;
+   eof_detected := false;
+   have_deccrt := false;
 
    if channel < 0 then channel := inp_chan;
    tmp := channel;
@@ -640,9 +643,10 @@ Var end_dcl: boolean;           { True kun aliohjelma suoritettu loppuun }
     succeed: boolean;           { onnistuiko käsky }
     Id:      unsigned;          { prosessin pid }
     name:    string;            { prosessin nimi }
-    mask:    unsigned := 2 ** (dcl_efn-base_efn) + 2 ** (tmr_efn-base_efn);
+    mask:    unsigned;
 Begin     
-
+  mask := 2 ** (dcl_efn-base_efn) + 2 ** (tmr_efn-base_efn);
+  
   name := Substr ('_'+userident,1,10); 
   
   WriteLn ('Control switch to child-process: ',name); 
